@@ -1,0 +1,1403 @@
+diff -cNr ./files.mak ../i18n_hack/files.mak
+*** ./files.mak	Sun Dec  9 05:27:54 2001
+--- ../i18n_hack/files.mak	Fri Jan 11 21:01:48 2002
+***************
+*** 27,32 ****
+--- 27,33 ----
+             ./libkawari/kawari_matchcode.cpp \
+             ./libkawari/sequence_gen.cpp \
+             ./libkawari/misc.cpp \
++            ./libkawari/kawari_i18n.cpp \
+             ./libkawari/mt19937.cpp \
+             $(KISSRC) \
+             $(CRYPTSRC)
+diff -cNr ./kawari-731-kpcg-I18Nhack.diff ../i18n_hack/kawari-731-kpcg-I18Nhack.diff
+*** ./kawari-731-kpcg-I18Nhack.diff	Fri Jan 11 22:12:26 2002
+--- ../i18n_hack/kawari-731-kpcg-I18Nhack.diff	Thu Jan  1 00:00:00 1970
+***************
+*** 1,13 ****
+- diff -cNr ./files.mak ../i18n_hack/files.mak
+- *** ./files.mak	Sun Dec  9 05:27:54 2001
+- --- ../i18n_hack/files.mak	Fri Jan 11 21:01:48 2002
+- ***************
+- *** 27,32 ****
+- --- 27,33 ----
+-              ./libkawari/kawari_matchcode.cpp \
+-              ./libkawari/sequence_gen.cpp \
+-              ./libkawari/misc.cpp \
+- +            ./libkawari/kawari_i18n.cpp \
+-              ./libkawari/mt19937.cpp \
+-              $(KISSRC) \
+-              $(CRYPTSRC)
+--- 0 ----
+diff -cNr ./kis/kis_escape.cpp ../i18n_hack/kis/kis_escape.cpp
+*** ./kis/kis_escape.cpp	Sun Aug  5 22:01:44 2001
+--- ../i18n_hack/kis/kis_escape.cpp	Fri Jan 11 21:57:46 2002
+***************
+*** 6,11 ****
+--- 6,12 ----
+  //      Programed by NAKAUE.T (Meister)
+  //
+  //  2001.07.14  Phase 6.1     First version
++ //	2002.01.11  Phase 7.3.1   I18N Hack (kpcg.I18Nhack)
+  //
+  //---------------------------------------------------------------------------
+  #include "config.h"
+***************
+*** 13,18 ****
+--- 14,20 ----
+  #include "kis/kis_escape.h"
+  //---------------------------------------------------------------------------
+  #include "libkawari/misc.h"
++ #include "libkawari/kawari_i18n.h"
+  //---------------------------------------------------------------------------
+  string KIS_escape::Function(const vector<string>& args)
+  {
+***************
+*** 23,31 ****
+--- 25,41 ----
+  		if(i>1) retstr+=string(" ");
+  
+  		for(unsigned int j=0;j<args[i].size();j++) {
++ #ifdef I18N_HACK
++ 			if(int trail=lang.moreBytes(args[i][j])) {
++ 				for(int k = 0; k < trail; k++) {
++ 					retstr += args[i][j++];
++ 				}
++ 				retstr+=args[i][j];
++ #else
+  			if(iskanji1st(args[i][j])) {
+  				retstr+=args[i][j++];
+  				retstr+=args[i][j];
++ #endif
+  			} else {
+  				if((args[i][j]=='\\')||(args[i][j]=='%')) retstr+='\\';
+  				retstr+=args[i][j];
+diff -cNr ./kis/kis_expr.cpp ../i18n_hack/kis/kis_expr.cpp
+*** ./kis/kis_expr.cpp	Mon Jan  7 23:55:46 2002
+--- ../i18n_hack/kis/kis_expr.cpp	Fri Jan 11 21:59:14 2002
+***************
+*** 15,20 ****
+--- 15,21 ----
+  //  2001.10.29  Phase 7.0.2   change macro name(Thanks: Sanori)
+  //  2002.01.07  Phase 7.3     findposサブコマンド追加 (さとー)
+  //                            splitコマンド追加(さとー)
++ //	2002.01.11  Phase 7.3.1   I18N Hack (kpcg.I18Nhack)
+  //
+  //---------------------------------------------------------------------------
+  #include "config.h"
+***************
+*** 41,46 ****
+--- 42,48 ----
+  //---------------------------------------------------------------------------
+  #include "libkawari/kawari_engine.h"
+  #include "libkawari/misc.h"
++ #include "libkawari/kawari_i18n.h"
+  #include "kis/kis_expr.h"
+  using namespace std;
+  //---------------------------------------------------------------------------
+***************
+*** 53,63 ****
+  #	define Eval5 Eval6
+  #endif
+  
+! // SJIS Wide Char String -> SJIS Char String
+  static std::string wtoc(const std::wstring& ws){
+      unsigned int max = ws.length();
+      std::string ret;
+      for (unsigned int i=0; i<max; i++){
+          if (ws[i] & (unsigned short)0xff00){
+              ret += static_cast<unsigned char>(
+                  (ws[i] & (unsigned short)0xff00) >> 8);
+--- 55,69 ----
+  #	define Eval5 Eval6
+  #endif
+  
+! // Wide Char String -> Char String
+  static std::string wtoc(const std::wstring& ws){
+      unsigned int max = ws.length();
+      std::string ret;
+      for (unsigned int i=0; i<max; i++){
++ 
++ #ifdef I18N_HACK
++ 		ret += lang.WcharToStr(ws[i]);
++ #else
+          if (ws[i] & (unsigned short)0xff00){
+              ret += static_cast<unsigned char>(
+                  (ws[i] & (unsigned short)0xff00) >> 8);
+***************
+*** 67,81 ****
+              ret += static_cast<unsigned char>(
+                  (ws[i] & (unsigned short)0x00ff));
+          }
+      }
+      return ret;
+  }
+  
+! // SJIS Char String -> SJIS Wide Char String
+  static std::wstring ctow(const std::string& s){
+      unsigned int max = s.length();
+      std::wstring ret;
+      for (unsigned int i=0; i<max; i++){
+          if (iskanji1st(s[i]) && (i<max-1)){
+              ret +=
+                  (static_cast<unsigned char>(s[i++]) << 8) |
+--- 73,100 ----
+              ret += static_cast<unsigned char>(
+                  (ws[i] & (unsigned short)0x00ff));
+          }
++ #endif
+      }
+      return ret;
+  }
+  
+! // Char String -> Wide Char String
+  static std::wstring ctow(const std::string& s){
+      unsigned int max = s.length();
+      std::wstring ret;
+      for (unsigned int i=0; i<max; i++){
++     	
++     	
++ #ifdef I18N_HACK
++ 	int trail = lang.moreBytes(s[i]);
++ 	if ((i+trail) < max)
++ 	{
++ 		ret+=lang.StrToWchar(s.substr(i), trail);
++ 		i+=trail; // skip used data
++ 	}
++ 	else
++ 		ret+=static_cast<unsigned char>(s[i]);
++ #else
+          if (iskanji1st(s[i]) && (i<max-1)){
+              ret +=
+                  (static_cast<unsigned char>(s[i++]) << 8) |
+***************
+*** 83,88 ****
+--- 102,108 ----
+          }else{
+              ret += static_cast<unsigned char>(s[i]);
+          }
++ #endif
+      }
+      return ret;
+  }
+diff -cNr ./kis/kis_substitute.cpp ../i18n_hack/kis/kis_substitute.cpp
+*** ./kis/kis_substitute.cpp	Mon Sep 24 16:14:00 2001
+--- ../i18n_hack/kis/kis_substitute.cpp	Fri Jan 11 21:15:44 2002
+***************
+*** 12,17 ****
+--- 12,18 ----
+  //---------------------------------------------------------------------------
+  #include "kis/kis_substitute.h"
+  #include "libkawari/misc.h"
++ #include "libkawari/kawari_i18n.h"
+  //---------------------------------------------------------------------------
+  #include <ctype.h>
+  #include <cstdlib>
+***************
+*** 24,34 ****
+  	string retstr;
+  	for(unsigned int i=1;i<args.size();i++) {
+  		if(i>1) retstr+=string(" ");
+- 
+  		for(unsigned int j=0;j<args[i].size();j++) {
+  			if(iskanji1st(args[i][j])) {
+  				retstr+=args[i][j++];
+  				retstr+=args[i][j];
+  			} else {
+  				if( 'a' <= args[i][j] && args[i][j] <= 'z') {
+  					retstr+= toupper(args[i][j]);
+--- 25,42 ----
+  	string retstr;
+  	for(unsigned int i=1;i<args.size();i++) {
+  		if(i>1) retstr+=string(" ");
+  		for(unsigned int j=0;j<args[i].size();j++) {
++ #ifdef I18N_HACK
++ 			if(int trail=lang.moreBytes(args[i][j])) {
++ 				for(int k=0; k < trail; k++) {
++ 					retstr +=args[i][j++];
++ 				}
++ 				retstr+=args[i][j];
++ #else
+  			if(iskanji1st(args[i][j])) {
+  				retstr+=args[i][j++];
+  				retstr+=args[i][j];
++ #endif
+  			} else {
+  				if( 'a' <= args[i][j] && args[i][j] <= 'z') {
+  					retstr+= toupper(args[i][j]);
+***************
+*** 52,60 ****
+--- 60,76 ----
+  		if(i>1) retstr+=string(" ");
+  
+  		for(unsigned int j=0;j<args[i].size();j++) {
++ #ifdef I18N_HACK
++ 			if(int trail=lang.moreBytes(args[i][j])) {
++ 				for(int k=0; k < trail; k++) {
++ 					retstr +=args[i][j++];
++ 				}
++ 				retstr+=args[i][j];
++ #else
+  			if(iskanji1st(args[i][j])) {
+  				retstr+=args[i][j++];
+  				retstr+=args[i][j];
++ #endif
+  			} else {
+  				if( args[i][j] >= 'A'  && args[i][j] <= 'Z') {
+  					retstr+= tolower(args[i][j]);
+diff -cNr ./libkawari/kawari.cpp ../i18n_hack/libkawari/kawari.cpp
+*** ./libkawari/kawari.cpp	Tue Jan  8 05:30:06 2002
+--- ../i18n_hack/libkawari/kawari.cpp	Fri Jan 11 22:00:28 2002
+***************
+*** 69,74 ****
+--- 69,75 ----
+  //  2002.01.07  Phase 7.3     著作者表示用ヘッダ追加(Thanks: えびさわ)
+  //                            伝達経路情報をSecurityLevelのみで判別
+  //  2002.01.08  Phase 7.3.1   BalloonOffsetヘッダ対応
++ //	2002.01.11  Phase 7.3.1   I18N Hack (kpcg.I18Nhack)
+  //
+  //---------------------------------------------------------------------------
+  #include "config.h"
+***************
+*** 84,89 ****
+--- 85,91 ----
+  #include "libkawari/kawari.h"
+  #include "libkawari/sequence_gen.h"
+  #include "libkawari/misc.h"
++ #include "libkawari/kawari_i18n.h"
+  //---------------------------------------------------------------------------
+  // SHIORI/2.0 API
+  //---------------------------------------------------------------------------
+***************
+*** 570,575 ****
+--- 572,590 ----
+  				}
+  			} else if(key=="include") {
+  				LoadINI(datapath+value,datapath,dictfiles);
++ #ifdef I18N_HACK
++ 			} else if(key=="locale") {
++ 				string s = lang.setLocale(value);
++ 				if(LogFS) {
++ 					(*LogFS) << "Setting Locale \"" << value << "\": ";
++ 					if (s =="") {
++ 						(*LogFS) << "Failed";
++ 					} else {
++ 						(*LogFS) << "Succeeded (" << s << ")";
++ 					}
++ 					(*LogFS) << endl;
++ 				}
++ #endif
+  			} else if(key=="debug") {
+  				if(value=="log") {
+  					if(!LogFS) LogFS=new ofstream((datapath+"kawari.log").c_str());
+diff -cNr ./libkawari/kawari.h ../i18n_hack/libkawari/kawari.h
+*** ./libkawari/kawari.h	Tue Jan  8 05:30:06 2002
+--- ../i18n_hack/libkawari/kawari.h	Fri Jan 11 21:59:58 2002
+***************
+*** 57,69 ****
+  //  2002.01.07  Phase 7.3     著作者表示用ヘッダ追加(Thanks: えびさわ)
+  //                            伝達経路情報をSecurityLevelのみで判別
+  //  2002.01.08  Phase 7.3.1   BalloonOffsetヘッダ対応
+  //
+  //---------------------------------------------------------------------------
+  #ifndef KAWARI_H
+  #define KAWARI_H
+  //---------------------------------------------------------------------------
+  // 華和梨のバージョン番号はここに書く
+! #define KAWARI_NAME	"KAWARI.kpcg"
+  #define KAWARI_AUTHOR	"Meister"	// 著作者(英数字だけ)
+  //#define KAWARI_NAME	"KAWARI.sky"
+  #define KAWARI_MAJOR	"7"		// メジャー番号(ピリオド無し、数字だけ)
+--- 57,70 ----
+  //  2002.01.07  Phase 7.3     著作者表示用ヘッダ追加(Thanks: えびさわ)
+  //                            伝達経路情報をSecurityLevelのみで判別
+  //  2002.01.08  Phase 7.3.1   BalloonOffsetヘッダ対応
++ //	2002.01.11  Phase 7.3.1   I18N Hack (kpcg.I18Nhack)
+  //
+  //---------------------------------------------------------------------------
+  #ifndef KAWARI_H
+  #define KAWARI_H
+  //---------------------------------------------------------------------------
+  // 華和梨のバージョン番号はここに書く
+! #define KAWARI_NAME	"KAWARI.kpcg.I18Nhack"
+  #define KAWARI_AUTHOR	"Meister"	// 著作者(英数字だけ)
+  //#define KAWARI_NAME	"KAWARI.sky"
+  #define KAWARI_MAJOR	"7"		// メジャー番号(ピリオド無し、数字だけ)
+diff -cNr ./libkawari/kawari_i18n.cpp ../i18n_hack/libkawari/kawari_i18n.cpp
+*** ./libkawari/kawari_i18n.cpp	Thu Jan  1 00:00:00 1970
+--- ../i18n_hack/libkawari/kawari_i18n.cpp	Fri Jan 11 22:02:32 2002
+***************
+*** 0 ****
+--- 1,383 ----
++ //---------------------------------------------------------------------------
++ //
++ // "kawari" for are igai no nanika igaino nanika
++ // nise I18N (Internationalizaiton) module
++ //
++ //      I18N Module Programmed by Joo-won Jung (Sanori)
++ //      Kawari Programed by NAKAUE.T (Meister)
++ //
++ //  2001.09.08  Phase 7.0     Created
++ //  2001.10.05  Phase 7.0     WcharToStr, StrToWchar added
++ //	2002.01.11  Phase 7.3.1   Applied to KAWARI.kpcg Phase 7.3.1 (kpcg.I18Nhack)
++ //
++ //---------------------------------------------------------------------------
++ #include <algorithm>
++ #include "libkawari/kawari_i18n.h"
++ //---------------------------------------------------------------------------
++ 
++ #define MAX_TRAIL 5
++ 
++ #define LOWBYTE(x) (((unsigned int)(x)) & 0xFF)
++ 
++ TKawariI18N::TKawariI18N(const string& l) {
++ 	// Initialize to_charset
++ 	// The key should be lowercase
++ 	to_charset["iso-8859-1"] = ISO8859;
++ 	to_charset["iso-8859-2"] = ISO8859;
++ 	to_charset["iso-8859-5"] = ISO8859;
++ 	to_charset["sjis"] = SJIS;
++ 	to_charset["shift_jis"] = SJIS;
++ 	to_charset["eucjp"] = eucJP;
++ 	to_charset["euc-jp"] = eucJP;
++ 	to_charset["euckr"] = eucKR;
++ 	to_charset["euc-kr"] = eucKR;
++ 	to_charset["euctw"] = eucTW;
++ 	to_charset["euc-tw"] = eucTW;
++ 	to_charset["euccn"] = eucCN;
++ 	to_charset["euc-cn"] = eucCN;
++ 	to_charset["big5"] = BIG5;
++ 	to_charset["koi8"] = KOI8;
++ 	to_charset["utf8"] = UTF8;
++ 	to_charset["utf-8"] = UTF8;
++ 
++ 	// initialize locale_alias
++ 	locale_alias["C"] = 	"en_US.ISO-8859-1";	// wrong
++ 	locale_alias["POSIX"] =	"en_US.ISO-8859-1";	// wrong
++ 	locale_alias["en"] = 	"en_US.ISO-8859-1";
++ 	locale_alias["fr"] = 	"fr_FR.ISO-8859-1";
++ 	locale_alias["de"] = 	"fr_FR.ISO-8859-1";
++ 	locale_alias["es"] = 	"es_ES.ISO-8859-1";
++ 	locale_alias["ru"] = 	"ru_RU.KOI-8";
++ 	locale_alias["ja"] =	"ja_JP.SJIS";
++ 	locale_alias["ja_JP"] =	"ja_JP.SJIS";
++ 	locale_alias["ko"] =	"ko_KR.eucKR";
++ 	locale_alias["ko_KR"] =	"ko_KR.eucKR";
++ 	locale_alias["zh"] =	"ko_KR.eucKR";
++ 	locale_alias["zh_TW"] =	"zh_TW.BIG5";
++ 	locale_alias["zh_CN"] =	"zh_CN.GB2312";
++ 
++ 	setLocale(l);
++ }
++ string TKawariI18N::formalLocaleName(const string& locale) const {
++ 	string ret = locale;
++ 	if(locale.find(".") == string::npos) {
++ 		// check alias
++ 		map<string,string>::const_iterator it;
++ 		if ((it = locale_alias.find(locale)) != locale_alias.end()) {
++ 			ret = it->second;
++ 		} else {
++ 			// no alias
++ 			ret = "";
++ 		}
++ 	}
++ 	return ret;
++ }
++ 
++ TKawariI18N::charset TKawariI18N::getCharset(const string& locale) const {
++ 	charset ret = NONE;
++ 	string::size_type p;
++ 	string l = formalLocaleName(locale);
++ 	if (l == "") return NONE;
++ 	p = l.find(".");
++ 
++ 	// encoding specified
++ 	string enc = l.substr(p+1,string::npos);
++ 	transform(enc.begin(), enc.end(), enc.begin(), tolower);
++ 	map<string,charset>::const_iterator it;
++ 	if ((it=to_charset.find(enc)) != to_charset.end()) {
++ 		ret = it->second;
++ 	} // else no available charset
++ 
++ 	return ret;
++ }
++ 
++ string TKawariI18N::getLocale() const {
++ 	return currentLocale;
++ }
++ 
++ string TKawariI18N::setLocale(const string& l) {
++ 	currentLocale = formalLocaleName(l);
++ 	currentCharset = getCharset(currentLocale);
++ 	return currentLocale;
++ }
++ 
++ int TKawariI18N::moreBytes(int c) const {
++ 	const int UTF8moreChar[256] = {
++ 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
++ 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
++ 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
++ 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
++ 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
++ 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
++ 	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
++ 	2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, 3,3,3,3,3,3,3,3,4,4,4,4,5,5,5,5};
++ 
++ 	int ret = 0;
++ 	c = (c & 0xff);
++ 	switch(currentCharset) {
++ 		case SJIS:
++ 			// from iskanji1st
++ 			if ((unsigned char)((c^0x20)-0xa1)<=0x3b) {
++ 				ret = 1;
++ 			}
++ 			break;
++ 
++ 		case eucJP:
++ 			if (((0xa1 <= c) && (c <= 0xfe)) || (c == 0x8e)) {
++ 				ret = 1;
++ 			} else if (c == 0x8f) {
++ 				ret = 2;
++ 			}
++ 			break;
++ 
++ 		case eucKR:
++ 		case eucCN:
++ 		case BIG5:
++ 			if ((0xa1 <= c) && (c <= 0xfe)) { ret = 1; }
++ 			break;
++ 
++ 		case eucTW:
++ 			if ((0xa1 <= c) && (c <= 0xfe)) {
++ 				ret = 1;
++ 			} else if (c == 0x8e) {
++ 				ret = 3;
++ 			}
++ 			break;
++ 
++ 		case UTF8:
++ 			ret = UTF8moreChar[c];
++ 			break;
++ 
++ 		case KOI8:
++ 		case ISO8859:
++ 		default:
++ 			ret = 0;
++ 			break;
++ 	}
++ 
++ 	return ret;
++ }
++ 
++ wchar_t TKawariI18N::StrToWchar(const string &str, int trail) const
++ {
++ 	wchar_t wcRet=NULL;
++ 
++ 	if ((trail < 0) || (trail > MAX_TRAIL)) trail=moreBytes(str[0]);
++ 
++ 	// Fail-safe error handler
++ 	if (str.length() < (trail+1))
++ 		return wcRet;
++ 
++ 	switch(currentCharset)
++ 	{
++ 		case SJIS:
++ 		case eucKR:
++ 		case eucCN:
++ 		case BIG5:
++ 
++ 			if (trail)
++ 				wcRet=(wchar_t) ((LOWBYTE(str[0]) << 8) | LOWBYTE(str[1]));
++ 			else
++ 				wcRet=(wchar_t) LOWBYTE(str[0]);
++ 			break;
++ 
++ 		case eucJP:
++ 			switch(trail) {
++ 			case 0 :
++ 				wcRet=(wchar_t) LOWBYTE(str[0]);
++ 				break;
++ 			case 1 :
++ 				wcRet=(wchar_t) ((LOWBYTE(str[0]) << 8) | LOWBYTE(str[1]));
++ 				break;
++ 			case 2 :	
++ 				// Nise Wide-char :)
++ 				// Map 8FA1A1 ~ 8FFEFE to 01A1 ~ 5EFE (01=A1-A0, 5E=FE-A0)
++ 				wcRet= (wchar_t) (((LOWBYTE(str[1]) - 0x0A0) << 8) | LOWBYTE(str[2]));
++ 			default:; // Error
++ 			}
++ 			break;
++ 
++ 		case eucTW:
++ 			// eucTW has total 16 planes (whee~), and it is IMPOSSIBLE to map
++ 			// every planes into 2-bytes-wide-char. Hopefully, the plane 1 is
++ 			// redundant with A1A1 ~ FEFE. This function only supports plane 1 ~ plane 4.
++ 			switch(trail) {
++ 			case 0 :
++ 				wcRet=(wchar_t) LOWBYTE(str[0]);
++ 				break;
++ 			case 1 :
++ 				wcRet=(wchar_t) ((LOWBYTE(str[0]) << 8) | LOWBYTE(str[1]));
++ 				break;
++ 			case 3 :	
++ 				// Nise Wide-char :)
++ 				// plane 1: Map 8EA1A1A1 ~ 8EA1FEFE to A1A1 ~ FEFE (Redundant)
++ 				// plane 2: Map 8EA2A1A1 ~ 8EA2FEFE to 0101 ~ 5E5E (01=A1-A0, 5E=FE-A0)
++ 				// plane 3: Map 8EA3A1A1 ~ 8EA3FEFE to A101 ~ FE5E (01=A1-A0, 5E=FE-A0)
++ 				// plane 4: Map 8EA4A1A1 ~ 8EA4FEFE to 01A1 ~ 5EFE (01=A1-A0, 5E=FE-A0)
++ 
++ 				if (LOWBYTE(str[1]) < 0xA5)	// bail out plane 5 ~ 16 (Error)
++ 				{
++ 					unsigned int first, second;
++ 					
++ 					if (str[1] & 0x01)	// plane 1, 3
++ 						first=LOWBYTE(str[2]);
++ 					else	// plane 2, 4
++ 						first=LOWBYTE(str[2]) - 0x0A0;
++ 
++ 					if (str[1] & 0x02)	// plane 2, 3
++ 						second=LOWBYTE(str[3]) - 0x0A0;
++ 					else	// plane 2, 4
++ 						second=LOWBYTE(str[3]);
++ 
++ 				wcRet=(wchar_t) ((first << 8) | second);
++ 				}
++ 				break;
++ 			default: ; // Error
++ 			}
++ 			break;
++ 
++ 		case UTF8:
++ 			// Note: This code is not overlong-code-attack-safe. DO NOT use this code when
++ 			// you are developing such security-important programming.
++ 			// This also, more than 2-byte unicode codes are considered as error.
++ 
++ 			switch (trail)
++ 			{
++ 			case 0: // 0000-007F
++ 				wcRet=(wchar_t) LOWBYTE(str[0]);
++ 				break;
++ 			case 1: // 0080-07FF
++ 				wcRet=(wchar_t) ((LOWBYTE(str[0]) & 0x01F) << 6);
++ 				wcRet|=(wchar_t) (LOWBYTE(str[1]) & 0x03F);
++ 				break;
++ 			case 2: // 0800-FFFF
++ 				wcRet=(wchar_t) ((LOWBYTE(str[0]) & 0x0F) << 12);
++ 				wcRet|=(wchar_t) ((LOWBYTE(str[1]) & 0x03F) << 6);
++ 				wcRet|=(wchar_t) (LOWBYTE(str[2]) & 0x03F);
++ 				break;
++ 
++ 			default:; // Error
++ 			}
++ 			break;
++ 
++ 		case KOI8:
++ 		case ISO8859:
++ 		default:
++ 			wcRet=(wchar_t) LOWBYTE(str[0]);
++ 			break;
++ 	}
++ 	return wcRet;
++ }
++ 
++ string TKawariI18N::WcharToStr(const wchar_t widechar) const
++ {
++ 	string strRet;
++ 
++ 	unsigned char first, second;
++ 	first= ((widechar >> 8) & 0xFF);
++ 	second= (widechar & 0xFF);
++ 
++ 	switch(currentCharset)
++ 	{
++ 		case SJIS:
++ 		case eucKR:
++ 		case eucCN:
++ 		case BIG5:
++ 
++ 			if (first)
++ 			{
++ 				strRet=(char)first;
++ 				strRet+=(char)second;
++ 			}
++ 			else
++ 				strRet=(char)second;
++ 			break;
++ 
++ 		case eucJP:
++ 			if (first) {
++ 				if ( (0x01 <= first) && (first <= 0x5E) )
++ 				{
++ 					strRet=(char)0x8F;
++ 					strRet+=(char)(first + 0xA0);
++ 				}
++ 				else
++ 					strRet=(char)first;
++ 
++ 				strRet+=(char)second;
++ 			}
++ 			else
++ 				strRet=(char)second;
++ 			break;
++ 
++ 		case eucTW:
++ 			if (first) {
++ 				if ( (0xA1 <= first) && (first <= 0xFE) )	// plane 1, 3
++ 				{
++ 					if ( (0xA1 <= second) && (second <= 0xFE) )	// plane 1
++ 					{
++ 						strRet=(char)first;
++ 						strRet+=(char)second;
++ 					}
++ 					else	// plane 3
++ 					{
++ 						strRet=(char)0x8E;
++ 						strRet+=(char)0xA3;
++ 						strRet+=(char)first;
++ 						strRet+=(char)(second+0xA0);
++ 					}
++ 				}
++ 				else	// plane 2, 4
++ 				{
++ 					if ( (0xA1 <= second) && (second <= 0xFE) )	// plane 4
++ 					{
++ 						strRet=(char)0x8E;
++ 						strRet+=(char)0xA4;
++ 						strRet+=(char)(first+0xA0);
++ 						strRet+=(char)second;
++ 					}
++ 					else	// plane 2
++ 					{
++ 						strRet=(char)0x8E;
++ 						strRet+=(char)0xA2;
++ 						strRet+=(char)(first+0xA0);
++ 						strRet+=(char)(second+0xA0);
++ 					}
++ 				}
++ 			}
++ 			else
++ 				strRet=(char)second;
++ 			break;
++ 
++ 		case UTF8:
++ 			if (widechar < 0x0080)
++ 				strRet=(char)(second & 0x7F);
++ 			else if (widechar < 0x0800)
++ 			{
++ 				strRet= 0xC0 | ((unsigned char)(widechar >> 6) & 0x1F); // (110x xxxx)
++ 				strRet+= 0x80 | ((unsigned char)(widechar) & 0x3F); // (10xx xxxx)
++ 			}
++ 			else // (widechar <= 0xFFFF)
++ 			{
++ 				strRet= 0xE0 | ((unsigned char)(widechar >> 12) & 0x0F); // (1110 xxxx)
++ 				strRet+= 0x80 | ((unsigned char)(widechar >> 6) & 0x3F); // (10xx xxxx)
++ 				strRet+= 0x80 | ((unsigned char)(widechar) & 0x3F); // (10xx xxxx)
++ 			}
++ 			break;
++ 
++ 
++ 		case KOI8:
++ 		case ISO8859:
++ 		default:
++ 			strRet=(char)second;
++ 			break;
++ 	}
++ 	return strRet;
++ }
++ 
++ #ifdef I18N_HACK
++ // Global variable (Thread UNSAFE!) -_-;
++ 
++ TKawariI18N lang("ja_JP.SJIS");		// default locale is Japanese PC
++ 
++ #endif // I18N_HACK
++ //---------------------------------------------------------------------------
+diff -cNr ./libkawari/kawari_i18n.h ../i18n_hack/libkawari/kawari_i18n.h
+*** ./libkawari/kawari_i18n.h	Thu Jan  1 00:00:00 1970
+--- ../i18n_hack/libkawari/kawari_i18n.h	Fri Jan 11 22:03:26 2002
+***************
+*** 0 ****
+--- 1,72 ----
++ //---------------------------------------------------------------------------
++ //
++ // "kawari" for are igai no nanika igaino nanika
++ // nise I18N (Internationalizaiton) module
++ //
++ //      I18N Module Programmed by Joo-won Jung (Sanori)
++ //      Kawari Programed by NAKAUE.T (Meister)
++ //
++ //  2001.09.08  Phase 7.0     Created
++ //  2001.10.05  Phase 7.0     WcharToStr, StrToWchar added
++ //	2002.01.11  Phase 7.3.1   Applied to KAWARI.kpcg Phase 7.3.1 (kpcg.I18Nhack)
++ //
++ //---------------------------------------------------------------------------
++ #ifndef KAWARI_I18N_H
++ #define KAWARI_I18N_H
++ //---------------------------------------------------------------------------
++ #include <string>
++ #include <map>
++ 
++ // Includes from kis_expr.cpp (for using wchar_t)
++ // some includes might not need, but I do not know platform/version differences...
++ 
++ #ifdef __GNUC__
++ 	#if (__GNUC__ < 3)
++ 		#include <cctype>
++ 	#else
++ 		#include <cctype>
++ 		#include <cwchar>
++ 	#endif
++ #else
++ 	#include <cwctype>
++ 	#include <cwchar>
++ #endif
++ 
++ using namespace std;
++ class TKawariI18N {
++ public:
++ 	enum charset {
++ 		ISO8859, SJIS, eucJP, eucKR, eucCN, eucTW, BIG5, KOI8, UTF8,
++ 		NONE };
++ private:
++ 	map <string, string> locale_alias;
++ 	map <string, charset> to_charset;
++ 	string currentLocale;
++ 	charset currentCharset;
++ 	string formalLocaleName(const string& locale) const;
++ public:
++ 	TKawariI18N(const string& locale = "C");
++ 
++ 	string setLocale(const string& locale = "C");
++ 	string getLocale() const;
++ 	charset getCharset(const string& locale) const;
++ 
++ 	int moreBytes(int c) const;
++ 
++ 	// StrToWchar: return the wide character of the 
++ 	//             1st encoded character of string
++ 	// If any error occurred, returned char will be NULL
++ 	wchar_t StrToWchar(const string &str, int trail = -1) const;
++ 	// WcharToStr: return encoded string of an wide character
++ 	string WcharToStr(const wchar_t widechar) const;
++ 	
++ 
++ };
++ 
++ #ifdef I18N_HACK
++ 
++ extern TKawariI18N lang;
++ 
++ #endif // I18N_HACK
++ //---------------------------------------------------------------------------
++ #endif
+diff -cNr ./libkawari/kawari_lexer.cpp ../i18n_hack/libkawari/kawari_lexer.cpp
+*** ./libkawari/kawari_lexer.cpp	Mon Oct 29 18:54:10 2001
+--- ../i18n_hack/libkawari/kawari_lexer.cpp	Fri Jan 11 22:01:08 2002
+***************
+*** 7,12 ****
+--- 7,13 ----
+  //
+  //  2001.04.24  Phase 0.5     字句解析機分離
+  //  2001.05.20  Phase 5.1     インタープリタ・コンパイラ化
++ //	2002.01.11  Phase 7.3.1   I18N Hack (kpcg.I18Nhack)
+  //
+  //---------------------------------------------------------------------------
+  #include "config.h"
+***************
+*** 17,22 ****
+--- 18,24 ----
+  using namespace std;
+  //---------------------------------------------------------------------------
+  #include "libkawari/misc.h"
++ #include "libkawari/kawari_i18n.h"
+  //---------------------------------------------------------------------------
+  // 区切り文字の定義
+  #define CONST_START_MACRO		"$"			// マクロの開始文字
+***************
+*** 88,97 ****
+--- 90,107 ----
+  		if(orgsen[endpos]=='\\') {
+  			if((endpos+1)<cntsen) endpos++;
+  		}
++ 
++ #ifdef I18N_HACK
++ 		if(int trail = lang.moreBytes(orgsen[endpos])) {
++ 			// jump over one character in MBCS environment
++ 			if((endpos+trail)<cntsen) endpos+=trail;
++ 		}
++ #else
+  		if(iskanji1st(orgsen[endpos])) {
+  			// 漢字
+  			if((endpos+1)<cntsen) endpos++;
+  		}
++ #endif
+  		endpos++;
+  	}
+  
+***************
+*** 116,125 ****
+--- 126,142 ----
+  			if((endpos+1)<orgsen.size()) endpos++;
+  		}
+  
++ #ifdef I18N_HACK
++ 		if(int trail = lang.moreBytes(orgsen[endpos])) {
++ 			// jump over one character in MBCS environment
++ 			if((endpos+trail)<orgsen.size()) endpos+=trail;
++ 		}
++ #else
+  		if(iskanji1st(orgsen[endpos])) {
+  			// 漢字
+  			if((endpos+1)<orgsen.size()) endpos++;
+  		}
++ #endif
+  		endpos++;
+  	}
+  
+***************
+*** 138,143 ****
+--- 155,168 ----
+  	unsigned int endpos=Pos;
+  
+  	while(endpos<cntsen) {
++ #ifdef I18N_HACK
++ 		if(int trail=lang.moreBytes(orgsen[endpos])) {
++ 			if((endpos+trail)<cntsen) {
++ 				endpos += (trail+1);
++ 			} else {
++ 				break;
++ 			}
++ #else
+  		if(iskanji1st(orgsen[endpos])) {
+  			// 漢字
+  			if((endpos+1)<cntsen) {
+***************
+*** 145,150 ****
+--- 170,176 ----
+  			} else {
+  				break;
+  			}
++ #endif
+  		} else if(
+  		 isalnum(orgsen[endpos])
+  		 ||(orgsen[endpos]=='_')
+***************
+*** 172,177 ****
+--- 198,211 ----
+  	unsigned int endpos=Pos;
+  
+  	while(endpos<orgsen.size()) {
++ #ifdef I18N_HACK
++ 		if(int trail=lang.moreBytes(orgsen[endpos])) {
++ 			if((endpos+trail)<orgsen.size()) {
++ 				endpos += (trail+1);
++ 			} else {
++ 				break;
++ 			}
++ #else
+  		if(iskanji1st(orgsen[endpos])) {
+  			// 漢字
+  			if((endpos+1)<orgsen.size()) {
+***************
+*** 180,185 ****
+--- 214,220 ----
+  			} else {
+  				break;
+  			}
++ #endif
+  		} else if(
+  		 isalnum(orgsen[endpos])
+  		 ||(orgsen[endpos]=='_')
+***************
+*** 320,325 ****
+--- 355,369 ----
+  			unsigned int tmppos = Pos;
+  			while((Pos<cntsen)
+  			 &&(StartAll.find(orgsen[Pos])==string::npos)) {
++ #ifdef I18N_HACK
++ 				if(int trail=lang.moreBytes(orgsen[Pos])) {
++ 					if((Pos+trail)<cntsen) {
++ 							Pos+=trail+1;
++ 					} else Pos++;
++ 				} else {
++ 					Pos++;
++ 				}
++ #else
+  				if(iskanji1st(orgsen[Pos])) {
+  					if((Pos+1)<cntsen) {
+  						Pos += 2;
+***************
+*** 327,332 ****
+--- 371,377 ----
+  				} else {
+  					Pos++;
+  				}
++ #endif
+  			}
+  			if (Pos > tmppos)
+  				result.Str += orgsen.substr(tmppos, Pos - tmppos);
+***************
+*** 402,407 ****
+--- 447,462 ----
+  			result.Type=TToken::ttokSentence;
+  			while((Pos<orgsen.size())
+  			 &&(StartAll.find(orgsen[Pos])==string::npos)) {
++ #ifdef I18N_HACK
++ 				if(int trail=lang.moreBytes(orgsen[Pos])) {
++ 					if((Pos+trail)<orgsen.size()) {
++ 						for(int i=0; i <= trail; i++)
++ 							result.Str+=orgsen[Pos++];
++ 					} else Pos++;
++ 				} else {
++ 					result.Str+=orgsen[Pos++];
++ 				}
++ #else
+  				if(iskanji1st(orgsen[Pos])) {
+  					if((Pos+1)<orgsen.size()) {
+  						result.Str+=orgsen[Pos++];
+***************
+*** 410,415 ****
+--- 465,471 ----
+  				} else {
+  					result.Str+=orgsen[Pos++];
+  				}
++ #endif
+  			}
+  		}
+  	} catch(...) {
+***************
+*** 493,502 ****
+--- 549,568 ----
+  			if(((pos+1)<orgsen.size())&&(orgsen[pos+1]==quote)) pos++;
+  		}
+  
++ #ifdef I18N_HACK
++ 		if(int trail = lang.moreBytes(orgsen[pos])) {
++ 			// MBCS
++ 			if((pos+trail)<orgsen.size()) {
++ 				for(int i=0; i < trail; i++)
++ 					retstr+=orgsen[pos++];
++ 			}
++ 		}
++ #else
+  		if(iskanji1st(orgsen[pos])) {
+  			// 漢字
+  			if((pos+1)<orgsen.size()) retstr+=orgsen[pos++];
+  		}
++ #endif
+  		retstr+=orgsen[pos++];
+  	}
+  
+diff -cNr ./libkawari/mt19937.h ../i18n_hack/libkawari/mt19937.h
+*** ./libkawari/mt19937.h	Wed Nov 21 22:22:56 2001
+--- ../i18n_hack/libkawari/mt19937.h	Fri Jan 11 20:42:18 2002
+***************
+*** 29,36 ****
+  class TMTRandomGenerator {
+  private:
+  
+  	static const int N=624;
+! 
+  	unsigned long mt[N]; /* the array for the state vector  */
+  	int mti;
+  
+--- 29,41 ----
+  class TMTRandomGenerator {
+  private:
+  
++ 	// This line causes an error in VC++
++ 	// Instead, we can use #define alternatively
++ #ifndef _MSC_VER
+  	static const int N=624;
+! #else
+! #define N 624
+! #endif
+  	unsigned long mt[N]; /* the array for the state vector  */
+  	int mti;
+  
+diff -cNr ./mingw_kawari.mak ../i18n_hack/mingw_kawari.mak
+*** ./mingw_kawari.mak	Sun Aug 26 09:13:42 2001
+--- ../i18n_hack/mingw_kawari.mak	Fri Jan 11 21:53:18 2002
+***************
+*** 11,17 ****
+  
+  CRYPTOBJ = $(CRYPTSRC:.cpp=.o)
+  
+! CFLAGS = -O2 -I. -DUSEKDB
+  LIBS   = 
+  
+  UPX = upx
+--- 11,17 ----
+  
+  CRYPTOBJ = $(CRYPTSRC:.cpp=.o)
+  
+! CFLAGS = -O2 -I. -DUSEKDB -DI18N_HACK
+  LIBS   = 
+  
+  UPX = upx
+diff -cNr ./vc_kawari/kawari.dsp ../i18n_hack/vc_kawari/kawari.dsp
+*** ./vc_kawari/kawari.dsp	Sun Aug 12 09:45:54 2001
+--- ../i18n_hack/vc_kawari/kawari.dsp	Fri Jan 11 21:04:52 2002
+***************
+*** 1,24 ****
+  # Microsoft Developer Studio Project File - Name="kawari" - Package Owner=<4>
+  # Microsoft Developer Studio Generated Build File, Format Version 6.00
+! # ** 編集しないでください **
+  
+  # TARGTYPE "Win32 (x86) Dynamic-Link Library" 0x0102
+  
+  CFG=kawari - Win32 Debug
+! !MESSAGE これは有効なﾒｲｸﾌｧｲﾙではありません。 このﾌﾟﾛｼﾞｪｸﾄをﾋﾞﾙﾄﾞするためには NMAKE を使用してください。
+! !MESSAGE [ﾒｲｸﾌｧｲﾙのｴｸｽﾎﾟｰﾄ] ｺﾏﾝﾄﾞを使用して実行してください
+  !MESSAGE 
+  !MESSAGE NMAKE /f "kawari.mak".
+  !MESSAGE 
+! !MESSAGE NMAKE の実行時に構成を指定できます
+! !MESSAGE ｺﾏﾝﾄﾞ ﾗｲﾝ上でﾏｸﾛの設定を定義します。例:
+  !MESSAGE 
+  !MESSAGE NMAKE /f "kawari.mak" CFG="kawari - Win32 Debug"
+  !MESSAGE 
+! !MESSAGE 選択可能なﾋﾞﾙﾄﾞ ﾓｰﾄﾞ:
+  !MESSAGE 
+! !MESSAGE "kawari - Win32 Release" ("Win32 (x86) Dynamic-Link Library" 用)
+! !MESSAGE "kawari - Win32 Debug" ("Win32 (x86) Dynamic-Link Library" 用)
+  !MESSAGE 
+  
+  # Begin Project
+--- 1,24 ----
+  # Microsoft Developer Studio Project File - Name="kawari" - Package Owner=<4>
+  # Microsoft Developer Studio Generated Build File, Format Version 6.00
+! # ** DO NOT EDIT **
+  
+  # TARGTYPE "Win32 (x86) Dynamic-Link Library" 0x0102
+  
+  CFG=kawari - Win32 Debug
+! !MESSAGE This is not a valid makefile. To build this project using NMAKE,
+! !MESSAGE use the Export Makefile command and run
+  !MESSAGE 
+  !MESSAGE NMAKE /f "kawari.mak".
+  !MESSAGE 
+! !MESSAGE You can specify a configuration when running NMAKE
+! !MESSAGE by defining the macro CFG on the command line. For example:
+  !MESSAGE 
+  !MESSAGE NMAKE /f "kawari.mak" CFG="kawari - Win32 Debug"
+  !MESSAGE 
+! !MESSAGE Possible choices for configuration are:
+  !MESSAGE 
+! !MESSAGE "kawari - Win32 Release" (based on "Win32 (x86) Dynamic-Link Library")
+! !MESSAGE "kawari - Win32 Debug" (based on "Win32 (x86) Dynamic-Link Library")
+  !MESSAGE 
+  
+  # Begin Project
+***************
+*** 43,49 ****
+  # PROP Ignore_Export_Lib 0
+  # PROP Target_Dir ""
+  # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "KAWARI_EXPORTS" /YX /FD /c
+! # ADD CPP /nologo /MT /W3 /GR /GX /O2 /I "../" /I "../libkawari/" /I "../kis/" /I "../shiori/" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "KAWARI_EXPORTS" /YX /FD /c
+  # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
+  # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
+  # ADD BASE RSC /l 0x411 /d "NDEBUG"
+--- 43,49 ----
+  # PROP Ignore_Export_Lib 0
+  # PROP Target_Dir ""
+  # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "KAWARI_EXPORTS" /YX /FD /c
+! # ADD CPP /nologo /MT /W3 /GR /GX /O2 /I "../" /I "../libkawari/" /I "../kis/" /I "../shiori/" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" /D "KAWARI_EXPORTS" /D "WIN32" /D "_MBCS" /D "I18N_HACK" /YX /FD /c
+  # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
+  # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
+  # ADD BASE RSC /l 0x411 /d "NDEBUG"
+***************
+*** 68,74 ****
+  # PROP Intermediate_Dir "kawari___Win32_Debug"
+  # PROP Target_Dir ""
+  # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "KAWARI_EXPORTS" /YX /FD /GZ /c
+! # ADD CPP /nologo /MTd /W3 /Gm /GR /GX /ZI /Od /I "../" /D "_WINDOWS" /D "_USRDLL" /D "KAWARI_EXPORTS" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "USEKDB" /YX /FD /GZ /c
+  # SUBTRACT CPP /u
+  # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
+  # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
+--- 68,74 ----
+  # PROP Intermediate_Dir "kawari___Win32_Debug"
+  # PROP Target_Dir ""
+  # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "KAWARI_EXPORTS" /YX /FD /GZ /c
+! # ADD CPP /nologo /MTd /W3 /Gm /GR /GX /ZI /Od /I "../" /D "_WINDOWS" /D "_USRDLL" /D "KAWARI_EXPORTS" /D "_DEBUG" /D "USEKDB" /D "WIN32" /D "_MBCS" /D "I18N_HACK" /YX /FD /GZ /c
+  # SUBTRACT CPP /u
+  # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
+  # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
+diff -cNr ./vc_kawari/kosui.dsp ../i18n_hack/vc_kawari/kosui.dsp
+*** ./vc_kawari/kosui.dsp	Sun Aug 12 09:45:54 2001
+--- ../i18n_hack/vc_kawari/kosui.dsp	Fri Jan 11 21:04:52 2002
+***************
+*** 1,24 ****
+  # Microsoft Developer Studio Project File - Name="kosui" - Package Owner=<4>
+  # Microsoft Developer Studio Generated Build File, Format Version 6.00
+! # ** 編集しないでください **
+  
+  # TARGTYPE "Win32 (x86) Console Application" 0x0103
+  
+  CFG=kosui - Win32 Debug
+! !MESSAGE これは有効なﾒｲｸﾌｧｲﾙではありません。 このﾌﾟﾛｼﾞｪｸﾄをﾋﾞﾙﾄﾞするためには NMAKE を使用してください。
+! !MESSAGE [ﾒｲｸﾌｧｲﾙのｴｸｽﾎﾟｰﾄ] ｺﾏﾝﾄﾞを使用して実行してください
+  !MESSAGE 
+  !MESSAGE NMAKE /f "kosui.mak".
+  !MESSAGE 
+! !MESSAGE NMAKE の実行時に構成を指定できます
+! !MESSAGE ｺﾏﾝﾄﾞ ﾗｲﾝ上でﾏｸﾛの設定を定義します。例:
+  !MESSAGE 
+  !MESSAGE NMAKE /f "kosui.mak" CFG="kosui - Win32 Debug"
+  !MESSAGE 
+! !MESSAGE 選択可能なﾋﾞﾙﾄﾞ ﾓｰﾄﾞ:
+  !MESSAGE 
+! !MESSAGE "kosui - Win32 Release" ("Win32 (x86) Console Application" 用)
+! !MESSAGE "kosui - Win32 Debug" ("Win32 (x86) Console Application" 用)
+  !MESSAGE 
+  
+  # Begin Project
+--- 1,24 ----
+  # Microsoft Developer Studio Project File - Name="kosui" - Package Owner=<4>
+  # Microsoft Developer Studio Generated Build File, Format Version 6.00
+! # ** DO NOT EDIT **
+  
+  # TARGTYPE "Win32 (x86) Console Application" 0x0103
+  
+  CFG=kosui - Win32 Debug
+! !MESSAGE This is not a valid makefile. To build this project using NMAKE,
+! !MESSAGE use the Export Makefile command and run
+  !MESSAGE 
+  !MESSAGE NMAKE /f "kosui.mak".
+  !MESSAGE 
+! !MESSAGE You can specify a configuration when running NMAKE
+! !MESSAGE by defining the macro CFG on the command line. For example:
+  !MESSAGE 
+  !MESSAGE NMAKE /f "kosui.mak" CFG="kosui - Win32 Debug"
+  !MESSAGE 
+! !MESSAGE Possible choices for configuration are:
+  !MESSAGE 
+! !MESSAGE "kosui - Win32 Release" (based on "Win32 (x86) Console Application")
+! !MESSAGE "kosui - Win32 Debug" (based on "Win32 (x86) Console Application")
+  !MESSAGE 
+  
+  # Begin Project
+***************
+*** 42,48 ****
+  # PROP Ignore_Export_Lib 0
+  # PROP Target_Dir ""
+  # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
+! # ADD CPP /nologo /W3 /GR /GX /O2 /I "../" /I "../libkawari/" /I "../kis/" /I "../shiori/" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
+  # ADD BASE RSC /l 0x411 /d "NDEBUG"
+  # ADD RSC /l 0x411 /d "NDEBUG"
+  BSC32=bscmake.exe
+--- 42,48 ----
+  # PROP Ignore_Export_Lib 0
+  # PROP Target_Dir ""
+  # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
+! # ADD CPP /nologo /MT /W3 /GR /GX /O2 /I "../" /I "../libkawari/" /I "../kis/" /I "../shiori/" /D "NDEBUG" /D "_CONSOLE" /D "WIN32" /D "_MBCS" /D "I18N_HACK" /YX /FD /c
+  # ADD BASE RSC /l 0x411 /d "NDEBUG"
+  # ADD RSC /l 0x411 /d "NDEBUG"
+  BSC32=bscmake.exe
+***************
+*** 66,73 ****
+  # PROP Ignore_Export_Lib 0
+  # PROP Target_Dir ""
+  # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
+! # ADD CPP /nologo /W3 /Gm /GR /GX /ZI /Od /I "../" /D "_CONSOLE" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "USEKDB" /YX /FD /GZ /c
+! # SUBTRACT CPP /u
+  # ADD BASE RSC /l 0x411 /d "_DEBUG"
+  # ADD RSC /l 0x411 /d "_DEBUG"
+  BSC32=bscmake.exe
+--- 66,72 ----
+  # PROP Ignore_Export_Lib 0
+  # PROP Target_Dir ""
+  # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
+! # ADD CPP /nologo /MTd /W3 /Gm /GR /GX /ZI /Od /I "../" /D "_CONSOLE" /D "_DEBUG" /D "USEKDB" /D "WIN32" /D "_MBCS" /D "I18N_HACK" /YX /FD /GZ /c
+  # ADD BASE RSC /l 0x411 /d "_DEBUG"
+  # ADD RSC /l 0x411 /d "_DEBUG"
+  BSC32=bscmake.exe
+diff -cNr ./vc_kawari/libkawari.dsp ../i18n_hack/vc_kawari/libkawari.dsp
+*** ./vc_kawari/libkawari.dsp	Sun Dec 23 20:43:08 2001
+--- ../i18n_hack/vc_kawari/libkawari.dsp	Fri Jan 11 21:04:52 2002
+***************
+*** 1,24 ****
+  # Microsoft Developer Studio Project File - Name="libkawari" - Package Owner=<4>
+  # Microsoft Developer Studio Generated Build File, Format Version 6.00
+! # ** 編集しないでください **
+  
+  # TARGTYPE "Win32 (x86) Static Library" 0x0104
+  
+  CFG=libkawari - Win32 Debug
+! !MESSAGE これは有効なﾒｲｸﾌｧｲﾙではありません。 このﾌﾟﾛｼﾞｪｸﾄをﾋﾞﾙﾄﾞするためには NMAKE を使用してください。
+! !MESSAGE [ﾒｲｸﾌｧｲﾙのｴｸｽﾎﾟｰﾄ] ｺﾏﾝﾄﾞを使用して実行してください
+  !MESSAGE 
+  !MESSAGE NMAKE /f "libkawari.mak".
+  !MESSAGE 
+! !MESSAGE NMAKE の実行時に構成を指定できます
+! !MESSAGE ｺﾏﾝﾄﾞ ﾗｲﾝ上でﾏｸﾛの設定を定義します。例:
+  !MESSAGE 
+  !MESSAGE NMAKE /f "libkawari.mak" CFG="libkawari - Win32 Debug"
+  !MESSAGE 
+! !MESSAGE 選択可能なﾋﾞﾙﾄﾞ ﾓｰﾄﾞ:
+  !MESSAGE 
+! !MESSAGE "libkawari - Win32 Release" ("Win32 (x86) Static Library" 用)
+! !MESSAGE "libkawari - Win32 Debug" ("Win32 (x86) Static Library" 用)
+  !MESSAGE 
+  
+  # Begin Project
+--- 1,24 ----
+  # Microsoft Developer Studio Project File - Name="libkawari" - Package Owner=<4>
+  # Microsoft Developer Studio Generated Build File, Format Version 6.00
+! # ** DO NOT EDIT **
+  
+  # TARGTYPE "Win32 (x86) Static Library" 0x0104
+  
+  CFG=libkawari - Win32 Debug
+! !MESSAGE This is not a valid makefile. To build this project using NMAKE,
+! !MESSAGE use the Export Makefile command and run
+  !MESSAGE 
+  !MESSAGE NMAKE /f "libkawari.mak".
+  !MESSAGE 
+! !MESSAGE You can specify a configuration when running NMAKE
+! !MESSAGE by defining the macro CFG on the command line. For example:
+  !MESSAGE 
+  !MESSAGE NMAKE /f "libkawari.mak" CFG="libkawari - Win32 Debug"
+  !MESSAGE 
+! !MESSAGE Possible choices for configuration are:
+  !MESSAGE 
+! !MESSAGE "libkawari - Win32 Release" (based on "Win32 (x86) Static Library")
+! !MESSAGE "libkawari - Win32 Debug" (based on "Win32 (x86) Static Library")
+  !MESSAGE 
+  
+  # Begin Project
+***************
+*** 41,47 ****
+  # PROP Intermediate_Dir "Release"
+  # PROP Target_Dir ""
+  # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
+! # ADD CPP /nologo /W3 /GR /GX /O2 /I "../" /I "../libkawari/" /I "../kis/" /I "../shiori/" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
+  # ADD BASE RSC /l 0x411 /d "NDEBUG"
+  # ADD RSC /l 0x411 /d "NDEBUG"
+  BSC32=bscmake.exe
+--- 41,47 ----
+  # PROP Intermediate_Dir "Release"
+  # PROP Target_Dir ""
+  # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
+! # ADD CPP /nologo /MT /W3 /GR /GX /O2 /I "../" /I "../libkawari/" /I "../kis/" /I "../shiori/" /D "NDEBUG" /D "_LIB" /D "WIN32" /D "_MBCS" /D "I18N_HACK" /YX /FD /c
+  # ADD BASE RSC /l 0x411 /d "NDEBUG"
+  # ADD RSC /l 0x411 /d "NDEBUG"
+  BSC32=bscmake.exe
+***************
+*** 64,71 ****
+  # PROP Intermediate_Dir "Debug"
+  # PROP Target_Dir ""
+  # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
+! # ADD CPP /nologo /W3 /Gm /GR /GX /ZI /Od /I "../" /D "_LIB" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "USEKDB" /YX /FD /GZ /c
+! # SUBTRACT CPP /u
+  # ADD BASE RSC /l 0x411 /d "_DEBUG"
+  # ADD RSC /l 0x411 /d "_DEBUG"
+  BSC32=bscmake.exe
+--- 64,70 ----
+  # PROP Intermediate_Dir "Debug"
+  # PROP Target_Dir ""
+  # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
+! # ADD CPP /nologo /MTd /W3 /Gm /GR /GX /ZI /Od /I "../" /D "_LIB" /D "_DEBUG" /D "USEKDB" /D "WIN32" /D "_MBCS" /D "I18N_HACK" /YX /FD /GZ /c
+  # ADD BASE RSC /l 0x411 /d "_DEBUG"
+  # ADD RSC /l 0x411 /d "_DEBUG"
+  BSC32=bscmake.exe
+***************
+*** 83,88 ****
+--- 82,95 ----
+  # Name "libkawari - Win32 Debug"
+  # Begin Source File
+  
++ SOURCE=..\kis\_dirent.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\_dirent.h
++ # End Source File
++ # Begin Source File
++ 
+  SOURCE=..\libkawari\base64.cpp
+  # End Source File
+  # Begin Source File
+***************
+*** 135,140 ****
+--- 142,155 ----
+  # End Source File
+  # Begin Source File
+  
++ SOURCE=..\libkawari\kawari_i18n.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_i18n.h
++ # End Source File
++ # Begin Source File
++ 
+  SOURCE=..\libkawari\kawari_iscript.cpp
+  # End Source File
+  # Begin Source File
+***************
+*** 251,285 ****
+  # End Source File
+  # Begin Source File
+  
+! SOURCE=..\kis\kis_test.cpp
+! # End Source File
+! # Begin Source File
+! 
+! SOURCE=..\kis\kis_test.h
+! # End Source File
+! # Begin Source File
+! 
+! SOURCE=..\kis\kis_urllist.cpp
+  # End Source File
+  # Begin Source File
+  
+! SOURCE=..\kis\kis_urllist.h
+  # End Source File
+  # Begin Source File
+  
+! SOURCE=..\kis\kis_substitute.cpp
+  # End Source File
+  # Begin Source File
+  
+! SOURCE=..\kis\kis_substitute.h
+  # End Source File
+  # Begin Source File
+  
+! SOURCE=..\kis\_dirent.cpp
+  # End Source File
+  # Begin Source File
+  
+! SOURCE=..\kis\_dirent.h
+  # End Source File
+  # Begin Source File
+  
+--- 266,292 ----
+  # End Source File
+  # Begin Source File
+  
+! SOURCE=..\kis\kis_substitute.cpp
+  # End Source File
+  # Begin Source File
+  
+! SOURCE=..\kis\kis_substitute.h
+  # End Source File
+  # Begin Source File
+  
+! SOURCE=..\kis\kis_test.cpp
+  # End Source File
+  # Begin Source File
+  
+! SOURCE=..\kis\kis_test.h
+  # End Source File
+  # Begin Source File
+  
+! SOURCE=..\kis\kis_urllist.cpp
+  # End Source File
+  # Begin Source File
+  
+! SOURCE=..\kis\kis_urllist.h
+  # End Source File
+  # Begin Source File
+  

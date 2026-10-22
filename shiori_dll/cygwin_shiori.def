@@ -1,0 +1,7 @@
+; dlltool --output-def=./shiori_dll/cygwin_shiori.def shiori_dll/shiori.o shiori/shiori_interface.o libkawari/kawari.o libkawari/kawari_engine.o libkawari/kawari_dict.o libkawari/kawari_code.o libkawari/kawari_iscript.o libkawari/kawari_lexer.o libkawari/kawari_matchdict.o libkawari/kawari_matchcode.o libkawari/sequence_gen.o libkawari/misc.o libkawari/mt19937.o kis/kis_echo.o kis/kis_dict.o kis/kis_test.o kis/kis_date.o kis/kis_counter.o kis/kis_cpiro.o kis/kis_expr.o kis/kis_file.o kis/kis_escape.o kis/kis_help.o kis/kis_urllist.o libkawari/kawari_crypt.o libkawari/base64.o
+EXPORTS
+	getmoduleversion @ 1 ; 
+;	getversion @ 2 ; 
+	load @ 2 ; 
+	request @ 3 ; 
+	unload @ 4 ; 

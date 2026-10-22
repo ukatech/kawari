@@ -1,0 +1,55 @@
+楽しいビルドの行い方。
+
+
+・Borland C++ Compiler 5.5.1
+
+    make -f bcc_kawari.mak
+
+  主力開発環境。
+
+
+・VisualC++ 6.0
+
+    vc_kawari/kawari.dswを開く
+
+  困ったちゃん。VCのみMakefileでは無いので、KISの追加等を忘れがち。
+
+
+・GCC 2.95/3.0
+
+    (Cygwin)
+    make -r -f cygwin_kawari.mak depend
+    make -r -f cygwin_kawari.mak
+
+    (Mingw(未チェック))
+    make -r -f mingw_kawari.mak depend
+    make -r -f mingw_kawari.mak
+
+    (djgpp)
+    make -r -f djgpp_kawari.mak depend
+    make -r -f djgpp_kawari.mak
+
+    (Linux)
+    make -r -f linux_kawari.mak depend
+    make -r -f linux_kawari.mak
+
+    (BCC)
+    make -r -f bccxx_kawari.mak depend
+    make -r -f bccxx_kawari.mak
+
+  要Ruby1.6以上。
+  makedepend.rbで完全な依存関係を記述したdepend.makを生成し、sjis2ascii.rbで
+  ソースコード中の2バイト文字を1バイト文字定数に変換している。
+  変換後のソースコードは*.cxx/*.hxxで、中間ファイルなので削除してよい。
+  bccxx_kawari.makは上記の変換機構のテスト用で、BCCを使用している。
+
+  djgppはDLLが生成できません。
+  mingwは開発環境を構築していないのでテストしていません。
+
+
+・その他
+
+  ソースファイルが増えたときはfiles.makを書き換える。
+  GNU Makeでclを使うような奇特な人は自力でどうにかしてください。
+
+

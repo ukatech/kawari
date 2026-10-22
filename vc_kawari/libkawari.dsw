@@ -1,0 +1,59 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# 警告: このワークスペース ファイル を編集または削除しないでください!
+
+###############################################################################
+
+Project: "kawari"=.\kawari.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libkawari
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "kosui"=.\kosui.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libkawari
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "libkawari"=.\libkawari.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

@@ -1,0 +1,7 @@
+EXPORTS
+    load
+    unload
+    request
+
+;    getversion
+    getmoduleversion

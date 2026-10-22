@@ -1,0 +1,9 @@
+LIBRARY     SHIORI.DLL
+
+EXPORTS
+    load                      = _load
+    unload                    = _unload
+    request                   = _request
+
+;    getversion                = _getversion
+    getmoduleversion          = _getmoduleversion

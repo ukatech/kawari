@@ -1,0 +1,1760 @@
+diff -cNr kawari-800b10/src/files.mak kawari-800b10I18N/src/files.mak
+*** kawari-800b10/src/files.mak	Sun May 19 17:38:30 2002
+--- kawari-800b10I18N/src/files.mak	Tue May 28 04:22:36 2002
+***************
+*** 34,40 ****
+             ./libkawari/kawari_log.cpp \
+             ./misc/misc.cpp \
+             ./misc/mt19937ar.cpp \
+!            ./misc/l10n.cpp \
+             ./misc/phttp.cpp \
+             ./saori/saori.cpp \
+             $(KISSRC) \
+--- 34,40 ----
+             ./libkawari/kawari_log.cpp \
+             ./misc/misc.cpp \
+             ./misc/mt19937ar.cpp \
+!            ./misc/i18n_l10n.cpp \
+             ./misc/phttp.cpp \
+             ./saori/saori.cpp \
+             $(KISSRC) \
+diff -cNr kawari-800b10/src/kis/kis_communicate.cpp kawari-800b10I18N/src/kis/kis_communicate.cpp
+*** kawari-800b10/src/kis/kis_communicate.cpp	Sun May 19 20:20:30 2002
+--- kawari-800b10I18N/src/kis/kis_communicate.cpp	Tue May 28 00:56:22 2002
+***************
+*** 13,19 ****
+  #include "kis/kis_communicate.h"
+  //---------------------------------------------------------------------------
+  #include "libkawari/kawari_engine.h"
+! #include "misc/l10n.h"
+  #include "misc/misc.h"
+  using namespace kawari_log;
+  //---------------------------------------------------------------------------
+--- 13,19 ----
+  #include "kis/kis_communicate.h"
+  //---------------------------------------------------------------------------
+  #include "libkawari/kawari_engine.h"
+! #include "misc/i18n_l10n.h"
+  #include "misc/misc.h"
+  using namespace kawari_log;
+  //---------------------------------------------------------------------------
+diff -cNr kawari-800b10/src/kis/kis_escape.cpp kawari-800b10I18N/src/kis/kis_escape.cpp
+*** kawari-800b10/src/kis/kis_escape.cpp	Fri Apr 26 22:01:52 2002
+--- kawari-800b10I18N/src/kis/kis_escape.cpp	Tue May 28 02:40:16 2002
+***************
+*** 6,18 ****
+  //      Programed by NAKAUE.T (Meister)
+  //
+  //  2001.07.14  Phase 6.1     First version
+  //
+  //---------------------------------------------------------------------------
+  #include "config.h"
+  //---------------------------------------------------------------------------
+  #include "kis/kis_escape.h"
+  //---------------------------------------------------------------------------
+! #include "misc/l10n.h"
+  //---------------------------------------------------------------------------
+  string KIS_escape::Function(const vector<string>& args)
+  {
+--- 6,19 ----
+  //      Programed by NAKAUE.T (Meister)
+  //
+  //  2001.07.14  Phase 6.1     First version
++ //	2002.05.27	Phase 8.0.0b10	Internationalize (I18Nhack)
+  //
+  //---------------------------------------------------------------------------
+  #include "config.h"
+  //---------------------------------------------------------------------------
+  #include "kis/kis_escape.h"
+  //---------------------------------------------------------------------------
+! #include "misc/i18n_l10n.h"
+  //---------------------------------------------------------------------------
+  string KIS_escape::Function(const vector<string>& args)
+  {
+***************
+*** 23,31 ****
+  		if(i>1) retstr+=string(" ");
+  
+  		for(unsigned int j=0;j<args[i].size();j++) {
+! 			if(iskanji1st(args[i][j])) {
+! 				retstr+=args[i][j++];
+! 				retstr+=args[i][j];
+  			} else {
+  				if((args[i][j]=='\\')||(args[i][j]=='%')) retstr+='\\';
+  				retstr+=args[i][j];
+--- 24,31 ----
+  		if(i>1) retstr+=string(" ");
+  
+  		for(unsigned int j=0;j<args[i].size();j++) {
+! 			if(lang.moreBytes(args[i][j])) {
+! 				lang.CopyOneChar(args[i],retstr,j);
+  			} else {
+  				if((args[i][j]=='\\')||(args[i][j]=='%')) retstr+='\\';
+  				retstr+=args[i][j];
+diff -cNr kawari-800b10/src/kis/kis_split.cpp kawari-800b10I18N/src/kis/kis_split.cpp
+*** kawari-800b10/src/kis/kis_split.cpp	Sun May 19 20:19:46 2002
+--- kawari-800b10I18N/src/kis/kis_split.cpp	Tue May 28 00:58:12 2002
+***************
+*** 20,26 ****
+  using namespace std;
+  //---------------------------------------------------------------------------
+  #include "libkawari/kawari_engine.h"
+! #include "misc/l10n.h"
+  //---------------------------------------------------------------------------
+  class tokenizer {
+  private:
+--- 20,26 ----
+  using namespace std;
+  //---------------------------------------------------------------------------
+  #include "libkawari/kawari_engine.h"
+! #include "misc/i18n_l10n.h"
+  //---------------------------------------------------------------------------
+  class tokenizer {
+  private:
+diff -cNr kawari-800b10/src/kis/kis_string.cpp kawari-800b10I18N/src/kis/kis_string.cpp
+*** kawari-800b10/src/kis/kis_string.cpp	Mon May 20 08:03:20 2002
+--- kawari-800b10I18N/src/kis/kis_string.cpp	Tue May 28 00:58:44 2002
+***************
+*** 18,24 ****
+  #include "kis/kis_string.h"
+  #include "libkawari/kawari_engine.h"
+  #include "misc/misc.h"
+! #include "misc/l10n.h"
+  //---------------------------------------------------------------------------
+  using namespace std;
+  //---------------------------------------------------------------------------
+--- 18,24 ----
+  #include "kis/kis_string.h"
+  #include "libkawari/kawari_engine.h"
+  #include "misc/misc.h"
+! #include "misc/i18n_l10n.h"
+  //---------------------------------------------------------------------------
+  using namespace std;
+  //---------------------------------------------------------------------------
+diff -cNr kawari-800b10/src/kis/kis_substitute.cpp kawari-800b10I18N/src/kis/kis_substitute.cpp
+*** kawari-800b10/src/kis/kis_substitute.cpp	Fri Apr 26 22:09:22 2002
+--- kawari-800b10I18N/src/kis/kis_substitute.cpp	Tue May 28 02:39:48 2002
+***************
+*** 6,17 ****
+  //      Programed by Chikara.H (MDR)
+  //
+  //  2001.09.04  created(9割はkis_escape.cppから拝借）
+  //
+  //---------------------------------------------------------------------------
+  #include "config.h"
+  //---------------------------------------------------------------------------
+  #include "kis/kis_substitute.h"
+! #include "misc/l10n.h"
+  //---------------------------------------------------------------------------
+  #include <ctype.h>
+  #include <cstdlib>
+--- 6,18 ----
+  //      Programed by Chikara.H (MDR)
+  //
+  //  2001.09.04  created(9割はkis_escape.cppから拝借）
++ //	2002.05.27	Phase 8.0.0b10	Internationalize (I18Nhack)
+  //
+  //---------------------------------------------------------------------------
+  #include "config.h"
+  //---------------------------------------------------------------------------
+  #include "kis/kis_substitute.h"
+! #include "misc/i18n_l10n.h"
+  //---------------------------------------------------------------------------
+  #include <ctype.h>
+  #include <cstdlib>
+***************
+*** 26,34 ****
+  		if(i>1) retstr+=string(" ");
+  
+  		for(unsigned int j=0;j<args[i].size();j++) {
+! 			if(iskanji1st(args[i][j])) {
+! 				retstr+=args[i][j++];
+! 				retstr+=args[i][j];
+  			} else {
+  				if( 'a' <= args[i][j] && args[i][j] <= 'z') {
+  					retstr+= toupper(args[i][j]);
+--- 27,34 ----
+  		if(i>1) retstr+=string(" ");
+  
+  		for(unsigned int j=0;j<args[i].size();j++) {
+! 			if(lang.moreBytes(args[i][j])) {
+! 				lang.CopyOneChar(args[i],retstr,j);
+  			} else {
+  				if( 'a' <= args[i][j] && args[i][j] <= 'z') {
+  					retstr+= toupper(args[i][j]);
+***************
+*** 52,60 ****
+  		if(i>1) retstr+=string(" ");
+  
+  		for(unsigned int j=0;j<args[i].size();j++) {
+! 			if(iskanji1st(args[i][j])) {
+! 				retstr+=args[i][j++];
+! 				retstr+=args[i][j];
+  			} else {
+  				if( args[i][j] >= 'A'  && args[i][j] <= 'Z') {
+  					retstr+= tolower(args[i][j]);
+--- 52,59 ----
+  		if(i>1) retstr+=string(" ");
+  
+  		for(unsigned int j=0;j<args[i].size();j++) {
+! 			if(lang.moreBytes(args[i][j])) {
+! 				lang.CopyOneChar(args[i],retstr,j);
+  			} else {
+  				if( args[i][j] >= 'A'  && args[i][j] <= 'Z') {
+  					retstr+= tolower(args[i][j]);
+diff -cNr kawari-800b10/src/kis/kis_system.cpp kawari-800b10I18N/src/kis/kis_system.cpp
+*** kawari-800b10/src/kis/kis_system.cpp	Sat May 25 09:43:42 2002
+--- kawari-800b10I18N/src/kis/kis_system.cpp	Tue May 28 02:43:16 2002
+***************
+*** 6,11 ****
+--- 6,12 ----
+  //      Programed by Suikyo.
+  //
+  //  2002.04.20  Phase 8.0.0   従来kawari.iniにあったコマンドの一部
++ //	2002.05.27	Phase 8.0.0b10	KIS_locale added (I18Nhack)
+  //
+  //---------------------------------------------------------------------------
+  #include "config.h"
+***************
+*** 14,19 ****
+--- 15,21 ----
+  #include "libkawari/kawari_engine.h"
+  #include "libkawari/kawari_log.h"
+  #include "misc/misc.h"
++ #include "misc/i18n_l10n.h"
+  using namespace kawari_log;
+  //---------------------------------------------------------------------------
+  #include <fstream>
+***************
+*** 135,137 ****
+--- 137,156 ----
+  	return ("");
+  }
+  //---------------------------------------------------------------------------
++ string KIS_locale::Function(const vector<string>& args){
++ 	if(!AssertArgument(args, 2, 2)) return ("");
++ 	if (initialized){
++ 		Logger.GetStream(LOG_ERROR) << "Locale is already fixed." << endl;
++ 		return ("");
++ 	}
++ 
++ 	string Locale=lang.setLocale(args[1]);
++ 	Engine->PushAfterClear("System.Locale", Locale);
++ 	Engine->WriteProtect("System.Locale");
++ 	initialized=true;
++ 	if (Logger.Check(LOG_INFO)){
++ 		Logger.GetStream() << "Locale: " << Locale << endl;
++ 	}
++ 	return ("");
++ }
++ //---------------------------------------------------------------------------
+\ No newline at end of file
+diff -cNr kawari-800b10/src/kis/kis_system.h kawari-800b10I18N/src/kis/kis_system.h
+*** kawari-800b10/src/kis/kis_system.h	Wed May 22 03:16:28 2002
+--- kawari-800b10I18N/src/kis/kis_system.h	Tue May 28 02:42:34 2002
+***************
+*** 6,11 ****
+--- 6,12 ----
+  //      Programed by Suikyo.
+  //
+  //  2002.04.20  Phase 8.0.0   従来kawari.iniにあったコマンドの一部
++ //	2002.05.27	Phase 8.0.0b10	KIS_locale added (I18Nhack)
+  //
+  //---------------------------------------------------------------------------
+  // 関数テーブルへの登録
+***************
+*** 14,19 ****
+--- 15,21 ----
+  INLINE_SCRIPT_REGIST(KIS_logfile);
+  INLINE_SCRIPT_REGIST(KIS_loglevel);
+  INLINE_SCRIPT_REGIST(KIS_debugger);
++ INLINE_SCRIPT_REGIST(KIS_locale);
+  #else
+  //---------------------------------------------------------------------------
+  #ifndef KIS_SYSTEM_H
+***************
+*** 105,110 ****
+--- 107,134 ----
+  
+  	// インタープリタ
+  	virtual string Function(const vector<string>& args);
++ };
++ //---------------------------------------------------------------------------
++ class KIS_locale : public TKisFunction_base {
++ private:
++ 	bool initialized;
++ public:
++ 
++ 	// Initで名前その他の情報を設定してください
++ 	virtual bool Init(void)
++ 	{
++ 		Name_="locale";
++ 		Format_="locale localename";
++ 		Returnval_="(NULL)";
++ 		Information_="Set locale. This function works only once.";
++ 
++ 		return(true);
++ 	}
++ 
++ 	// インタープリタ
++ 	virtual string Function(const vector<string>& args);
++ 
++ 	KIS_locale(void): initialized(false) {}
+  };
+  //---------------------------------------------------------------------------
+  #endif // KIS_SYSTEM_H
+diff -cNr kawari-800b10/src/libkawari/kawari_code.cpp kawari-800b10I18N/src/libkawari/kawari_code.cpp
+*** kawari-800b10/src/libkawari/kawari_code.cpp	Mon May 27 09:30:12 2002
+--- kawari-800b10I18N/src/libkawari/kawari_code.cpp	Tue May 28 00:59:22 2002
+***************
+*** 22,28 ****
+  #include "libkawari/kawari_code.h"
+  #include "libkawari/kawari_vm.h"
+  #include "libkawari/kawari_engine.h"
+! #include "misc/l10n.h"
+  #include "misc/misc.h"
+  //---------------------------------------------------------------------------
+  #include <cctype>
+--- 22,28 ----
+  #include "libkawari/kawari_code.h"
+  #include "libkawari/kawari_vm.h"
+  #include "libkawari/kawari_engine.h"
+! #include "misc/i18n_l10n.h"
+  #include "misc/misc.h"
+  //---------------------------------------------------------------------------
+  #include <cctype>
+diff -cNr kawari-800b10/src/libkawari/kawari_codeexpr.cpp kawari-800b10I18N/src/libkawari/kawari_codeexpr.cpp
+*** kawari-800b10/src/libkawari/kawari_codeexpr.cpp	Mon May 20 07:11:08 2002
+--- kawari-800b10I18N/src/libkawari/kawari_codeexpr.cpp	Tue May 28 18:49:02 2002
+***************
+*** 4,10 ****
+  #include "libkawari/kawari_engine.h"
+  #include "libkawari/kawari_vm.h"
+  #include "libkawari/kawari_log.h"
+! #include "misc/l10n.h"
+  #include "misc/misc.h"
+  
+  #include <cctype>
+--- 4,10 ----
+  #include "libkawari/kawari_engine.h"
+  #include "libkawari/kawari_vm.h"
+  #include "libkawari/kawari_log.h"
+! #include "misc/i18n_l10n.h"
+  #include "misc/misc.h"
+  
+  #include <cctype>
+diff -cNr kawari-800b10/src/libkawari/kawari_lexer.cpp kawari-800b10I18N/src/libkawari/kawari_lexer.cpp
+*** kawari-800b10/src/libkawari/kawari_lexer.cpp	Mon May 27 03:06:04 2002
+--- kawari-800b10I18N/src/libkawari/kawari_lexer.cpp	Tue May 28 06:13:46 2002
+***************
+*** 6,18 ****
+  //      Programed by Suikyo
+  //
+  //  2002.04.18  Phase 8.0.0   書き直し
+  //
+  //---------------------------------------------------------------------------
+  #include "config.h"
+  //---------------------------------------------------------------------------
+  #include "libkawari/kawari_lexer.h"
+  #include "misc/misc.h"
+! #include "misc/l10n.h"
+  #include "libkawari/kawari_crypt.h"
+  #include "libkawari/kawari_log.h"
+  //---------------------------------------------------------------------------
+--- 6,19 ----
+  //      Programed by Suikyo
+  //
+  //  2002.04.18  Phase 8.0.0   書き直し
++ //	2002.05.27	Phase 8.0.0b10	Internationalize (I18Nhack)
+  //
+  //---------------------------------------------------------------------------
+  #include "config.h"
+  //---------------------------------------------------------------------------
+  #include "libkawari/kawari_lexer.h"
+  #include "misc/misc.h"
+! #include "misc/i18n_l10n.h"
+  #include "libkawari/kawari_crypt.h"
+  #include "libkawari/kawari_log.h"
+  //---------------------------------------------------------------------------
+***************
+*** 133,144 ****
+  	string ret;
+  	ret.reserve(20);	// こんくらいですか
+  	while(pp->getch(ch)){
+! 		if (iskanji1st(ch)) {
+! 			ret+=ch;
+! 			if (pp->getch(ch))
+! 				ret+=ch;
+! 			else
+! 				break;
+  		}else if (map[ch]){
+  			ret+=ch;
+  		} else {
+--- 134,142 ----
+  	string ret;
+  	ret.reserve(20);	// こんくらいですか
+  	while(pp->getch(ch)){
+! 		if (lang.moreBytes(ch)) {
+! 			lang.CopyOneChar(pp,ret,ch);
+! 			break;
+  		}else if (map[ch]){
+  			ret+=ch;
+  		} else {
+***************
+*** 171,181 ****
+  
+  	bool closed = false;
+  	while(pp->getch(ch)) {
+! 		if(iskanji1st(ch)) {
+! 			// 漢字
+! 			result+=ch;
+! 			if(pp->getch(ch))
+! 				result+=ch;
+  		}else if(ch==quote){
+  			// 終了
+  			result+=ch;
+--- 169,177 ----
+  
+  	bool closed = false;
+  	while(pp->getch(ch)) {
+! 		if (lang.moreBytes(ch)) {
+! 			// Multi-byte char
+! 			lang.CopyOneChar(pp,result,ch);
+  		}else if(ch==quote){
+  			// 終了
+  			result+=ch;
+***************
+*** 224,234 ****
+  				pos++;
+  		}
+  
+! 		if(iskanji1st(orgsen[pos])) {
+! 			// 漢字
+! 			if((pos+1)<orgsen.size()) retstr+=orgsen[pos++];
+! 		}
+! 		retstr+=orgsen[pos++];
+  	}
+  
+  	retstr.resize(retstr.size());
+--- 220,230 ----
+  				pos++;
+  		}
+  
+! 		if(int trail=lang.moreBytes(orgsen[pos])) {
+! 			// Multi-byte char
+! 			lang.CopyOneChar(orgsen, retstr, pos);
+! 		} else
+! 			retstr+=orgsen[pos++];
+  	}
+  
+  	retstr.resize(retstr.size());
+***************
+*** 271,277 ****
+  
+  	if (pp->IsWaitingModeSwitch()){
+  		return Token::T_MODESWITCH;
+! 	}else if ((lex_map[(int)m][ch]|(char)iskanji1st(ch))){
+  		// ベア文字列
+  		return Token::T_LITERAL;
+  	}else if (QUOTE.find(ch)!=string::npos){
+--- 267,273 ----
+  
+  	if (pp->IsWaitingModeSwitch()){
+  		return Token::T_MODESWITCH;
+! 	}else if ( lex_map[(int)m][ch] || lang.moreBytes(ch) ){
+  		// ベア文字列
+  		return Token::T_LITERAL;
+  	}else if (QUOTE.find(ch)!=string::npos){
+***************
+*** 312,318 ****
+  
+  	char ch;
+  	pp->getch(ch);
+! 	if ((lex_map[(int)m][ch]|(char)iskanji1st(ch))){
+  		// ベア文字列
+  		pp->unget();
+  		string str=getLiteral(m);
+--- 308,314 ----
+  
+  	char ch;
+  	pp->getch(ch);
+! 	if ( lex_map[(int)m][ch] || lang.moreBytes(ch) ){
+  		// ベア文字列
+  		pp->unget();
+  		string str=getLiteral(m);
+***************
+*** 462,470 ****
+  
+  	for(unsigned int pos=0;pos<cntsen;pos++) {
+  		char c = entsen[pos];
+! 		if(iskanji1st(c)) {
+  			// 漢字は受容
+! 			if((pos+1)<cntsen) pos++;
+  			else break;
+  		} else if(!map[c]) {
+  			// 使えない文字は全て'_'に変換
+--- 458,466 ----
+  
+  	for(unsigned int pos=0;pos<cntsen;pos++) {
+  		char c = entsen[pos];
+! 		if(int trail=lang.moreBytes(c)) {
+  			// 漢字は受容
+! 			if((pos+trail)<cntsen) pos+=trail;
+  			else break;
+  		} else if(!map[c]) {
+  			// 使えない文字は全て'_'に変換
+diff -cNr kawari-800b10/src/libkawari/kawari_version.h kawari-800b10I18N/src/libkawari/kawari_version.h
+*** kawari-800b10/src/libkawari/kawari_version.h	Mon May  6 16:40:40 2002
+--- kawari-800b10I18N/src/libkawari/kawari_version.h	Tue May 28 04:29:44 2002
+***************
+*** 13,19 ****
+  //---------------------------------------------------------------------------
+  // SHIORIラッパー
+  
+! #define KAWARI_NAME		"KAWARI.kdt"
+  #define KAWARI_AUTHOR	"KawariDeveloperTeam"	// 著作者(英数字だけ)
+  #define KAWARI_MAJOR	"8"		// メジャー番号(ピリオド無し、数字だけ)
+  #define KAWARI_MINOR	"0"		// マイナー番号(ピリオド無し、数字だけ)
+--- 13,19 ----
+  //---------------------------------------------------------------------------
+  // SHIORIラッパー
+  
+! #define KAWARI_NAME		"KAWARI.kdt.i18nhack"
+  #define KAWARI_AUTHOR	"KawariDeveloperTeam"	// 著作者(英数字だけ)
+  #define KAWARI_MAJOR	"8"		// メジャー番号(ピリオド無し、数字だけ)
+  #define KAWARI_MINOR	"0"		// マイナー番号(ピリオド無し、数字だけ)
+diff -cNr kawari-800b10/src/misc/i18n_l10n.cpp kawari-800b10I18N/src/misc/i18n_l10n.cpp
+*** kawari-800b10/src/misc/i18n_l10n.cpp	Thu Jan  1 00:00:00 1970
+--- kawari-800b10I18N/src/misc/i18n_l10n.cpp	Tue May 28 18:17:34 2002
+***************
+*** 0 ****
+--- 1,415 ----
++ //---------------------------------------------------------------------------
++ // "kawari" for are igai no nanika igaino nanika
++ // nise I18N (Internationalizaiton) / L10N (Localization) module
++ //
++ //      I18N Module Programmed by Joo-won Jung (Sanori)
++ //      Kawari Programed by NAKAUE.T (Meister)
++ //		L10N Module Programmed by Kouji.U (sky) / NAKAUE.T
++ //
++ //  2001.09.08  Phase 7.0     Created
++ //  2001.10.05  Phase 7.0     WcharToStr, StrToWchar added
++ //	2002.01.11  Phase 7.3.1   Applied to KAWARI.kpcg Phase 7.3.1 (kpcg.I18Nhack)
++ //	2002.03.17  Phase 7.9.0   ctow() moved from kis_expr.cpp to l10n.cpp
++ //	2002.05.27	Phase 8.0.0b10	Combined with l10n.cpp in Phase 8.0.0b10 (I18Nhack)
++ //
++ //---------------------------------------------------------------------------
++ #include <algorithm>
++ #include "misc/i18n_l10n.h"
++ //---------------------------------------------------------------------------
++ 
++ // See moreBytes
++ // #define MAX_TRAIL 5
++ #define MAX_TRAIL 2
++ 
++ #define LOWBYTE(x) (((unsigned int)(x)) & 0xFF)
++ 
++ TKawariI18N::TKawariI18N(const string& l) {
++ 	/* Note for alias:
++ 		On 2002.05.27 update, I discarded "lang_terr" format (such as ja_JP) away, because
++ 		1) it does not affect anything in Kawari, 
++ 		2) some locales, such as ISO-8859-1, are used at lots of countries so identifying
++ 			country and territory costs, and
++ 		3) the format should be normalized so expected middleware-creators can refer
++ 			the locale information.
++ 		Therefore, the function "formatLocaleName" acts as translating various locale 
++ 		string to preferred MIME name suggested by IANA from now on.
++ 			- whoami 
++ 	*/
++ 	
++ 	// Initialize to_charset
++ 	// The key should be lowercase
++ 	to_charset["iso-8859-1"] = ISO8859;
++ 	to_charset["iso-8859-2"] = ISO8859;
++ 	to_charset["iso-8859-5"] = ISO8859;
++ 	to_charset["shift_jis"] = SJIS;
++ 	to_charset["euc-jp"] = eucJP;
++ 	to_charset["euc-kr"] = eucKR;
++ 	to_charset["euc-tw"] = eucTW;
++ 	to_charset["euccn"] = eucCN;
++ 	to_charset["euc-cn"] = eucCN;
++ 	to_charset["big5"] = BIG5;
++ 	to_charset["koi-8"] = KOI8;
++ 	to_charset["utf8"] = UTF8;
++ 	to_charset["utf-8"] = UTF8;
++ 
++ 	// initialize locale_alias
++ 	// lowercase
++ 	locale_alias["c"] = 	"ISO-8859-1";	// wrong
++ 	locale_alias["posix"] =	"ISO-8859-1";	// wrong
++ 	locale_alias["en"] = 	"ISO-8859-1";
++ 	locale_alias["fr"] = 	"ISO-8859-1";
++ 	locale_alias["de"] = 	"ISO-8859-1";
++ 	locale_alias["es"] = 	"ISO-8859-1";
++ 	locale_alias["ru"] = 	"KOI-8";
++ 	locale_alias["koi8"] = 	"KOI-8";
++ 	locale_alias["ja"] =	"Shift_JIS";
++ 	locale_alias["ja_jp"] =	"Shift_JIS";
++ 	locale_alias["sjis"] = 	"Shift_JIS";
++ 	locale_alias["eucjp"] =	"EUC-JP";
++ 	locale_alias["ko"] =	"EUC-KR";
++ 	locale_alias["ko_kr"] =	"EUC-KR";
++ 	locale_alias["euckr"] =	"EUC-KR";
++ 	locale_alias["euctw"] =	"EUC-TW";
++ 	locale_alias["zh"] =	"BIG5";
++ 	locale_alias["zh_tw"] =	"BIG5";
++ 	locale_alias["zh_cn"] =	"EUC-CN";
++ 	locale_alias["euccn"] = "EUC-CN";
++ 
++ 	setLocale(l);
++ }
++ string TKawariI18N::formalLocaleName(const string& locale) const {
++ 	string ret = locale;
++ 	int index = locale.find_last_of(".");
++ 	if(index != string::npos) 
++ 		ret=locale.substr(index+1);
++ 	
++ 	// lowercase
++ 	transform(ret.begin(), ret.end(), ret.begin(), tolower);
++ 
++ 	// check alias
++ 	map<string,string>::const_iterator it;
++ 	if ((it = locale_alias.find(ret)) != locale_alias.end()) {
++ 		ret = it->second;
++ 	}
++ 	
++ 	return ret;
++ }
++ 
++ TKawariI18N::charset TKawariI18N::getCharset(const string& locale) const {
++ 	charset ret = NONE;
++ 	string::size_type p;
++ 	string l = formalLocaleName(locale);
++ 	if (l == "") return NONE;
++ 	p = l.find(".");
++ 
++ 	// encoding specified
++ 	string enc = l.substr(p+1,string::npos);
++ 	transform(enc.begin(), enc.end(), enc.begin(), tolower);
++ 	map<string,charset>::const_iterator it;
++ 	if ((it=to_charset.find(enc)) != to_charset.end()) {
++ 		ret = it->second;
++ 	} // else no available charset
++ 
++ 	return ret;
++ }
++ 
++ string TKawariI18N::getShioriCharset() const
++ {
++ 	// Nanika's supported SSTP Charsets: 
++ 	// ASCII, Shift_JIS (default), ISO-2022-JP, EUC-JP, UTF-8
++ 	if (currentCharset==UTF8)
++ 		return "UTF-8";
++ 	else if (currentCharset==eucJP)
++ 		return "EUC-JP";
++ 	else if (currentCharset==ISO8859)
++ 		return "ASCII";
++ 	else 
++ 		return "Shift_JIS";
++ }
++ 
++ string TKawariI18N::getLocale() const {
++ 	return currentLocale;
++ }
++ 
++ string TKawariI18N::setLocale(const string& l) {
++ 	currentLocale = formalLocaleName(l);
++ 	currentCharset = getCharset(currentLocale);
++ 	return currentLocale;
++ }
++ 
++ int TKawariI18N::moreBytes(int c) const {
++ 	// Limitation: Since Kawari only uses a 2-byte wchar_t, there is
++ 	// NO way to represent Unicode;s 0x00100000-0x7FFFFFFF area and
++ 	// EUC-TW's plane 2+. Therefore, This function considers Unicode's
++ 	// uncovered area and ALL EUC-TW charset as one-byte char (like ASCII).
++ 	// In this approach, there should be no unfortunate data-losing, at least.
++ 	// (However, some KIS, such as length, will not work well..)
++ 	
++ 	const int UTF8moreChar[256] = {
++ 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,	// 00 - 1F
++ 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,	// 20 - 3F
++ 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,	// 40 - 5F
++ 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,	// 60 - 7F
++ 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,	// 80 - 9F
++ 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,	// A0 - BF
++ 	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,	// C0 - DF
++ //	2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, 3,3,3,3,3,3,3,3,4,4,4,4,5,5,5,5};	// E0 - FF
++ 	2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};	// E0 - FF	: disabled F0-FF due to the limitation.
++ 
++ 	int ret = 0;
++ 	c = (c & 0xff);
++ 	switch(currentCharset) {
++ 		case SJIS:
++ 			// from iskanji1st
++ 			if ((unsigned char)((c^0x20)-0xa1)<=0x3b) {
++ 				ret = 1;
++ 			}
++ 			break;
++ 
++ 		case eucJP:
++ 			if (((0xa1 <= c) && (c <= 0xfe)) || (c == 0x8e)) {
++ 				ret = 1;
++ 			} else if (c == 0x8f) {
++ 				ret = 2;
++ 			}
++ 			break;
++ 
++ 		case eucKR:
++ 		case eucCN:
++ 		case BIG5:
++ 			if ((0xa1 <= c) && (c <= 0xfe)) { ret = 1; }
++ 			break;
++ 
++ 		case eucTW:
++ 			/* This is the original representation, but disabled due to the limitation.
++ 			if ((0xa1 <= c) && (c <= 0xfe)) {
++ 				ret = 1;
++ 			} else if (c == 0x8e) {
++ 				ret = 3;
++ 			}
++ 			*/
++ 			ret = 0;
++ 			break;
++ 
++ 		case UTF8:
++ 			ret = UTF8moreChar[c];
++ 			break;
++ 
++ 		case KOI8:
++ 		case ISO8859:
++ 		default:
++ 			ret = 0;
++ 			break;
++ 	}
++ 
++ 	return ret;
++ }
++ 
++ wchar_t TKawariI18N::StrToWchar(const string &str, int &trail) const
++ {
++ 	wchar_t wcRet=NULL;
++ 
++ 	// Fail-safe error handler
++ 	if (str.length() < (trail+1))
++ 	{
++ 		trail=0;
++ 		return (wchar_t) LOWBYTE(str[0]);
++ 	}
++ 
++ 	switch(currentCharset)
++ 	{
++ 		case SJIS:
++ 		case eucKR:
++ 		case eucCN:
++ 		case BIG5:
++ 
++ 			if (trail)
++ 				wcRet=(wchar_t) ((LOWBYTE(str[0]) << 8) | LOWBYTE(str[1]));
++ 			else
++ 				wcRet=(wchar_t) LOWBYTE(str[0]);
++ 			break;
++ 
++ 		case eucJP:
++ 			switch(trail) {
++ 			case 0 :
++ 				wcRet=(wchar_t) LOWBYTE(str[0]);
++ 				break;
++ 			case 1 :
++ 				wcRet=(wchar_t) ((LOWBYTE(str[0]) << 8) | LOWBYTE(str[1]));
++ 				break;
++ 			case 2 :	
++ 				// Nise Wide-char ^_^ : map these area to unused wide-char area
++ 				// Map 8FA1A1 ~ 8FFEFE to 01A1 ~ 5EFE (01=A1-A0, 5E=FE-A0)
++ 				wcRet= (wchar_t) (((LOWBYTE(str[1]) - 0x0A0) << 8) | LOWBYTE(str[2]));
++ 			default:; // Error
++ 			}
++ 			break;
++ 
++ 		case eucTW:
++ 			wcRet=(wchar_t) LOWBYTE(str[0]);
++ 			break;
++ 
++ 		case UTF8:
++ 			// Note: This code is not overlong-code-attack-safe. DO NOT use this code when
++ 			// you are developing such security-important programming.
++ 			// This also, more than 2-byte unicode codes are considered as error.
++ 
++ 			switch (trail)
++ 			{
++ 			case 0: // 0000-007F
++ 				wcRet=(wchar_t) LOWBYTE(str[0]);
++ 				break;
++ 			case 1: // 0080-07FF
++ 				wcRet=(wchar_t) ((LOWBYTE(str[0]) & 0x01F) << 6);
++ 				wcRet|=(wchar_t) (LOWBYTE(str[1]) & 0x03F);
++ 				break;
++ 			case 2: // 0800-FFFF
++ 				wcRet=(wchar_t) ((LOWBYTE(str[0]) & 0x0F) << 12);
++ 				wcRet|=(wchar_t) ((LOWBYTE(str[1]) & 0x03F) << 6);
++ 				wcRet|=(wchar_t) (LOWBYTE(str[2]) & 0x03F);
++ 				break;
++ 
++ 			default:; // Error
++ 			}
++ 			break;
++ 
++ 		case KOI8:
++ 		case ISO8859:
++ 		default:
++ 			wcRet=(wchar_t) LOWBYTE(str[0]);
++ 			break;
++ 	}
++ 	return wcRet;
++ }
++ 
++ string TKawariI18N::WcharToStr(const wchar_t widechar) const
++ {
++ 	string strRet;
++ 
++ 	unsigned char first, second;
++ 	first= ((widechar >> 8) & 0xFF);
++ 	second= (widechar & 0xFF);
++ 
++ 	switch(currentCharset)
++ 	{
++ 		case SJIS:
++ 		case eucKR:
++ 		case eucCN:
++ 		case BIG5:
++ 
++ 			if (first)
++ 			{
++ 				strRet=(char)first;
++ 				strRet+=(char)second;
++ 			}
++ 			else
++ 				strRet=(char)second;
++ 			break;
++ 
++ 		case eucJP:
++ 			if (first) {
++ 				if ( (0x01 <= first) && (first <= 0x5E) )
++ 				{
++ 					strRet=(char)0x8F;
++ 					strRet+=(char)(first + 0xA0);
++ 				}
++ 				else
++ 					strRet=(char)first;
++ 
++ 				strRet+=(char)second;
++ 			}
++ 			else
++ 				strRet=(char)second;
++ 			break;
++ 
++ 		case eucTW:
++ 			strRet=(char)second;
++ 			break;
++ 
++ 		case UTF8:
++ 			if (widechar < 0x0080)
++ 				strRet=(char)(second & 0x7F);
++ 			else if (widechar < 0x0800)
++ 			{
++ 				strRet= 0xC0 | ((unsigned char)(widechar >> 6) & 0x1F); // (110x xxxx)
++ 				strRet+= 0x80 | ((unsigned char)(widechar) & 0x3F); // (10xx xxxx)
++ 			}
++ 			else // (widechar <= 0xFFFF)
++ 			{
++ 				strRet= 0xE0 | ((unsigned char)(widechar >> 12) & 0x0F); // (1110 xxxx)
++ 				strRet+= 0x80 | ((unsigned char)(widechar >> 6) & 0x3F); // (10xx xxxx)
++ 				strRet+= 0x80 | ((unsigned char)(widechar) & 0x3F); // (10xx xxxx)
++ 			}
++ 			break;
++ 
++ 
++ 		case KOI8:
++ 		case ISO8859:
++ 		default:
++ 			strRet=(char)second;
++ 			break;
++ 	}
++ 	return strRet;
++ }
++ 
++ // string version
++ unsigned int TKawariI18N::CopyOneChar(const string &fromStr, string &toStr, unsigned int &index)
++ {
++ 	unsigned int nTotalBytes=moreBytes(fromStr[index]) + 1;
++ 	
++ 	if (nTotalBytes+index > fromStr.length() )
++ 		nTotalBytes=1;
++ 	toStr+=fromStr.substr(index, nTotalBytes);
++ 	index+=nTotalBytes;
++ 	return index;
++ }
++ 
++ // TKawariPreProcessor version
++ unsigned int TKawariI18N::CopyOneChar(TKawariPreProcessor *pp, string &toStr, char ch)
++ {
++ 	unsigned int nTotalBytes=moreBytes(ch) + 1;
++ 	int i;
++ 
++ 	toStr+=ch;
++ 	for (i=1; i<nTotalBytes; i++)
++ 	{
++ 		if(pp->getch(ch))
++ 			toStr+=ch;
++ 	}
++ 	return i;
++ }
++ 
++ //---------------------------------------------------------------------------
++ // From l10n.cpp
++ 
++ // Char String -> Wide Char String
++ std::wstring ctow(const std::string& s)
++ {
++     unsigned int max = s.length();
++     std::wstring ret;
++     int trail;
++     for (unsigned int i=0; i<max; i++){
++ 		trail = lang.moreBytes(s[i]);
++ 		ret += lang.StrToWchar(s.substr(i,trail+1), trail);
++ 		i+=trail;
++     }
++     return ret;
++ }
++ //---------------------------------------------------------------------------
++ // SJIS Wide Char String -> SJIS Char String
++ std::string wtoc(const std::wstring& ws)
++ {
++     unsigned int max = ws.length();
++     std::string ret;
++     for (unsigned int i=0; i<max; i++){
++         ret += lang.WcharToStr(ws[i]);
++     }
++     return ret;
++ }
++ 
++ //---------------------------------------------------------------------------
++ // Global variable (Thread UNSAFE!) -_-;
++ 
++ TKawariI18N lang("ja_JP.SJIS");		// default locale is Japanese PC
++ 
++ //---------------------------------------------------------------------------
+diff -cNr kawari-800b10/src/misc/i18n_l10n.h kawari-800b10I18N/src/misc/i18n_l10n.h
+*** kawari-800b10/src/misc/i18n_l10n.h	Thu Jan  1 00:00:00 1970
+--- kawari-800b10I18N/src/misc/i18n_l10n.h	Tue May 28 18:17:34 2002
+***************
+*** 0 ****
+--- 1,98 ----
++ //---------------------------------------------------------------------------
++ //
++ // "kawari" for are igai no nanika igaino nanika
++ // nise I18N (Internationalizaiton) / L10N (Localization) module
++ //
++ //      I18N Module Programmed by Joo-won Jung (Sanori)
++ //      Kawari Programed by NAKAUE.T (Meister)
++ //		L10N Module Programmed by Kouji.U (sky) / NAKAUE.T
++ //
++ //  2001.09.08  Phase 7.0     Created
++ //  2001.10.05  Phase 7.0     WcharToStr, StrToWchar added
++ //	2002.01.11  Phase 7.3.1   Applied to KAWARI.kpcg Phase 7.3.1 (kpcg.I18Nhack)
++ //	2002.03.17  Phase 7.9.0   ctow() moved from kis_expr.cpp to l10n.cpp
++ //	2002.05.27	Phase 8.0.0b10	Combined with l10n.cpp in Phase 8.0.0b10 (I18Nhack)
++ //
++ //---------------------------------------------------------------------------
++ #ifndef KAWARI_I18N_H
++ #define KAWARI_I18N_H
++ //---------------------------------------------------------------------------
++ #include <string>
++ #include <map>
++ #include "libkawari/kawari_lexer.h"
++ 
++ // Includes from kis_expr.cpp (for using wchar_t)
++ // some includes might not need, but I do not know platform/version differences...
++ 
++ #ifdef __GNUC__
++ 	#if (__GNUC__ < 3)
++ 		#include <cctype>
++ 	#else
++ 		#include <cctype>
++ 		#include <cwchar>
++ 	#endif
++ 	namespace std {
++ 		typedef basic_string<wchar_t> wstring;
++ 	}
++ #else
++ 	#include <cwctype>
++ 	#include <cwchar>
++ #endif
++ 
++ using namespace std;
++ class TKawariI18N {
++ public:
++ 	// Charset IDs
++ 	enum charset {
++ 		ISO8859, SJIS, eucJP, eucKR, eucCN, eucTW, BIG5, KOI8, UTF8,
++ 		NONE };
++ private:
++ 	map <string, string> locale_alias;
++ 	map <string, charset> to_charset;
++ 	string currentLocale;
++ 	charset currentCharset;
++ 	// Covert an alias locale name to a formal locale name
++ 	string formalLocaleName(const string& locale) const;
++ public:
++ 	// Constructor
++ 	TKawariI18N(const string& locale = "C");
++ 
++ 	// Set an locale
++ 	string setLocale(const string& locale = "C");
++ 	// Get current locale name
++ 	string getLocale() const;
++ 	// Get charset ID from an locale name
++ 	charset getCharset(const string& locale) const;
++ 	// Get modified "Charset: " SHIORI response option string
++ 	string getShioriCharset() const;
++ 
++ 	// Check trail bytes. 0 if single-byte char, 1 or more if multi-byte char.
++ 	int moreBytes(int c) const;
++ 
++ 	// StrToWchar: return the wide character of the 
++ 	//             1st encoded character of string str.
++ 	// If any error occurred, returned char will be NULL
++ 	wchar_t StrToWchar(const string &str, int &trail) const;
++ 	// WcharToStr: return encoded string of the wide character
++ 	string WcharToStr(const wchar_t widechar) const;
++ 	// CopyOneChar (string ver): Copy only ONE multi-byte char and return a new index
++ 	unsigned int CopyOneChar(const string &fromStr, string &toStr, unsigned int &index);
++ 	// CopyOneChar (TKawariPreProcessor ver): Copy only ONE multi-byte char and return a new index
++ 	unsigned int CopyOneChar(TKawariPreProcessor *pp, string &toStr, char ch);	
++ 	
++ };
++ 
++ 
++ extern TKawariI18N lang;
++ 
++ //---------------------------------------------------------------------------
++ // From l10n.h
++ 
++ // Char String -> Wide Char String
++ std::wstring ctow(const std::string& s);
++ // Wide Char String -> Char String
++ std::string wtoc(const std::wstring& ws);
++ 
++ 
++ //---------------------------------------------------------------------------
++ #endif
+diff -cNr kawari-800b10/src/misc/l10n.cpp kawari-800b10I18N/src/misc/l10n.cpp
+*** kawari-800b10/src/misc/l10n.cpp	Tue Mar 26 07:54:52 2002
+--- kawari-800b10I18N/src/misc/l10n.cpp	Thu Jan  1 00:00:00 1970
+***************
+*** 1,51 ****
+- //---------------------------------------------------------------------------
+- //
+- // Localization支援
+- //
+- //      Programed by Kouji.U (sky) / NAKAUE.T
+- //
+- //  2002.03.17  Phase 7.9.0   ctow()をexprから移動
+- //
+- //---------------------------------------------------------------------------
+- #include "config.h"
+- //---------------------------------------------------------------------------
+- #include "misc/l10n.h"
+- //---------------------------------------------------------------------------
+- #include "misc/misc.h"
+- //---------------------------------------------------------------------------
+- // SJIS Wide Char String -> SJIS Char String
+- std::string wtoc(const std::wstring& ws)
+- {
+-     unsigned int max = ws.length();
+-     std::string ret;
+-     for (unsigned int i=0; i<max; i++){
+-         if (ws[i] & (unsigned short)0xff00){
+-             ret += static_cast<unsigned char>(
+-                 (ws[i] & (unsigned short)0xff00) >> 8);
+-             ret += static_cast<unsigned char>(
+-                 (ws[i] & (unsigned short)0x00ff));
+-         }else{
+-             ret += static_cast<unsigned char>(
+-                 (ws[i] & (unsigned short)0x00ff));
+-         }
+-     }
+-     return ret;
+- }
+- //---------------------------------------------------------------------------
+- // SJIS Char String -> SJIS Wide Char String
+- std::wstring ctow(const std::string& s)
+- {
+-     unsigned int max = s.length();
+-     std::wstring ret;
+-     for (unsigned int i=0; i<max; i++){
+-         if (iskanji1st(s[i]) && (i<max-1)){
+-             ret +=
+-                 (static_cast<unsigned char>(s[i++]) << 8) |
+-                     static_cast<unsigned char>(s[i]);
+-         }else{
+-             ret += static_cast<unsigned char>(s[i]);
+-         }
+-     }
+-     return ret;
+- }
+- //---------------------------------------------------------------------------
+--- 0 ----
+diff -cNr kawari-800b10/src/misc/l10n.h kawari-800b10I18N/src/misc/l10n.h
+*** kawari-800b10/src/misc/l10n.h	Tue Mar 26 07:54:52 2002
+--- kawari-800b10I18N/src/misc/l10n.h	Thu Jan  1 00:00:00 1970
+***************
+*** 1,53 ****
+- //---------------------------------------------------------------------------
+- //
+- // Localization支援
+- //
+- //      Programed by Kouji.U (sky) / NAKAUE.T
+- //
+- //  2002.03.17  Phase 7.9.0   ctow()をexprから移動
+- //
+- //---------------------------------------------------------------------------
+- #ifndef L10N_H
+- #define L10N_H
+- //---------------------------------------------------------------------------
+- #include "config.h"
+- //---------------------------------------------------------------------------
+- #include <string>
+- #ifdef __GNUC__
+- 	#if (__GNUC__ < 3)
+- 		#include <cctype>
+- 	#else
+- 		#include <cctype>
+- 		#include <cwchar>
+- 	#endif
+- 	namespace std {
+- 		typedef basic_string<wchar_t> wstring;
+- 	}
+- #else
+- 	#include <cwctype>
+- 	#include <cwchar>
+- #endif
+- //---------------------------------------------------------------------------
+- // 2バイト文字の1バイト目か?
+- inline bool iskanji1st(char c)
+- {
+- #if 1
+- 	// SJIS
+- 	// 0x00-0x7f ASCII
+- 	// 0x80-0x9f,0xe0-0xfc いわゆる全角1バイト目
+- 	// 0xa0-0xdf いわゆる半角カナ
+- 	return((unsigned char)((c^0x20)-0xa1)<=0x3b);
+- 	// ちなみに2バイト目は0x40-0xfc
+- #else
+- 	// EUC
+- 	return(c<0);
+- #endif
+- }
+- //---------------------------------------------------------------------------
+- // SJIS Wide Char String -> SJIS Char String
+- std::string wtoc(const std::wstring& ws);
+- //---------------------------------------------------------------------------
+- // SJIS Char String -> SJIS Wide Char String
+- std::wstring ctow(const std::string& s);
+- //---------------------------------------------------------------------------
+- #endif
+--- 0 ----
+diff -cNr kawari-800b10/src/misc/misc.cpp kawari-800b10I18N/src/misc/misc.cpp
+*** kawari-800b10/src/misc/misc.cpp	Thu Apr 25 18:43:36 2002
+--- kawari-800b10I18N/src/misc/misc.cpp	Tue May 28 01:00:44 2002
+***************
+*** 8,14 ****
+  #include "config.h"
+  //---------------------------------------------------------------------------
+  #include "misc/misc.h"
+! #include "misc/l10n.h"
+  //---------------------------------------------------------------------------
+  #include <string>
+  #include <cstdlib>
+--- 8,14 ----
+  #include "config.h"
+  //---------------------------------------------------------------------------
+  #include "misc/misc.h"
+! #include "misc/i18n_l10n.h"
+  //---------------------------------------------------------------------------
+  #include <string>
+  #include <cstdlib>
+diff -cNr kawari-800b10/src/shiori/kawari_shiori.cpp kawari-800b10I18N/src/shiori/kawari_shiori.cpp
+*** kawari-800b10/src/shiori/kawari_shiori.cpp	Sun May 26 07:50:06 2002
+--- kawari-800b10I18N/src/shiori/kawari_shiori.cpp	Tue May 28 02:41:14 2002
+***************
+*** 63,68 ****
+--- 63,69 ----
+  //  2002.03.20                SAORI統合
+  //  2002.04.12  Phase 8.0.0   インターフェース切り直し
+  //  2002.04.19                SHIORI/3.0対応
++ //	2002.05.27	Phase 8.0.0b10	UTF-8 Support (I18Nhack)
+  //
+  //---------------------------------------------------------------------------
+  #include "config.h"
+***************
+*** 78,83 ****
+--- 79,85 ----
+  #include "shiori/kawari_shiori.h"
+  #include "libkawari/kawari_log.h"
+  #include "misc/misc.h"
++ #include "misc/i18n_l10n.h"
+  using namespace kawari_log;
+  //---------------------------------------------------------------------------
+  // SHIORI/2.x API
+***************
+*** 253,259 ****
+  				statuscode=204;
+  			}
+  			response["Sender"]=GhostName;
+! 			response["Charset"]="Shift_JIS";
+  
+  		}else if(type=="NOTIFY"){
+  			const string &reqid=request["ID"];
+--- 255,261 ----
+  				statuscode=204;
+  			}
+  			response["Sender"]=GhostName;
+! 			response["Charset"]=lang.getShioriCharset();
+  
+  		}else if(type=="NOTIFY"){
+  			const string &reqid=request["ID"];
+***************
+*** 265,271 ****
+  			GetResponse(response);
+  			response.erase("Value");
+  			response["Sender"]=GhostName;
+! 			response["Charset"]="Shift_JIS";
+  
+  			statuscode=204;
+  		}else
+--- 267,273 ----
+  			GetResponse(response);
+  			response.erase("Value");
+  			response["Sender"]=GhostName;
+! 			response["Charset"]=lang.getShioriCharset();
+  
+  			statuscode=204;
+  		}else
+***************
+*** 295,301 ****
+  			response.erase("Sentence");
+  			response.erase("Age");
+  			response["Sender"]=GhostName;
+! 			response["Charset"]="Shift_JIS";
+  
+  			if(aistr.size()){
+  				response["Sentence"]=aistr;
+--- 297,303 ----
+  			response.erase("Sentence");
+  			response.erase("Age");
+  			response["Sender"]=GhostName;
+! 			response["Charset"]=lang.getShioriCharset();
+  
+  			if(aistr.size()){
+  				response["Sentence"]=aistr;
+diff -cNr kawari-800b10/src/tool/kosui.cpp kawari-800b10I18N/src/tool/kosui.cpp
+*** kawari-800b10/src/tool/kosui.cpp	Sat May 25 13:13:58 2002
+--- kawari-800b10I18N/src/tool/kosui.cpp	Tue May 28 01:01:18 2002
+***************
+*** 26,32 ****
+  //---------------------------------------------------------------------------
+  #include "tool/kosui_base.h"
+  #include "tool/kawari_kosui.h"
+! #include "misc/l10n.h"
+  #ifdef USEKDB
+  #	include "tool/kdb.h"
+  #	include "tool/kosui_dsstp.h"
+--- 26,32 ----
+  //---------------------------------------------------------------------------
+  #include "tool/kosui_base.h"
+  #include "tool/kawari_kosui.h"
+! #include "misc/i18n_l10n.h"
+  #ifdef USEKDB
+  #	include "tool/kdb.h"
+  #	include "tool/kosui_dsstp.h"
+diff -cNr kawari-800b10/src/vc_kawari/vc_kawari.dsp kawari-800b10I18N/src/vc_kawari/vc_kawari.dsp
+*** kawari-800b10/src/vc_kawari/vc_kawari.dsp	Thu Jan  1 00:00:00 1970
+--- kawari-800b10I18N/src/vc_kawari/vc_kawari.dsp	Tue May 28 04:46:46 2002
+***************
+*** 0 ****
+--- 1,439 ----
++ # Microsoft Developer Studio Project File - Name="vc_kawari" - Package Owner=<4>
++ # Microsoft Developer Studio Generated Build File, Format Version 6.00
++ # ** DO NOT EDIT **
++ 
++ # TARGTYPE "Win32 (x86) Dynamic-Link Library" 0x0102
++ 
++ CFG=vc_kawari - Win32 Debug
++ !MESSAGE This is not a valid makefile. To build this project using NMAKE,
++ !MESSAGE use the Export Makefile command and run
++ !MESSAGE 
++ !MESSAGE NMAKE /f "vc_kawari.mak".
++ !MESSAGE 
++ !MESSAGE You can specify a configuration when running NMAKE
++ !MESSAGE by defining the macro CFG on the command line. For example:
++ !MESSAGE 
++ !MESSAGE NMAKE /f "vc_kawari.mak" CFG="vc_kawari - Win32 Debug"
++ !MESSAGE 
++ !MESSAGE Possible choices for configuration are:
++ !MESSAGE 
++ !MESSAGE "vc_kawari - Win32 Release" (based on "Win32 (x86) Dynamic-Link Library")
++ !MESSAGE "vc_kawari - Win32 Debug" (based on "Win32 (x86) Dynamic-Link Library")
++ !MESSAGE 
++ 
++ # Begin Project
++ # PROP AllowPerConfigDependencies 0
++ # PROP Scc_ProjName ""
++ # PROP Scc_LocalPath ""
++ CPP=cl.exe
++ MTL=midl.exe
++ RSC=rc.exe
++ 
++ !IF  "$(CFG)" == "vc_kawari - Win32 Release"
++ 
++ # PROP BASE Use_MFC 0
++ # PROP BASE Use_Debug_Libraries 0
++ # PROP BASE Output_Dir "vc_kawari___Win32_Release"
++ # PROP BASE Intermediate_Dir "vc_kawari___Win32_Release"
++ # PROP BASE Target_Dir ""
++ # PROP Use_MFC 0
++ # PROP Use_Debug_Libraries 0
++ # PROP Output_Dir "Release"
++ # PROP Intermediate_Dir "Release"
++ # PROP Ignore_Export_Lib 0
++ # PROP Target_Dir ""
++ # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "VC_KAWARI_EXPORTS" /YX /FD /c
++ # ADD CPP /nologo /MT /W3 /GR /GX /O2 /I "../" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "VC_KAWARI_EXPORTS" /YX /FD /c
++ # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
++ # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
++ # ADD BASE RSC /l 0x411 /d "NDEBUG"
++ # ADD RSC /l 0x411 /d "NDEBUG"
++ BSC32=bscmake.exe
++ # ADD BASE BSC32 /nologo
++ # ADD BSC32 /nologo
++ LINK32=link.exe
++ # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
++ # ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386 /out:"Release/shiori.dll"
++ 
++ !ELSEIF  "$(CFG)" == "vc_kawari - Win32 Debug"
++ 
++ # PROP BASE Use_MFC 0
++ # PROP BASE Use_Debug_Libraries 1
++ # PROP BASE Output_Dir "vc_kawari___Win32_Debug"
++ # PROP BASE Intermediate_Dir "vc_kawari___Win32_Debug"
++ # PROP BASE Target_Dir ""
++ # PROP Use_MFC 0
++ # PROP Use_Debug_Libraries 1
++ # PROP Output_Dir "Release"
++ # PROP Intermediate_Dir "Debug"
++ # PROP Ignore_Export_Lib 0
++ # PROP Target_Dir ""
++ # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "VC_KAWARI_EXPORTS" /YX /FD /GZ /c
++ # ADD CPP /nologo /MTd /W3 /Gm /GR /GX /ZI /Od /I "../" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "VC_KAWARI_EXPORTS" /YX /FD /GZ /c
++ # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
++ # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
++ # ADD BASE RSC /l 0x411 /d "_DEBUG"
++ # ADD RSC /l 0x411 /d "_DEBUG"
++ BSC32=bscmake.exe
++ # ADD BASE BSC32 /nologo
++ # ADD BSC32 /nologo
++ LINK32=link.exe
++ # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
++ # ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /out:"Release/shiori.dll" /pdbtype:sept
++ 
++ !ENDIF 
++ 
++ # Begin Target
++ 
++ # Name "vc_kawari - Win32 Release"
++ # Name "vc_kawari - Win32 Debug"
++ # Begin Group "Source Files"
++ 
++ # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
++ # Begin Source File
++ 
++ SOURCE=..\misc\_dirent.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\misc\base64.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\misc\i18n_l10n.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_code.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_codeexpr.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_codekis.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_codeset.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_compiler.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_crypt.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_dict.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_engine.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_lexer.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_log.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_ns.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\shiori\kawari_shiori.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_vm.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_communicate.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_counter.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_date.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_dict.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_echo.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_escape.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_file.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_help.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_saori.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_split.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_string.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_substitute.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_system.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_urllist.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_xargs.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\misc\misc.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\misc\mt19937ar.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\misc\phttp.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\saori\saori.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\saori\saori_win32.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\shiori_dll\shiori.cpp
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\shiori\shiori_interface.cpp
++ # End Source File
++ # End Group
++ # Begin Group "Header Files"
++ 
++ # PROP Default_Filter "h;hpp;hxx;hm;inl"
++ # Begin Source File
++ 
++ SOURCE=..\misc\_dirent.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\misc\base64.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\config.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\misc\i18n_l10n.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_code.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_codeexpr.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_codekis.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_codeset.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_compiler.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_crypt.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_dict.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_engine.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_lexer.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_log.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_ns.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\shiori\kawari_shiori.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_version.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\kawari_vm.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_base.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_communicate.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_config.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_counter.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_date.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_debug.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_dict.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_echo.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_escape.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_file.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_help.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_math.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_saori.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_split.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_string.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_substitute.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_system.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_urllist.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\kis\kis_xargs.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\misc\misc.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\misc\mmap.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\misc\mt19937ar.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\misc\phttp.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\rwordcollection.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\saori\saori.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\saori\saori_win32.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\shiori\shiori_impl.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\shiori\shiori_interface.h
++ # End Source File
++ # Begin Source File
++ 
++ SOURCE=..\libkawari\wordcollection.h
++ # End Source File
++ # End Group
++ # End Target
++ # End Project
+diff -cNr kawari-800b10/src/vc_kawari/vc_kawari.dsw kawari-800b10I18N/src/vc_kawari/vc_kawari.dsw
+*** kawari-800b10/src/vc_kawari/vc_kawari.dsw	Thu Jan  1 00:00:00 1970
+--- kawari-800b10I18N/src/vc_kawari/vc_kawari.dsw	Tue Apr 23 19:18:22 2002
+***************
+*** 0 ****
+--- 1,29 ----
++ Microsoft Developer Studio Workspace File, Format Version 6.00
++ # 警告: このﾜｰｸｽﾍﾟｰｽ ﾌｧｲﾙ を編集または削除しないでください!
++ 
++ ###############################################################################
++ 
++ Project: "vc_kawari"=.\vc_kawari.dsp - Package Owner=<4>
++ 
++ Package=<5>
++ {{{
++ }}}
++ 
++ Package=<4>
++ {{{
++ }}}
++ 
++ ###############################################################################
++ 
++ Global:
++ 
++ Package=<5>
++ {{{
++ }}}
++ 
++ Package=<3>
++ {{{
++ }}}
++ 
++ ###############################################################################
++ 
