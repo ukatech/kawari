@@ -11,7 +11,7 @@
 
 Phase 9 系は、オリジナルの華和梨をフォークし、[ponapalt](https://github.com/ponapalt) と [Claudia](https://ponadocs.shillest.net/claudia/) (Claude) が大幅に改修したものです。
 その後、Ukagaka Tech Team に所属してメンテナンスを続けています。
-ライセンスと著作権表示はオリジナルのものを引き継いでいます (`LICENSE` を参照)。
+ライセンスは BSD 2-Clause License で、著作権表示はオリジナルのものを引き継いでいます (`LICENSE` を参照)。
 
 ## これは何ですか
 
