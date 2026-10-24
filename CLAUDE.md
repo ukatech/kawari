@@ -9,7 +9,7 @@ CI は無い。最低限のテストは `build/src/test/` (下記「テスト」
 - 内部のテキストはすべて `std::wstring` / `wchar_t`。文字数は wchar_t 1 要素 = 1 文字 (Windows のサロゲートペアは 2 文字)。`std::string` は外部とのバイト列 (ファイルの生バイト、SHIORI/SAORI の生リクエスト、暗号化の中間データ) にだけ使う。
 - 変換は `misc/charset.h` (`SJIStoW` / `UTF8toW` / `ACPtoW` / `MBtoW(str, cs)` / `DetectCharset` / `CharsetFromName` 等。Windows は Win32 API、POSIX は iconv)。ファイル I/O とパスは `misc/wfile.h` (`kawari_wfopen` / `ReadTextFile` / `WriteTextFile` / `ListDirectory` / `PathStat` / `GetEnvironmentW`)。旧 `ctow` / `wtoc` / `iskanji1st` / `misc/_dirent.*` は廃止 (`misc/l10n.h` は互換スタブ)。
 - ロガーは `std::wostream`。バイト出力先へは `TWideOStream` (`ostream*` か `FILE*` + charset、CRLF 変換可) を挟む。
-- 文字コードの規則 (変更時は `document/changelog.txt` と整合させる): 辞書は BOM か UTF-8 として正当なら UTF-8、でなければ SJIS。暗号化行はファイルに BOM があれば UTF-8、なければ SJIS。save/savecrypt は UTF-8 BOM あり、textsave/textappend とログファイルは UTF-8 BOM なし、コンソールは ACP。SHIORI はリクエストの Charset (無ければ SJIS) で応答も返す。`loadu` (UTF-8 パス) もエクスポート。`textload_charset` / `textsave_charset` / `textappend_charset` は文字コードを引数で取り (`CharsetFromNameExt`)、Shift_JIS / UTF-8 / EUC-JP / ISO-2022-JP / EUC-KR / GB2312 を扱う (Windows のコードページは 20932 / 50220 / 949 / 936。51932 は `MultiByteToWideChar` が非対応)。SAORI は satoriya 互換 (UTF-8 で開始、GET Version に Charset が無ければ以後 SJIS、応答の Charset を次回に引き継ぐ。`loadu` があれば UTF-8 パス)。
+- 文字コードの規則 (変更時は `../kawari-docs` の `other/changelog.md` と整合させる): 辞書は BOM か UTF-8 として正当なら UTF-8、でなければ SJIS。暗号化行はファイルに BOM があれば UTF-8、なければ SJIS。save/savecrypt は UTF-8 BOM あり、textsave/textappend とログファイルは UTF-8 BOM なし、コンソールは ACP。SHIORI はリクエストの Charset (無ければ SJIS) で応答も返す。`loadu` (UTF-8 パス) もエクスポート。`textload_charset` / `textsave_charset` / `textappend_charset` は文字コードを引数で取り (`CharsetFromNameExt`)、Shift_JIS / UTF-8 / EUC-JP / ISO-2022-JP / EUC-KR / GB2312 を扱う (Windows のコードページは 20932 / 50220 / 949 / 936。51932 は `MultiByteToWideChar` が非対応)。SAORI は satoriya 互換 (UTF-8 で開始、GET Version に Charset が無ければ以後 SJIS、応答の Charset を次回に引き継ぐ。`loadu` があれば UTF-8 パス)。
 - Win32 API は W 版 (`UNICODE` / `_UNICODE`、`WINVER` / `_WIN32_WINNT` = 0x0500 を `config.h` と `gcc-mach.mak` で定義)。ただし i686-posix の MinGW 8.1.0 は winpthreads 由来で `AddVectoredExceptionHandler` 等 (XP 以降) を import するので、生成物は実際には Windows 2000 では動かない (8.2.9 のリリース版も同じ)。
 - コード中の文字列リテラルに非 ASCII を直書きしない (`L"\x3042"` 等を使う)。
 
@@ -19,7 +19,7 @@ CI は無い。最低限のテストは `build/src/test/` (下記「テスト」
 - 標準の Read / Edit / Write は UTF-8 前提のため EUC-JP を壊す。`.claude/euc-tools/hook.py` (PreToolUse フック) が弾くので、**`euc_read` / `euc_edit` / `euc_write` / `euc_sed` / `euc_grep` を使う** (`.mcp.json` で MCP サーバとして登録済み)。
   - `sed` や PowerShell の `-replace`、`od` / `xxd` 等はフックで禁止。
   - 純 ASCII の `.cpp` / `.h` に日本語を足す場合も `euc_edit` を使う (標準 Edit だと UTF-8 が混入する)。
-- 例外: `gcc.mak` / `files.mak` / `kawari_rc_sjis_encoded.h` などは UTF-8 (実質 ASCII)。`document/*.html` も UTF-8 (フックの記述による)。
+- 例外: `gcc.mak` / `files.mak` / `kawari_rc_sjis_encoded.h` などは UTF-8 (実質 ASCII)。マニュアルは `../kawari-docs` に移した (旧 `document/` は廃止)。
 - `build/BUILD.TXT` は **CP932 (Shift-JIS)**。`euc_*` ツールでは編集できず、標準 Edit / Write も拒否される。変更するなら cp932 を明示して書き換えること。`README.md` は UTF-8 (9.0.0 β1 で旧 `README.jp.md` (CP932) から変換・改名)。
 - `libkawari/kawari_rc.cpp` が include する `kawari_rc_sjis_encoded.h` は、`kawari_rc.sjis` を `sjis2ascii.rb` で八進エスケープ化した生成物と思われる。直接手編集せず、元の `.sjis` 側を直す。
 
@@ -103,7 +103,7 @@ make -f gcc.mak
 
 ## 正規表現 (KIS の regex_*)
 
-- `kis/kis_regex.*` が `regex_match` / `find` / `findall` / `count` / `replace(_first)` / `erase(_first)` / `split` / `escape`。仕様は `document/kis_reference.html` の「正規表現」。複数の結果は引数のエントリに入れる (`split` と違い、中身を置き換える)。
+- `kis/kis_regex.*` が `regex_match` / `find` / `findall` / `count` / `replace(_first)` / `erase(_first)` / `split` / `escape`。仕様は `../kawari-docs` の `kis/regex.md` と `kis/regex_*.md`。複数の結果は引数のエントリに入れる (`split` と違い、中身を置き換える)。
 - サブルーチン呼び出し: パターン内に定義の無い `(?&名前)` / `\g<名前>` は、`CRegexpW::Compile` のリゾルバ (`TRegex::Resolve`) が辞書の `${名前}` の展開結果に解決する。エントリが無ければ構文エラー (名前入り)。入れ子の展開は深さ 16 で打ち切る。
 - 取り込まれたサブルーチンのグループは、パターン自身のグループの**後ろ**に (サブルーチン内の括弧も含めて) 番号が振られ、`GetGroupCount()` にも数えられる。結果に出すのはパターン自身の分だけなので、`TRegex::GroupCount` は「最初に取り込まれた名前の番号 - 1」で数える (satoriya の実装は取り込み数を引いており、サブルーチン内に括弧があるとずれる)。
 - **辞書やスクリプトに書くパターンは、括弧を含むなら `"..."` で囲む**。素の `( )` は華和梨の構文 (グループ) として消える (`kosui --check` が K-W2003 で、置換文字列の素の `${N}` を K-W2004 で警告する)。`"..."` の中は `${}` `$()` が展開されないので、置換文字列の `${1}` も同様。`\n` は改行にならない。
@@ -111,7 +111,7 @@ make -f gcc.mak
 
 ## 華和梨スクリプト (KIS) の勘所
 
-テストやデバッグで辞書を書くときの記憶の鍵。文法の詳細は `document/kis_reference.html`、構文 BNF は `document/kiu_specbnf.txt`。以下は `kosui` で動作確認したもの。
+テストやデバッグで辞書を書くときの記憶の鍵。文法の詳細は `../kawari-docs` の `kis/` (KIS コマンド) と `grammar/`、構文 BNF は `spec/06-bnf.md`。以下は `kosui` で動作確認したもの。
 
 ```
 # 辞書 (kawarirc.kis など)。"エントリ名 : 単語"。コメントは行頭の #
@@ -143,6 +143,6 @@ $(adddict list "d")            -> 単語の追加 (size は 4 になる)
 
 ## その他
 
-- 仕様の一次資料は `document/` (`kis_reference.html` が KIS コマンド、`kiu_specbnf.txt` が構文 BNF)。更新履歴は `document/changelog.txt`、バージョンは `libkawari/kawari_version.h`。
+- 仕様の一次資料はマニュアルのリポジトリ `../kawari-docs` (http://ukatech.shillest.net/kawari-docs/。`kis/` が KIS コマンド、`spec/06-bnf.md` が構文 BNF)。更新履歴は `../kawari-docs` の `other/changelog.md`、バージョンは `libkawari/kawari_version.h`。旧 `document/` (HTML) は廃止して削除した。機能を足したら、マニュアルは kawari-docs 側に書く。
 - `build/contrib/` は過去に取り込んだパッチ (Python モジュール化、darwin、SAORI フォールバック等) の保管場所。
 - `config.h` が OS / コンパイラ判定 (`KAWARI_WIN32` / `KAWARI_POSIX` 等) を担う。`js` ターゲットは `-U_WIN32` 等で Windows 判定を打ち消している。

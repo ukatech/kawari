@@ -17,20 +17,20 @@ Phase 9 系は、オリジナルの華和梨をフォークし、[ponapalt](http
 
 華和梨 Phase 9 のリリース版です。
 ライセンスを始め、新仕様に関するかなりの情報がドキュメント化されています。
-`document/index.html` をご使用のブラウザでご覧ください。
+マニュアルは別のリポジトリ ([kawari-docs](https://github.com/ukatech/kawari-docs)) にあり、オンラインで読めます。
 
-- オンライン版: <https://ukatech.github.io/kawari/>
+- マニュアル: <http://ukatech.shillest.net/kawari-docs/>
 
 ## 華和梨 8 からの乗り換え
 
-**華和梨 Phase 9 は、Phase 8 (8.2.x) の置き換えとして、そのまま差し替えて使えます。** ゴーストの辞書 (`kawarirc.kis` など)・SAORI・本体との連携を書き換えずに、`shiori.dll` を差し替えるだけで動きます。Phase 7 から 8 へ上がったときのような、辞書の書き直しが必要になる非互換な変更はありません。Phase 7 → 8 の変更点は `document/convert.html` に載っていますが、これは Phase 8 のゴーストが対象で、Phase 9 に上げるだけなら読む必要はありません。
+**華和梨 Phase 9 は、Phase 8 (8.2.x) の置き換えとして、そのまま差し替えて使えます。** ゴーストの辞書 (`kawarirc.kis` など)・SAORI・本体との連携を書き換えずに、`shiori.dll` を差し替えるだけで動きます。Phase 7 から 8 へ上がったときのような、辞書の書き直しが必要になる非互換な変更はありません。Phase 7 → 8 の変更点は[マニュアルの移行ガイド](http://ukatech.shillest.net/kawari-docs/migration/)に載っていますが、これは Phase 8 のゴーストが対象で、Phase 9 に上げるだけなら読む必要はありません。
 
 **差し替えるときに知っておくこと** (意図した違いです)
 
 - `save` / `savecrypt` は UTF-8 (BOM あり) で書き出します。Phase 9 は 8.2.x が書いたセーブを読めますが、Phase 9 が書いたセーブを 8.2.9 以前に戻して読むことはできません (差し替えを戻す可能性があるなら、セーブのバックアップを)
 - SHIORI の応答に `Charset` ヘッダが付き、SAORI への `GET Version` は UTF-8 で送ります (応答に `Charset` が無ければ、以後は Shift_JIS)。ふつうの SHIORI / SAORI には影響しません
 - 文字列の大小比較とエントリの列挙順が、Shift_JIS のバイト順ではなく Unicode のコードポイント順になりました (ASCII だけなら変わりません)
-- 不具合の修正で、これまで偶然動いていた異常な書き方の結果が変わることがあります (整数のあふれ、`date` に負の時刻を渡したときの異常終了など)。細かい一覧は `document/changelog.txt` を参照してください
+- 不具合の修正で、これまで偶然動いていた異常な書き方の結果が変わることがあります (整数のあふれ、`date` に負の時刻を渡したときの異常終了など)。細かい一覧は[マニュアルの更新履歴](http://ukatech.shillest.net/kawari-docs/other/changelog/)を参照してください
 - 診断 (エラー・警告) のログの書式が変わりました (9.2.0)。ログを機械的に読んでいる場合だけ影響します
 
 ## 目次
@@ -95,7 +95,7 @@ Phase 9 系は、オリジナルの華和梨をフォークし、[ponapalt](http
 - 同じ SAORI の DLL を 2 回読み込むと、最後に解放しても DLL が残っていた
 - POSIX: ISO-2022-JP への書き出しで変換できない文字があると以降が化けていた。ninix との Direct SSTP で SIGPIPE により落ちることがあった
 - kosui は入力の最後に `exit` が無くても終わるようになった。`kawari_encode` などはフォルダ名の `.` を拡張子とみなしていた (入力を出力で上書きしうるファイルは処理しない)
-- その他、細かな不具合 (`document/changelog.txt` を参照)
+- その他、細かな不具合 ([マニュアルの更新履歴](http://ukatech.shillest.net/kawari-docs/other/changelog/)を参照)
 
 #### 2026/10/19 Phase 9.1.0 (Core 4.1.0)
 

@@ -1,6 +1,6 @@
 # Fixture ghost for the shiori suite (build/src/test/run.ps1).
 #
-# The minimum SHIORI/3.0 handler from document/start.html: an ID that starts
+# The minimum SHIORI/3.0 handler from the Getting Started guide of kawari-docs: an ID that starts
 # with "On" is an event (event.<ID>), anything else is a resource
 # (resource.<ID>). version / craftman / shioriid / name are answered by
 # the module itself unless this file defines them.

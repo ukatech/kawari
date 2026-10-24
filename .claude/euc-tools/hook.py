@@ -15,7 +15,7 @@ Rules:
 - Bash/PowerShell: EUC-JP を化けさせるか改行コードを書き換えるコマンドを DENY
 
 純 ASCII (0x00-0x7F のみ) のファイルは文字コードの区別が存在しないため素通しする。
-UTF-8 のファイル (document/*.html など) は対象外で、標準ツールをそのまま使える。
+UTF-8 のファイル (README.md など) は対象外で、標準ツールをそのまま使える。
 """
 import json
 import re
