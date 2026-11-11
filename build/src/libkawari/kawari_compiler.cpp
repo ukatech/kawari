@@ -203,8 +203,29 @@ int TKawariCompiler::GetLineNo(void) const{
 	return lexer->getLineNo();
 }
 //-------------------------------------------------------------------------
+// 文字列が「そのまま1つの文字列リテラルになる」ことが字句規則から明らかか調べる。
+// 満たすなら Compile() は字句解析をせずに TKVMCodeString を返してよい。
+// 条件 (BLOCK_MODE のリテラルは前処理なしで1行分の空白付き文字列になる):
+//   ・空でなく、先頭と末尾が空白でない
+//   ・制御文字・DEL・ " $ ' ( ) を含まない (0x80 以上は常にリテラルの文字)
+static bool IsPlainLiteral(const wstring &src){
+	if (src.empty()) return false;
+	wchar_t first=src[0], last=src[src.size()-1];
+	if ((first==L' ')||(last==L' ')) return false;
+	for (wstring::size_type i=0, n=src.size(); i<n; i++){
+		unsigned long c=(unsigned long)src[i];
+		if (c>=0x80) continue;
+		if ((c<0x20)||(c==0x7F)) return false;
+		if ((c==L'"')||(c==L'$')||(c==L'\'')||(c==L'(')||(c==L')')) return false;
+	}
+	return true;
+}
+//-------------------------------------------------------------------------
 // 文字列をStatementとして中間コードへコンパイル
 TKVMCode_base *TKawariCompiler::Compile(const wstring &src, TKawariLogger &logger){
+	// 実行時に作られる単語の大半は記号を含まない単純な文字列。
+	// ストリームと字句解析器を作る費用を省く。
+	if (IsPlainLiteral(src)) return new TKVMCodeString(src);
 	wistringstream is(src);
 	TKawariCompiler compiler(is, logger, L"<unknown>", false);
 	return compiler.compileStatement(true, BLOCK_MODE);

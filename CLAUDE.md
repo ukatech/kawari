@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-華和梨 (KAWARI) — 伺か用の SHIORI (擬似AI) モジュール。C++ 製、Phase 9.2.0 (Core 4.2.0)。
+華和梨 (KAWARI) — 伺か用の SHIORI (擬似AI) モジュール。C++ 製、Phase 9.2.1 (Core 4.2.1)。
 CI は無い。最低限のテストは `build/src/test/` (下記「テスト」)。
 旧 ACP (SJIS の std::string) 版のコードは `v8acp` ブランチに保存してある。
 
@@ -100,6 +100,14 @@ make -f gcc.mak
   - コンパイラで拾うもの (木には残らない): **K-W2003** (`regex_*` の引数に引用符のない `( )`。素の括弧は `compileBlock` が中身だけを残して消すので、`(a)` と `a` が同じ木になる)。`TKawariCompiler::SetLintNotes(TLintNotes *)` で受け取り先を付けたときだけ、`compileWord` が「スクリプト中にブロックを読んだ」旗 (`lastwordblock`) を立て、`compileScriptStatement` が所見を `TLintNotes` に積む。受け取り先は `TKawariEngine` が持ち (`LoadKawariDictStream` が `KeepZones` のときだけ付ける)、通常の読み込みでは NULL で何もしない。`compileWord` の旗は終わるときに設定するので、入れ子の単語の旗は外側が上書きする。木で拾うもの: **K-W2004** (`regex_replace(_first)` の置換文字列に引用符のない `${N}` = `TKVMCodeHistoryCall`)。
   - 抑制は `# lint:disable-next-line=K-W2001, K-W2003` (次の行だけ。ユーザーが決めた)。`TKawariPreProcessor` がコメント行を捨てる所で `TLintNotes::ReadComment` に渡し、`TKawariLint::Run` が出力前に `IsSuppressed` で捨てる。K-W2xxx にだけ効き、実行時の診断は抑制しない。複数行の単語の所見は単語の先頭行なので、エントリ定義の前の行に書く。
   - **まだ無い**: カンマによる意図しない単語分割 (「意図しない」を判定できず偽陽性が出るので見送り)。
+
+## 実行速度 (Phase 9.2.1)
+
+- 文の実行 (`TKVMCodeScriptStatement::Run`) は、先頭の単語から構築時に決めた `kind` で分岐する (文字列比較しない)。`list` を構築後に書き換える処理を足すなら `Classify()` を呼び直すこと。
+- 先頭の単語が固定の文字列の文は、`TFunctionCache` (`kawari_vm.h`) に `System.Function.<名前>` の検索結果を覚える。エントリの名前→ID は変わらないので、`TNameSpace::RegisteredEntryCount()` (エントリは増える一方) が同じなら再利用する。**エントリを `EntryCollection` から消す処理を足すと、この前提が崩れる**。
+- `TKawariCompiler::Compile` は、制御文字・`" $ ' ( )`・前後の空白を含まない文字列なら字句解析を通さず `TKVMCodeString` を返す (`IsPlainLiteral`)。字句規則 (`literal_map3`) や前処理を変えたら、元の経路と結果が同じか確かめること。
+- `TWordCollection` は ID ごとに `WordIDMap` の iterator (`IDIter`) を持ち、`Delete` で再検索しない。
+- 測るときは、辞書の読み込み (約 300ms / 4 万行) と実行を分けること。引用符の中は `${}` が展開されないので、毎回違う単語を作るベンチは引用符なしで書く。`-pg` は全体にかけると mcount が 3 割を占めて歪む。
 
 ## 正規表現 (KIS の regex_*)
 

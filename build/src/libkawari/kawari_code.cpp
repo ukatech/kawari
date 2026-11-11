@@ -147,14 +147,41 @@ wstring TKVMCodeScriptStatement::GetArg0(void){
 	return str->s;
 }
 
+// 先頭の単語から構文の種類を決める (コンストラクタから一度だけ呼ぶ)
+void TKVMCodeScriptStatement::Classify(void){
+	kind=K_CALL;
+	arg0lit=NULL;
+	if (!list.size()) return;
+	const TKVMCodeString *str=dynamic_cast<const TKVMCodeString *>(list[0]);
+	if (!str) return;
+	arg0lit=&(str->s);
+	const wstring &a=str->s;
+	if(a==L"NULL") kind=K_NULL;
+	else if(a==L"break") kind=K_BREAK;
+	else if(a==L"continue") kind=K_CONTINUE;
+	else if(a==L"return") kind=K_RETURN;
+	else if(a==L"function") kind=K_FUNCTION;
+	else if(a==L"lambda") kind=K_LAMBDA;
+	else if(a==L"rmfunc") kind=K_RMFUNC;
+	else if(a==L"while") kind=K_WHILE;
+	else if(a==L"until") kind=K_UNTIL;
+	else if(a==L"loop") kind=K_LOOP;
+	else if(a==L"foreach") kind=K_FOREACH;
+	else if(a==L"?") kind=K_RANDOM;
+	else if(a==L"silent") kind=K_SILENT;
+}
+
+TKVMCodeScriptStatement::~TKVMCodeScriptStatement(){
+	delete fcache;
+}
+
 wstring TKVMCodeScriptStatement::Run(TKawariVM &vm){
 	if (!list.size()) return L"";
-	wstring arg0=GetArg0();
 	wstring retstr;
 	// 2段パースは気持ち悪いよぅ。
-	if(arg0==L"NULL") {
+	if(kind==K_NULL) {
 		retstr=L"";
-	}else if(arg0==L"break"){
+	}else if(kind==K_BREAK){
 		if (vm.Dictionary().CurrentLoop()){
 			vm.SetState(TKawariVM::InterpState(TKawariVM::InterpState::BREAK, L""));
 		}else{
@@ -163,7 +190,7 @@ wstring TKVMCodeScriptStatement::Run(TKawariVM &vm){
 				<< RC.S(kawari::resource::ERR_CODE_BREAK_OUTOF_LOOP);
 		}
 		retstr=L"";
-	}else if(arg0==L"continue"){
+	}else if(kind==K_CONTINUE){
 		if (vm.Dictionary().CurrentLoop()){
 			vm.SetState(TKawariVM::InterpState(TKawariVM::InterpState::CONTINUE, L""));
 		}else{
@@ -172,7 +199,7 @@ wstring TKVMCodeScriptStatement::Run(TKawariVM &vm){
 				<< RC.S(kawari::resource::ERR_CODE_CONTINUE_OUTOF_LOOP);
 		}
 		retstr=L"";
-	}else if(arg0==L"return"){
+	}else if(kind==K_RETURN){
 		if(list.size()==2){
 			unsigned int frame=vm.Dictionary().LinkFrame();
 			vm.SetState(TKawariVM::InterpState(
@@ -182,7 +209,7 @@ wstring TKVMCodeScriptStatement::Run(TKawariVM &vm){
 			vm.SetState(TKawariVM::InterpState(
 				TKawariVM::InterpState::RETURN, L"", false));
 		}
-	}else if(arg0==L"function"){
+	}else if(kind==K_FUNCTION){
 		if(list.size()==3){
 			wstring funcname=vm.RunWithCurrentContext(list[1]);
 			// 確実なコピーは逆コンパイルしかない。
@@ -213,7 +240,7 @@ wstring TKVMCodeScriptStatement::Run(TKawariVM &vm){
 		}else{
 			// エラー
 		}
-	}else if(arg0==L"lambda"){
+	}else if(kind==K_LAMBDA){
 		if(list.size()==2){
 			// 確実なコピーは逆コンパイルしかない。
 			wstring funcdecl=list[1]->DisCompile();
@@ -240,14 +267,14 @@ wstring TKVMCodeScriptStatement::Run(TKawariVM &vm){
 		}else{
 			// エラー
 		}
-	}else if(arg0==L"rmfunc"){
+	}else if(kind==K_RMFUNC){
 		if (list.size()==2){
 			wstring funcname=vm.RunWithCurrentContext(list[1]);
 			if (funcname.size())
 				vm.Dictionary().GetEntry(
 					TKawariVM::SYSTEM_FUNCTION_PREFIX+funcname).Clear();
 		}
-	}else if(arg0==L"while"){
+	}else if(kind==K_WHILE){
 		if(list.size()==3) {
 			unsigned int frame=vm.Dictionary().LinkFrame();
 			vm.Dictionary().StartLoop();
@@ -268,7 +295,7 @@ wstring TKVMCodeScriptStatement::Run(TKawariVM &vm){
 		} else {
 			// エラー
 		}
-	}else if(arg0==L"until"){
+	}else if(kind==K_UNTIL){
 		if(list.size()==3) {
 			unsigned int frame=vm.Dictionary().LinkFrame();
 			vm.Dictionary().StartLoop();
@@ -289,7 +316,7 @@ wstring TKVMCodeScriptStatement::Run(TKawariVM &vm){
 		} else {
 			// エラー
 		}
-	}else if(arg0==L"loop"){
+	}else if(kind==K_LOOP){
 		if(list.size()==3) {
 			unsigned int frame=vm.Dictionary().LinkFrame();
 			vm.Dictionary().StartLoop();
@@ -309,7 +336,7 @@ wstring TKVMCodeScriptStatement::Run(TKawariVM &vm){
 		} else {
 			// エラー
 		}
-	}else if(arg0==L"foreach"){
+	}else if(kind==K_FOREACH){
 		if(list.size()==4) {
 			TNS_KawariDictionary &dict=vm.Dictionary();
 			unsigned int frame=dict.LinkFrame();
@@ -353,7 +380,7 @@ wstring TKVMCodeScriptStatement::Run(TKawariVM &vm){
 		}else{
 			// エラー
 		}
-	}else if(arg0==L"?"){
+	}else if(kind==K_RANDOM){
 		if(list.size()>1) {
 			// 第1パラメータ以降から一つ選択
 			unsigned int index=Random(list.size()-1)+1;
@@ -363,9 +390,16 @@ wstring TKVMCodeScriptStatement::Run(TKawariVM &vm){
 	}else{
 		// 「関数」の処理
 		vector<wstring> args;
+		args.reserve(list.size());
 		for(TCodePVector::iterator it=list.begin();it!=list.end();it++)
 			args.push_back((*it)->Run(vm));
-		retstr=vm.FunctionCall(args);
+		TFunctionCache *fc=NULL;
+		if (arg0lit && arg0lit->size() && ((*arg0lit)[0]!=L'.')){
+			// 関数名が固定なので、エントリ検索の覚えを使う
+			if (!fcache) fcache=new TFunctionCache(TKawariVM::SYSTEM_FUNCTION_PREFIX+*arg0lit);
+			fc=fcache;
+		}
+		retstr=vm.FunctionCall(args, fc);
 	}
 	vm.Dictionary().PushToHistory(retstr);
 	return retstr;
@@ -396,7 +430,7 @@ wstring TKVMCodeInlineScript::Run(TKawariVM &vm){
 		}
 		TKVMCodeScriptStatement *code=dynamic_cast<TKVMCodeScriptStatement *>(*it);
 		if (code){
-			if(code->GetArg0()==L"silent"){
+			if(code->IsSilent()){
 				retstr=L"";
 				continue;
 			}

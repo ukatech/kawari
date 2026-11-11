@@ -206,15 +206,28 @@ wstring TKawariVM::RunWithCurrentContext(TKVMCode_base *code){
 }
 //---------------------------------------------------------------------------
 // 関数実行
-wstring TKawariVM::FunctionCall(const vector<wstring>& args){
+wstring TKawariVM::FunctionCall(const vector<wstring>& args, TFunctionCache *cache){
 	if (!args[0].size()) return (L"");
 	// 先頭に'.'がある場合は強制ビルトインコマンド呼び出し
 	if (args[0][0]==L'.') {
 		wstring comname=args[0].substr(1);
-		if (FunctionTable.count(comname))
-			return (FunctionTable[comname]->Function(args));
+		map<wstring, TKisFunction_base *>::const_iterator fit=FunctionTable.find(comname);
+		if (fit!=FunctionTable.end())
+			return (fit->second->Function(args));
 	}else{
-		TEntry entry=dictionary.GetEntry(SYSTEM_FUNCTION_PREFIX+args[0]);
+		TEntry entry(NULL, 0);
+		if (cache){
+			// 文ごとの覚え。エントリの名前→IDは登録総数が変わらない限り変わらない
+			unsigned int gen=dictionary.GlobalEntryCount();
+			if ((!cache->valid)||(cache->generation!=gen)){
+				cache->entry=dictionary.GetEntry(cache->entryname);
+				cache->generation=gen;
+				cache->valid=true;
+			}
+			entry=cache->entry;
+		}else{
+			entry=dictionary.GetEntry(SYSTEM_FUNCTION_PREFIX+args[0]);
+		}
 		// ユーザ定義関数を優先
 		if (entry.IsValid()&&entry.Size()){
 			// 最初の単語を実体とする
@@ -252,9 +265,11 @@ wstring TKawariVM::FunctionCall(const vector<wstring>& args){
 			ResetState();
 
 			return retstr;
-		}else if(FunctionTable.count(args[0])){
+		}else{
 			// ビルトイン関数
-			return (FunctionTable[args[0]]->Function(args));
+			map<wstring, TKisFunction_base *>::const_iterator fit=FunctionTable.find(args[0]);
+			if (fit!=FunctionTable.end())
+				return (fit->second->Function(args));
 		}
 	}
 	logger.Diag(kawari_log::LOG_ERROR, kawari_log::E_UNDEFINED_FUNCTION)

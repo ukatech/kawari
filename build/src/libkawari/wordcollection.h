@@ -52,6 +52,10 @@ protected:
 	// データとIDの対応表
 	std::map<T,unsigned int,Compare> WordIDMap;
 
+	// IDごとの WordIDMap 上の位置 (添字は ID-1)。Delete で再検索せずに消すため。
+	// std::map の iterator は他の要素の挿入・削除で無効にならない。
+	std::vector<typename std::map<T,unsigned int,Compare>::iterator> IDIter;
+
 	// リサイクル待ちID
 	std::vector<unsigned int> Recycle;
 
@@ -128,14 +132,14 @@ bool TWordCollection<T,Compare>::Insert(const T& word,unsigned int *id_)
 		Recycle.pop_back();
 		// やばいかなー
 		WordList[id-1]=word;
-		WordIDMap.insert(it,typename std::map<T,unsigned int,Compare>::value_type(word,id));
+		IDIter[id-1]=WordIDMap.insert(it,typename std::map<T,unsigned int,Compare>::value_type(word,id));
 		IDMap[id]=id;
 	}else{
 		WordList.push_back(word);
 		id=WordList.size();
 
 		IDMap.push_back(id);
-		WordIDMap.insert(it,typename std::map<T,unsigned int,Compare>::value_type(word,id));
+		IDIter.push_back(WordIDMap.insert(it,typename std::map<T,unsigned int,Compare>::value_type(word,id)));
 	}
 	if(id_) *id_=id;
 
@@ -151,7 +155,8 @@ bool TWordCollection<T,Compare>::Delete(unsigned int id){
 
 	IDMap[id]=0;
 	Recycle.push_back(id);
-	WordIDMap.erase(WordList[id-1]);
+	// 挿入時に控えた位置で消す (比較子による再検索をしない)
+	WordIDMap.erase(IDIter[id-1]);
 
 	return true;
 }
@@ -190,6 +195,7 @@ void TWordCollection<T,Compare>::Reserve(unsigned int n)
 {
 	WordList.reserve(n);
 	IDMap.reserve(n);
+	IDIter.reserve(n);
 	Recycle.reserve(n/2);
 }
 //---------------------------------------------------------------------------

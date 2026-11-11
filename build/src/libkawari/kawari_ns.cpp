@@ -31,6 +31,13 @@ TEntry TNameSpace::Create(const wstring& entry)
 	// "."はルートを示す。
 	if(entry==L".") return(TEntry(this,0));
 
+	// 登録済みの名前なら、親の登録も済んでいるので、分解せずに返す
+	// (EntryCollection には分解後の正規の名前しか入らない)
+	{
+		TEntryID found=EntryCollection.Find(entry);
+		if(found) return(TEntry(this,found));
+	}
+
 	vector<wstring> entryname_node;
 	SplitEntryName(entry,entryname_node);
 	if(entryname_node.size()==0) return(TEntry(this,0));
@@ -114,20 +121,24 @@ unsigned int TEntry::Size(void) const
 // 戻り値 : 成功でtrue
 bool TEntry::Clear(void)
 {
-	if((!IsValid())||(ns->Dictionary.count(entry)==0)) return(false);
+	if(!IsValid()) return(false);
+	TDictionary::iterator dit=ns->Dictionary.find(entry);
+	if(dit==ns->Dictionary.end()) return(false);
 	if(AssertIfProtected()) return(false);
 
 	// 全単語に対して……
-	for(vector<TWordID>::iterator it=ns->Dictionary[entry].begin();it!=ns->Dictionary[entry].end();it++) {
+	vector<TWordID> &words=dit->second;
+	for(vector<TWordID>::iterator it=words.begin();it!=words.end();it++) {
 		TWordID wid=(*it);
 		// 逆引き辞書の消去
-		ns->ReverseDictionary[wid].erase(ns->ReverseDictionary[wid].lower_bound(entry));
+		multiset<TEntryID> &rev=ns->ReverseDictionary[wid];
+		rev.erase(rev.lower_bound(entry));
 		// GCに登録
 		ns->gc->MarkWordForGC(wid);
 	}
 
 //	ns->Dictionary.erase(entry);
-	ns->Dictionary[entry].clear();
+	words.clear();
 	return(true);
 }
 //---------------------------------------------------------------------------

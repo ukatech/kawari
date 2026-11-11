@@ -233,3 +233,9 @@ echo $(date "%Y-%m-%d %H:%M:%S" $(mktime 2100 12 31 23 59 59))
 
 echo $(date "%Y-%m-%d %H:%M:%S" $(mktime 2000 2 29 0 0 0))
 = 2000-02-29 00:00:00
+
+# Function lookup cache of a statement: the same statement node runs while the
+# function is undefined, defined, removed, and then shadowed by a user function
+# with a builtin's name.
+cmd set n 0; loop 5 $(set n $[ ${n} + 1 ]; if $[ ${n} == 3 ] $(function foo $(echo user)); foo; echo "|"); rmfunc foo; foo; echo "|"; function echo $(.echo shadow); echo x
+= ||user|user|user||shadow

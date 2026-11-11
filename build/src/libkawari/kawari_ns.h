@@ -85,6 +85,10 @@ public:
 	// 有効エントリ数を取得
 	unsigned int Size(void) const;
 
+	// 名前を登録したエントリの総数。エントリは作られるたびに増え、減ることはない
+	// (名前→IDの対応が変わっていないことを、数の一致で確かめるのに使う)
+	unsigned int RegisteredEntryCount(void) const { return EntryCollection.Size(); }
+
 
 	// [ エントリ獲得 ]
 
@@ -328,7 +332,7 @@ inline wstring TEntry::GetName(void) const
 // 戻り値 : 書込み保護対象ならばtrue
 inline bool TEntry::AssertIfProtected(void)
 {
-	if(IsValid()&&ns->ProtectedEntry.count(entry)){
+	if(IsValid()&&(!ns->ProtectedEntry.empty())&&ns->ProtectedEntry.count(entry)){
 		ns->gc->GetLogger().Diag(kawari_log::LOG_ERROR, kawari_log::E_PROTECTED_ENTRY)
 			<< RC.S(kawari::resource::ERR_NS_ASSERT_PROTECTED_ENTRY1) << GetName()
 			<< RC.S(kawari::resource::ERR_NS_ASSERT_PROTECTED_ENTRY2);

@@ -140,11 +140,28 @@ public:
 // 基本的にStatementと同じ。
 class TKVMCodeScriptStatement : public TKVMCodeList_base {
 public:
+	// 先頭の単語が表す構文の種類 (コンパイル時に一度だけ決める。実行のたびに文字列比較しない)
+	enum Kind {
+		K_CALL=0,	// 関数呼び出し (下のどれでもない)
+		K_NULL, K_BREAK, K_CONTINUE, K_RETURN, K_FUNCTION, K_LAMBDA, K_RMFUNC,
+		K_WHILE, K_UNTIL, K_LOOP, K_FOREACH, K_RANDOM, K_SILENT
+	};
+
 	virtual std::wstring GetArg0(void);
 	virtual std::wstring Run(class TKawariVM &vm);
 	virtual std::wstring DisCompile(void) const;
-	virtual ~TKVMCodeScriptStatement() {}
-	TKVMCodeScriptStatement(const std::vector<TKVMCode_base *> &tmplist):TKVMCodeList_base(tmplist) {}
+	// 先頭の単語が "silent" か
+	bool IsSilent(void) const { return kind==K_SILENT; }
+	virtual ~TKVMCodeScriptStatement();
+	TKVMCodeScriptStatement(const std::vector<TKVMCode_base *> &tmplist):TKVMCodeList_base(tmplist), fcache(NULL) { Classify(); }
+private:
+	// 先頭の単語から kind と arg0lit を決める
+	void Classify(void);
+	Kind kind;
+	// 先頭の単語が固定の文字列ならその中身 (list[0] が持つので寿命は同じ)。そうでなければ NULL
+	const std::wstring *arg0lit;
+	// 関数呼び出しのときのユーザ関数エントリ検索の覚え (最初の呼び出しで作る)
+	struct TFunctionCache *fcache;
 protected:
 	virtual const std::wstring GetName(void) const { return L"ScriptStatement"; }
 };

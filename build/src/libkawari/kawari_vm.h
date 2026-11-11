@@ -38,6 +38,20 @@
 //---------------------------------------------------------------------------
 
 //==========================================================================
+// 関数呼び出しのたびに「System.Function.<名前>」エントリを探す費用を省くための覚え。
+// 先頭の単語が固定の文字列である文ごとに 1 つ持つ。
+// エントリは作られる一方で消えないので、登録済みエントリの総数 (generation) が
+// 同じなら、前回の検索結果 (見つからなかった、を含む) がそのまま使える。
+//==========================================================================
+struct TFunctionCache {
+	std::wstring entryname;		// "System.Function." + 関数名
+	bool valid;					// entry と generation が入っているか
+	unsigned int generation;	// 検索したときの登録済みエントリ総数
+	TEntry entry;				// 検索結果 (無効なエントリなら無い)
+	TFunctionCache(const std::wstring &name) : entryname(name), valid(false), generation(0), entry(NULL, 0) {}
+};
+
+//==========================================================================
 //
 //  華和梨仮想機械
 //  Kawari Virtual Machine  (former TKisEngine)
@@ -156,7 +170,8 @@ public:
 	std::wstring RunWithCurrentContext(class TKVMCode_base *code);
 
 	// 関数実行
-	std::wstring FunctionCall(const std::vector<std::wstring>& args);
+	// cache : 呼び出し元の文が持つ、ユーザ関数エントリの検索結果の覚え (無ければ NULL)
+	std::wstring FunctionCall(const std::vector<std::wstring>& args, TFunctionCache *cache=NULL);
 
 	// 例外状態(continue, break, return, exception)であるかを知る
 	bool IsOnException(void) { return (state.state!=InterpState::NORMAL); }

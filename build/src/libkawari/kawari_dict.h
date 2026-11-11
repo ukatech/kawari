@@ -113,6 +113,9 @@ public:
 	// 戻り値 : エントリの個数
 	unsigned int Size(void) const;
 
+	// グローバルな名前空間に名前を登録したエントリの総数 (増える一方で減らない)
+	unsigned int GlobalEntryCount(void) const;
+
 	// 指定されたエントリの単語数を取得
 	// 戻り値 : 単語の個数
 //	unsigned int EntrySize(TEntryID entry) const;
@@ -231,6 +234,12 @@ inline unsigned int TNS_KawariDictionary::WordCollectionSize(void) const
 inline unsigned int TNS_KawariDictionary::Size(void) const
 {
 	return(GlobalNameSpace->Size());
+}
+//---------------------------------------------------------------------------
+// グローバルな名前空間に名前を登録したエントリの総数
+inline unsigned int TNS_KawariDictionary::GlobalEntryCount(void) const
+{
+	return(GlobalNameSpace->RegisteredEntryCount());
 }
 //---------------------------------------------------------------------------
 // 単語ID取得
