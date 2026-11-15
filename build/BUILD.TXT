@@ -99,27 +99,26 @@ Ruby 1.6, bash, findがある環境で、
     $ make -f bcc.mak
 
 
-2.3. Microsoft VC++(7.1)
+2.3. Microsoft Visual C++ (最新版 / VC6)
 -------------------
 
-Ruby 1.6, bash, findがある環境で、
+IDE のプロジェクトファイルは廃止しました。代わりに Python のスクリプト
+build/src/msvc_build.py が cl.exe を直接呼びます(Windows、Python 3 が必要)。
+ソースは EUC-JP のため、スクリプトが変換したコピー(最新版は UTF-8、VC6 は
+CP932)を build/mach/<ターゲット>/work に作ってコンパイルします。
+作業ツリーは書き換えません。conv.sh は不要です。
 
-    $ cd KAWARI/build
-    $ ./conv.sh -c sjis src
+    $ cd KAWARI/build/src
+    $ python msvc_build.py x64     (最新の Visual Studio、64bit)
+    $ python msvc_build.py x86     (最新の Visual Studio、32bit)
+    $ python msvc_build.py vc6     (Visual C++ 6.0)
 
-を実行し、ソースをSJISに変換してからコンパイルします。
+Visual Studio は vswhere で探します(--vs-dir で指定もできます)。VC6 は
+C:\Program Files (x86)\Microsoft Visual Studio\VC98 を見ます(--vc6-dir か
+環境変数 VC6DIR で指定します)。成果物は build/mach/msvc_x64、msvc_x86、vc6 に
+できます。詳しくは msvc_build.py の冒頭を見てください。
 
-    vc_kawari/vc_kawari.sln
-    vc_kawari/vc_kawari.suo
-    vc_kawari/vc_kawari.vcproj
-    vc_kawari/vc_kosui.sln
-    vc_kawari/vc_kosui.suo
-    vc_kawari/vc_kosui.vcproj
-
-以下はVC++ 7.1以前のプロジェクトファイルですが、動作は保証しません。参考程度に。
-
-    vc_kawari/vc_kawari.dsw
-    vc_kawari/vc_kosui.dsw
+VC6 には _time64 が無いため、date / mktime は 2038 年以降を扱えません。
 
 
 3. hacking KAWARI

@@ -131,13 +131,13 @@ int TWideToByteStreamBuf::sync(void)
 }
 //---------------------------------------------------------------------------
 TWideOStream::TWideOStream(std::ostream *os, TKawariCharset cs, bool crlf)
-	: std::wostream(NULL), buf(os, cs, crlf)
+	: wostream(NULL), buf(os, cs, crlf)
 {
 	rdbuf(&buf);
 }
 //---------------------------------------------------------------------------
 TWideOStream::TWideOStream(FILE *fp, TKawariCharset cs, bool crlf)
-	: std::wostream(NULL), buf(fp, cs, crlf)
+	: wostream(NULL), buf(fp, cs, crlf)
 {
 	rdbuf(&buf);
 }

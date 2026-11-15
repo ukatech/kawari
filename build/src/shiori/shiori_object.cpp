@@ -1,11 +1,11 @@
 //---------------------------------------------------------------------------
 //
-// ‚ ‚êˆÈŠO‚Ì‰½‚©ˆÈŠO‚Ì‰½‚©
+// ¤¢¤ì°Ê³°¤Î²¿¤«°Ê³°¤Î²¿¤«
 // OBJECT SHIORI
 //
 //      Programed by Suikyo.
 //
-//  2003.01.24  Phase 8.1.0   ‹U—ÑŒç‚ğQl‚É
+//  2003.01.24  Phase 8.1.0   µ¶ÎÓ¸é¤ò»²¹Í¤Ë
 //
 //---------------------------------------------------------------------------
 #include "config.h"
@@ -26,26 +26,26 @@ namespace {
 	}
 }
 //---------------------------------------------------------------------------
-// ƒ‰ƒCƒuƒ‰ƒŠ‚Ì‰Šú‰»ˆ—
+// ¥é¥¤¥Ö¥é¥ê¤Î½é´ü²½½èÍı
 int so_library_init(void){
 	return 1;
 }
 //---------------------------------------------------------------------------
-// ƒ‰ƒCƒuƒ‰ƒŠ‚ÌI—¹ˆ—
+// ¥é¥¤¥Ö¥é¥ê¤Î½ªÎ»½èÍı
 int so_library_cleanup(void){
 	TKawariShioriFactory::DisposeFactory();
 	return 1;
 }
 //---------------------------------------------------------------------------
-// ƒ‚ƒWƒ…[ƒ‹”Ô†‚ğ•Ô‚·
+// ¥â¥¸¥å¡¼¥ëÈÖ¹æ¤òÊÖ¤¹
 const char *so_getmoduleversion(long *length){
 	string modver=TKawariShioriFactory::GetModuleVersion();
 	return string2cstr(modver, length);
 }
 //---------------------------------------------------------------------------
-// V‹KƒCƒ“ƒXƒ^ƒ“ƒX‚Ì¶¬
+// ¿·µ¬¥¤¥ó¥¹¥¿¥ó¥¹¤ÎÀ¸À®
 SO_HANDLE so_create(const char *argument, long length){
-	// —áŠO‚ğŒÄ‚Ño‚µ‘¤‚Éo‚³‚È‚¢
+	// Îã³°¤ò¸Æ¤Ó½Ğ¤·Â¦¤Ë½Ğ¤µ¤Ê¤¤
 	try {
 		return TKawariShioriFactory::GetFactory().CreateInstance(
 			ACPtoW(string(argument, length)));
@@ -64,15 +64,15 @@ SO_HANDLE so_createu(const char *argument, long length){
 	}
 }
 //---------------------------------------------------------------------------
-// ƒCƒ“ƒXƒ^ƒ“ƒX‚Ìíœ
+// ¥¤¥ó¥¹¥¿¥ó¥¹¤Îºï½ü
 int so_dispose(SO_HANDLE h){
 	return (int)TKawariShioriFactory::GetFactory().DisposeInstance((int)h);
 }
 //---------------------------------------------------------------------------
-// ‹UAIƒŠƒNƒGƒXƒg
-//   –ß‚è’l‚Ìƒ|ƒCƒ“ƒ^‚Í‚È‚é‚×‚­‘‚­so_free()‚Å‰ğ•ú‚·‚é‚±‚ÆB
-//   requeststr : u‰½‚©B(‰¼)vSHIORI/2.x, SAORI/1.0‹KŠi‚ÉŠî‚Ã‚«
-//                 ƒGƒ“ƒR[ƒh‚³‚ê‚½ˆø”
+// µ¶AI¥ê¥¯¥¨¥¹¥È
+//   Ìá¤êÃÍ¤Î¥İ¥¤¥ó¥¿¤Ï¤Ê¤ë¤Ù¤¯Áá¤¯so_free()¤Ç²òÊü¤¹¤ë¤³¤È¡£
+//   requeststr : ¡Ö²¿¤«¡£(²¾)¡×SHIORI/2.x, SAORI/1.0µ¬³Ê¤Ë´ğ¤Å¤­
+//                 ¥¨¥ó¥³¡¼¥É¤µ¤ì¤¿°ú¿ô
 //
 //   returns NULL if library is not ready.
 //

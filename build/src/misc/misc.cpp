@@ -64,17 +64,17 @@ wstring IntToString(int n)
 }
 //---------------------------------------------------------------------------
 // 64bit整数値から文字列を得る
-wstring Int64ToString(long long n)
+wstring Int64ToString(kawari_int64 n)
 {
 	wchar_t buff[64];
 	wchar_t *bp=buff;
 	wstring ret;
 
 	// 最小値の符号反転があふれないよう unsigned で扱う
-	unsigned long long u=(unsigned long long)n;
+	kawari_uint64 u=(kawari_uint64)n;
 	if(n<0) {
 		ret+=L'-';
-		u=0ull-u;
+		u=(kawari_uint64)0-u;
 	}
 
 	do {
@@ -91,7 +91,7 @@ wstring Int64ToString(long long n)
 }
 //---------------------------------------------------------------------------
 // 文字列から64bit整数値を得る (先頭の空白と符号を許し、数字でなくなるまで読む)
-long long StringToInt64(const std::wstring &str)
+kawari_int64 StringToInt64(const std::wstring &str)
 {
 	std::wstring::size_type i=0, max=str.length();
 	while((i<max)&&((str[i]==L' ')||(str[i]==L'\t')||(str[i]==L'\r')||(str[i]==L'\n'))) i++;
@@ -103,8 +103,8 @@ long long StringToInt64(const std::wstring &str)
 	}
 
 	// 絶対値は負の側の限界まで持てるよう unsigned で数え、範囲外は飽和させる
-	const unsigned long long limit=neg ? 9223372036854775808ull : 9223372036854775807ull;
-	unsigned long long v=0;
+	const kawari_uint64 limit=neg ? (((kawari_uint64)1)<<63) : ((((kawari_uint64)1)<<63)-1);
+	kawari_uint64 v=0;
 	for(; (i<max)&&_isdigit(str[i]); i++) {
 		unsigned int d=(unsigned int)(str[i]-L'0');
 		if(v>(limit-d)/10) {
@@ -115,8 +115,8 @@ long long StringToInt64(const std::wstring &str)
 		}
 		v=v*10+d;
 	}
-	if(neg) return (long long)(0ull-v);
-	return (long long)v;
+	if(neg) return (kawari_int64)((kawari_uint64)0-v);
+	return (kawari_int64)v;
 }
 //---------------------------------------------------------------------------
 // パス表現の正規化

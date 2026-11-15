@@ -14,6 +14,15 @@
 #if defined(KAWARI_WIN32)
 #	include <windows.h>
 #	define DSSTP_WIN32
+#	if defined(_MSC_VER) && (_MSC_VER < 1300)
+		// VC6付属の古いSDKには無い。32bit専用なので32bit整数と同じ扱いにする
+		typedef DWORD DWORD_PTR;
+		typedef DWORD ULONG_PTR;
+		typedef long LONG_PTR;
+#		define GWLP_USERDATA GWL_USERDATA
+#		define GetWindowLongPtrW GetWindowLongW
+#		define SetWindowLongPtrW SetWindowLongW
+#	endif
 #elif defined(KAWARI_POSIX) && !defined(__EMSCRIPTEN__)
 #	include <climits>
 #	include <cstdint>
@@ -173,7 +182,8 @@ bool TBasewareLink::Send(const string &request, string &response, unsigned int t
 {
 	response.erase();
 
-	HWND target=(HWND)(UINT_PTR)handle;
+	// ウィンドウハンドルは32bitで表せる値。64bit版では符号拡張してポインタにする
+	HWND target=(HWND)(INT_PTR)(LONG)handle;
 	if ((handle==0)||(!::IsWindow(target))) return false;
 
 	const wchar_t *windowname=L"kawari_dsstp_receiver";

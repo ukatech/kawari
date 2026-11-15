@@ -20,6 +20,11 @@
 #include <iostream>
 using namespace std;
 //---------------------------------------------------------------------------
+#if defined(_MSC_VER) && (_MSC_VER < 1300)
+// VC6付属のSDKにはDWORD_PTRが無い (32bit専用なのでDWORDと同じ)
+typedef DWORD DWORD_PTR;
+#endif
+//---------------------------------------------------------------------------
 namespace{
 	const unsigned int DIRECT_SSTP_PORT=9801;
 
@@ -131,7 +136,8 @@ wstring TKosuiDSSTPInterface::Parse(const wstring& script){
 	TPHMessage request;
 
 	char szHWnd[100];
-	sprintf(szHWnd, "%d", (unsigned int)dumhwnd);
+	// ウィンドウハンドルは64bit版Windowsでも32bitで表せる(符号拡張された値)
+	sprintf(szHWnd, "%u", (unsigned int)(UINT_PTR)dumhwnd);
 
 	// 送信するCharsetに従ってバイト列化する
 	const TKawariCharset sendcs=KC_SJIS;
@@ -149,7 +155,7 @@ wstring TKosuiDSSTPInterface::Parse(const wstring& script){
 	cds.cbData = reqmes.size();
 	cds.lpData = (LPVOID)reqmes.c_str();
 
-	DWORD dwret;
+	DWORD_PTR dwret;	// 64bitではPDWORD_PTR(8バイト)を要求される
 	::SendMessageTimeout(
 		dahwnd, WM_COPYDATA, (WPARAM)dumhwnd,
 		(LPARAM)&cds, SMTO_ABORTIFHUNG, 1000, &dwret);

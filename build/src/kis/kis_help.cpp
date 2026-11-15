@@ -54,12 +54,13 @@ wstring KIS_help::Function(const vector<wstring>& args)
 wstring KIS_ver::Function(const vector<wstring>& args)
 {
 	if ((args.size()>=2)&&(args[1]==L"license")){
-		GetLogger().GetStream() << L"" KAWARI_CORE_LICENSE;
+		// 狭い文字列リテラルとワイド文字列リテラルの連結は VC6 が受け付けない
+		GetLogger().GetStream() << AtoW(std::string(KAWARI_CORE_LICENSE));
 		return (L"");
 	}else if((args.size()>=2)&&(args[1]==L"author")) {
-		return(L"" KAWARI_AUTHOR);
+		return(AtoW(std::string(KAWARI_AUTHOR)));
 	}else{
-		return(L"" KAWARI_NAME L"/" KAWARI_MAJOR L"." KAWARI_MINOR L"." KAWARI_SUBMINOR);
+		return(AtoW(std::string(KAWARI_NAME "/" KAWARI_MAJOR "." KAWARI_MINOR "." KAWARI_SUBMINOR)));
 	}
 }
 //---------------------------------------------------------------------------

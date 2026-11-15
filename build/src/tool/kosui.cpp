@@ -111,7 +111,7 @@ static wstring JsonEscape(const wstring &s)
 static wstring DiagCodeName(const TDiagRecord &r)
 {
 	wostringstream o;
-	o << L"K-" << (r.iserror ? L'E' : L'W') << setw(4) << setfill(L'0') << r.code;
+	o << L"K-" << (r.iserror ? L"E" : L"W") << setw(4) << setfill(L'0') << r.code;
 	return o.str();
 }
 //---------------------------------------------------------------------------

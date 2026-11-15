@@ -132,14 +132,14 @@ bool TWordCollection<T,Compare>::Insert(const T& word,unsigned int *id_)
 		Recycle.pop_back();
 		// やばいかなー
 		WordList[id-1]=word;
-		IDIter[id-1]=WordIDMap.insert(it,typename std::map<T,unsigned int,Compare>::value_type(word,id));
+		IDIter[id-1]=WordIDMap.insert(it,std::pair<const T,unsigned int>(word,id));
 		IDMap[id]=id;
 	}else{
 		WordList.push_back(word);
 		id=WordList.size();
 
 		IDMap.push_back(id);
-		IDIter.push_back(WordIDMap.insert(it,typename std::map<T,unsigned int,Compare>::value_type(word,id)));
+		IDIter.push_back(WordIDMap.insert(it,std::pair<const T,unsigned int>(word,id)));
 	}
 	if(id_) *id_=id;
 

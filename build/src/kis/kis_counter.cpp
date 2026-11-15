@@ -27,7 +27,7 @@ wstring KIS_inc::Function_(const vector<wstring>& args,bool flag_dec)
 	if(!AssertArgument(args, 2, 4)) return(L"");
 
 	// INT_MIN の符号反転や加算で int があふれないよう long long で計算する
-	long long diff=(args.size()<3)? 1: StringToInt(args[2]);
+	kawari_int64 diff=(args.size()<3)? 1: StringToInt(args[2]);
 	if(flag_dec) diff=-diff;
 #if 0
 	wstring entryname;
@@ -75,7 +75,7 @@ wstring KIS_inc::Function_(const vector<wstring>& args,bool flag_dec)
 		return(L"");
 	}
 
-	long long limit=(args.size()>=4)?
+	kawari_int64 limit=(args.size()>=4)?
 		StringToInt(args[3]):((flag_dec)? INT_MIN: INT_MAX);
 	TWordID nullstr=Engine->CreateStrWord(L"");
 
@@ -85,7 +85,7 @@ wstring KIS_inc::Function_(const vector<wstring>& args,bool flag_dec)
 	//MEMO: 範囲指定した場合、その全てをinc/decするように仕様追加。
 	for(unsigned int i=range.Start;i<=range.End;i++){
 		// atoi()は""に対して0を返すことが保証されている。
-		long long counter=StringToInt(Engine->IndexParse(range.Entry,i))+diff;
+		kawari_int64 counter=StringToInt(Engine->IndexParse(range.Entry,i))+diff;
 		if(((!flag_dec)&&(counter>limit))
 		   ||(flag_dec&&(counter<limit))) counter=limit;
 		// limit を超える方向とは逆にあふれた場合も int の範囲に収める

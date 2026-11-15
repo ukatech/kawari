@@ -63,7 +63,9 @@
 
 	// forのスコープがANSIに準拠していない問題対策(篠原君考案の手法)
 	// 参考文献 http://www.ksky.ne.jp/~seahorse/cpp/loopvar.html
-	#ifndef for
+	// VC6(_MSC_VER<1300)だけ。VC7.1以降は標準に準拠しており、
+	// 新しいSTLはキーワードのマクロ化を#errorで拒否する
+	#if (_MSC_VER < 1300) && !defined(for)
 	#define for if(0);else for
 	#endif
 
@@ -98,6 +100,15 @@
 #	if (__GNUC__ >= 3)
 #		define HAVE_SSTREAM_H
 #	endif
+#endif
+//---------------------------------------------------------------------------
+// 64bit整数 (VC6には long long が無く、__int64 を使う)
+#if defined(_MSC_VER) && (_MSC_VER < 1310)
+	typedef __int64 kawari_int64;
+	typedef unsigned __int64 kawari_uint64;
+#else
+	typedef long long kawari_int64;
+	typedef unsigned long long kawari_uint64;
 #endif
 //---------------------------------------------------------------------------
 #endif

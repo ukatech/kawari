@@ -49,6 +49,7 @@
 //   4.2.0 = Phase 9.2.0 (診断コードと位置、kosui --check、静的検査、時刻の64bit化)
 #define KAWARI_CORE_VERSION	"4.2.1"
 
+#ifndef RC_INVOKED	// リソースコンパイラ(VC6のrc等)は長いマクロを扱えず、下の2つは要らない
 // 華和梨コア・クレジット(適当に改行で区切って連名)
 #define KAWARI_CORE_CREDITS \
 	" Original KAWARI Developer Team :\n" \
@@ -114,5 +115,6 @@
 "LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING\n" \
 "NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS\n" \
 "SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n"
+#endif // RC_INVOKED
 
 #endif // KAWARI_VERSION_H

@@ -104,7 +104,8 @@ void GetGhostList(map<HWND,wstring> &ghostlist)
 		string value=buff.substr(pos2+1,pos3-pos2-1);
 
 		if(key=="hwnd") {
-			idmap[processid]=((HWND)atoi(value.c_str()));;
+			// HWNDは32bitで表せる値。64bit版では符号拡張してポインタにする
+			idmap[processid]=((HWND)(INT_PTR)(LONG)strtoul(value.c_str(),NULL,10));
 		} else if(key=="name") {
 			namemap[processid]=SJIStoW(value);
 		}

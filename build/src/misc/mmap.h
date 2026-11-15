@@ -28,7 +28,7 @@ public:
 		// 2001/12/16 suikyo@yk.rim.or.jp : imortal entry bug
 //		if(it==end()) it=insert(pair<KeyType,DataType>(key,DataType()));
 //		if(it==upper_bound(key)) it=insert(pair<const KeyType,DataType>(key,DataType()));
-		if(it==this->upper_bound(key)) it=this->insert(typename TMMap<KeyType,DataType>::value_type(key,DataType()));
+		if(it==this->upper_bound(key)) it=this->insert(std::pair<const KeyType,DataType>(key,DataType()));
 		return((*it).second);
 	}
 /*
@@ -43,7 +43,7 @@ public:
 	void Add(const KeyType& key,const DataType& data)
 	{
 //		insert(pair<const KeyType,DataType>(key,data));
-		this->insert(typename TMMap::value_type(key,data));
+		this->insert(std::pair<const KeyType,DataType>(key,data));
 	}
 
 };

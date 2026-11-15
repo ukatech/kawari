@@ -64,9 +64,9 @@ inline int StringToInt(const std::wstring &str)
 
 //---------------------------------------------------------------------------
 // 64bit整数版 (時刻の通算秒数用。式の評価は int のまま)
-wstring Int64ToString(long long n);
+wstring Int64ToString(kawari_int64 n);
 // 文字列から64bit整数値を得る (StringToInt と同じ規則。範囲外は飽和)
-long long StringToInt64(const std::wstring &str);
+kawari_int64 StringToInt64(const std::wstring &str);
 //---------------------------------------------------------------------------
 // 整数値判定
 bool IsInteger (const std::wstring &str);
@@ -97,7 +97,7 @@ wstring PathToFileName(const wstring &path);
 wstring PathToBaseDir(const wstring &path);
 //---------------------------------------------------------------------------
 template <class T>
-int StringCompare(const basic_string<T> &str0, const basic_string<T> &str1, size_t s=0, size_t n=basic_string<T>::npos){
+int StringCompare(const basic_string<T> &str0, const basic_string<T> &str1, size_t s=0, size_t n=(size_t)-1){	// (size_t)-1 は basic_string<T>::npos。VC6はnposを既定引数に書くと内部エラーになる
 #if defined(__GNUC__) && (__GNUC__ < 3)
 	return str0.compare(str1, s, n);
 #else

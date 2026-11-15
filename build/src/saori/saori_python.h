@@ -1,11 +1,11 @@
 //---------------------------------------------------------------------------
 //
-// "壺榓棞" for 偁傟埲奜偺壗偐埲奜偺壗偐
-// SAORI 僀儞僞乕僼僃乕僗(python儌僕儏乕儖)
+// "糙下忘" for あれ笆嘲の部か笆嘲の部か
+// SAORI インタ〖フェ〖ス(pythonモジュ〖ル)
 //
 //              ABE, Suikyo
 //
-//  2003.03.07  Phase 8.1.0   摫擖
+//  2003.03.07  Phase 8.1.0   瞥掐
 //
 //---------------------------------------------------------------------------
 #ifndef SAORI_PYTHON_H
@@ -19,30 +19,30 @@
 #include <string>
 #include <map>
 //---------------------------------------------------------------------------
-// 弶婜壔
+// 介袋步
 PyObject *wrap_setcallback(PyObject *self, PyObject *args);
 //---------------------------------------------------------------------------
 namespace saori{
 //---------------------------------------------------------------------------
 class TModuleFactoryPython : public IModuleFactory{
 public:
-	// 儌僕儏乕儖偺専嶕偲惗惉
-	// 栠傝抣: 惗惉偵惉岟偟偨応崌丄僀儞僗僞儞僗丅幐攕偟偨応崌丄NULL丅
+	// モジュ〖ルの浮瑚と栏喇
+	// 提り猛: 栏喇に喇根した眷圭、インスタンス。己窃した眷圭、NULL。
 	virtual TModule *CreateModule(const std::wstring &path);
 
-	// 儌僕儏乕儖偺姰慡攋婞
+	// モジュ〖ルの窗链撬逮
 	virtual void DeleteModule(TModule *module);
 
-	// 僐儞僗僩儔僋僞
+	// コンストラクタ
 	TModuleFactoryPython(class TKawariLogger &lgr);
 
-	// 僨僗僩儔僋僞
+	// デストラクタ
 	virtual ~TModuleFactoryPython(void);
 };
 //---------------------------------------------------------------------------
 class TModulePython : public TModule{
 public:
-	// 弶婜壔
+	// 介袋步
 	virtual bool Initialize(void);
 	// SAORI/1.0 Load
 	virtual bool Load(void);

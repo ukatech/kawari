@@ -33,41 +33,41 @@ using namespace std;
 // 32bit の mingw-w64 (msvcrt) は time_t が 32bit なので、64bit 版の CRT 関数を直接呼ぶ。
 // localtime は 1970年より前では NULL を返し、mktime は 3000年を超えると -1 を返す。
 #if defined(__MINGW32__)
-static long long NowTime(void)
+static kawari_int64 NowTime(void)
 {
-	return (long long)_time64(NULL);
+	return (kawari_int64)_time64(NULL);
 }
-static struct tm *LocalTime(long long t)
+static struct tm *LocalTime(kawari_int64 t)
 {
 	__time64_t v=(__time64_t)t;
 	return _localtime64(&v);
 }
-static long long MakeTime(struct tm *tt)
+static kawari_int64 MakeTime(struct tm *tt)
 {
-	return (long long)_mktime64(tt);
+	return (kawari_int64)_mktime64(tt);
 }
 #else
 // 64bit の time_t を持つ環境 (LP64 の POSIX など)ではそのまま 64bit。
 // time_t が 32bit の環境では、範囲外の値は localtime が NULL を返して空文字になる。
-static long long NowTime(void)
+static kawari_int64 NowTime(void)
 {
-	return (long long)time(NULL);
+	return (kawari_int64)time(NULL);
 }
-static struct tm *LocalTime(long long t)
+static struct tm *LocalTime(kawari_int64 t)
 {
 	time_t v=(time_t)t;
-	if((long long)v!=t) return NULL;
+	if((kawari_int64)v!=t) return NULL;
 	return localtime(&v);
 }
-static long long MakeTime(struct tm *tt)
+static kawari_int64 MakeTime(struct tm *tt)
 {
-	return (long long)mktime(tt);
+	return (kawari_int64)mktime(tt);
 }
 #endif
 //---------------------------------------------------------------------------
 wstring KIS_date::Function(const vector<wstring>& args)
 {
-	long long nowtt;
+	kawari_int64 nowtt;
 	if(args.size()>=3) {
 		nowtt=StringToInt64(args[2]);
 	} else {
@@ -123,7 +123,7 @@ wstring KIS_date::Function(const vector<wstring>& args)
 				ret << setw(2) << setfill(L'0') << now->tm_sec;
 				break;
 			case L's':	// 1970/1/1 00:00:00 UTCからの秒数
-				ret << nowtt;
+				ret << Int64ToString(nowtt);	// VC6のwostreamは__int64を受け付けない
 				break;
 			case L'w':	// 曜日 (0..6) 日曜日が0
 				ret << now->tm_wday;
@@ -133,14 +133,14 @@ wstring KIS_date::Function(const vector<wstring>& args)
 				ret << (now->tm_year+1900);
 				break;
 			case L'%':
-				ret << L'%';
+				ret << L"%";	// VC6はwchar_tがunsigned shortなので、1文字を<<で流すと数値になる
 				break;
 			default:
-				ret << L'%';
+				ret << L"%";	// VC6はwchar_tがunsigned shortなので、1文字を<<で流すと数値になる
 				i--;
 			}
 		} else {
-			ret << format[i];
+			ret << wstring(1, format[i]);
 		}
 	}
 

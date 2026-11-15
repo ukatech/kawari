@@ -19,12 +19,15 @@
 #include "misc/charset.h"
 #include "misc/dsstp.h"
 //---------------------------------------------------------------------------
+#include <stddef.h>
 #include <string>
 #include <vector>
 #include <map>
 //---------------------------------------------------------------------------
 namespace saori{
-typedef unsigned long SAORI_HANDLE;
+// ライブラリのハンドル(HMODULE等のポインタ)を入れるので、ポインタと同じ幅が要る。
+// 64bit Windows(LLP64)では unsigned long は32bitでハンドルが切り詰められる
+typedef size_t SAORI_HANDLE;
 //---------------------------------------------------------------------------
 // SAORIモジュールを管理するファクトリ
 class IModuleFactory{
