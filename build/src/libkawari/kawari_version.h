@@ -21,11 +21,11 @@
 #define KAWARI_AUTHOR	"KawariDeveloperTeam"	// 著作者(英数字だけ)
 #define KAWARI_MAJOR	"9"		// メジャー番号(ピリオド無し、数字だけ)
 #define KAWARI_MINOR	"2"		// マイナー番号(ピリオド無し、数字だけ)
-#define KAWARI_SUBMINOR	"1"		// バグフィックス(ピリオド無し、数字だけ)
+#define KAWARI_SUBMINOR	"2"		// バグフィックス(ピリオド無し、数字だけ)
 
 // Win32のバージョン情報リソース(kawari_version.rc)用。上の番号と揃えること
-#define KAWARI_VERSION_RC		9,2,1,0
-#define KAWARI_VERSION_RC_STR	"9.2.1.0"
+#define KAWARI_VERSION_RC		9,2,2,0
+#define KAWARI_VERSION_RC_STR	"9.2.2.0"
 
 //---------------------------------------------------------------------------
 // コア
@@ -47,7 +47,9 @@
 //   4.1.0 = Phase 9.1.0 (lambda追加)
 //   4.1.1 = Phase 9.1.1 (textload_charset等追加)
 //   4.2.0 = Phase 9.2.0 (診断コードと位置、kosui --check、静的検査、時刻の64bit化)
-#define KAWARI_CORE_VERSION	"4.2.1"
+//   4.2.1 = Phase 9.2.1 (辞書の実行の高速化)
+//   4.2.2 = Phase 9.2.2 (他環境向けのメンテナンス。動作は4.2.1と同じ)
+#define KAWARI_CORE_VERSION	"4.2.2"
 
 #ifndef RC_INVOKED	// リソースコンパイラ(VC6のrc等)は長いマクロを扱えず、下の2つは要らない
 // 華和梨コア・クレジット(適当に改行で区切って連名)
