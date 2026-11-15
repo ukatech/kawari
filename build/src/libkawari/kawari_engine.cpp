@@ -228,7 +228,7 @@ unsigned int TKawariEngine::CalcEntryExpression(const wstring &entryexpr, set<TW
 	if (!code) return 0;
 	code->Evaluate(*KawariVM, wordcol);
 	delete code;
-	return wordcol.size();
+	return static_cast<unsigned int>(wordcol.size());
 }
 //---------------------------------------------------------------------------
 // 指定されたIDの単語(スクリプト)を実行する
@@ -394,7 +394,7 @@ bool TKawariEngine::SaveKawariDict(const wstring &filename,const vector<wstring>
 			wstring line;
 			line=(*it)+L" : "+GetWordFromID(wordcol[0]);
 
-			unsigned int wordcolmax=wordcol.size();
+			unsigned int wordcolmax=static_cast<unsigned int>(wordcol.size());
 			for(unsigned int j=1;j<wordcolmax;j++) {
 				line+=L" , ";
 				line+=GetWordFromID(wordcol[j]);

@@ -50,11 +50,11 @@ wstring KIS_substr::Function(const vector<wstring>& args){
 	if(!AssertArgument(args, 3)) return (L"");
 
 	const wstring target=(args[1]);
-	int st=normalizeIndex(StringToInt(args[2]), target.length());
-	int len=(args.size()>=4)?StringToInt(args[3]):target.length();
+	int st=normalizeIndex(StringToInt(args[2]), static_cast<int>(target.length()));
+	int len=(args.size()>=4)?StringToInt(args[3]):static_cast<int>(target.length());
 	if((st<0)||(len<0)) return (L"");
 	// len+stはintをあふれうる (lengthに巨大な値を渡された場合)
-	if(len>static_cast<int>(target.length())-st) len=target.length()-st;
+	if(len>static_cast<int>(target.length())-st) len=static_cast<int>(target.length())-st;
 	return (target.substr(st, len));
 }
 //---------------------------------------------------------------------------
@@ -63,7 +63,7 @@ wstring KIS_substr::Function(const vector<wstring>& args){
 wstring KIS_length::Function(const vector<wstring>& args){
 	if(!AssertArgument(args, 2)) return (L"");
 
-	return IntToString((args[1]).length());
+	return IntToString(static_cast<int>((args[1]).length()));
 }
 //---------------------------------------------------------------------------
 // target: target wstring
@@ -75,12 +75,12 @@ static int _match(const wstring &target, const wstring &pattern, int idx, bool f
 	if((!target.length())&&(!pattern.length())) return 0;
 	if(!pattern.length()){
 		// -(length+1) <= idx <= target.length()
-		if(idx<0) idx+=target.length()+1;
+		if(idx<0) idx+=static_cast<int>(target.length())+1;
 		// 0 <= idx <= target.length()
 		if((0<=idx)&&(idx<=static_cast<int>(target.length()))) return idx;
 		else return -1;
 	}else{
-		idx=normalizeIndex(idx, target.length());
+		idx=normalizeIndex(idx, static_cast<int>(target.length()));
 		if(idx<0) return -1;
 	}
 	wstring::size_type pos=(f)?
@@ -125,12 +125,12 @@ wstring KIS_match_at::Function(const vector<wstring>& args){
 	const wstring pattern=(args[2]);
 	if(!pattern.length()){
 		int idx=(args.size()>3)?StringToInt(args[3]):0;
-		if(idx<0) idx+=target.length();
+		if(idx<0) idx+=static_cast<int>(target.length());
 		if((0<=idx)&&(idx<=static_cast<int>(target.length()))) return (L"1");
 		else return (L"");
 	}
 	int idx=(args.size()>3)?
-		normalizeIndex(StringToInt(args[3]),target.length()):0;
+		normalizeIndex(StringToInt(args[3]),static_cast<int>(target.length())):0;
 	if(idx<0) return (L"");
 	if((!target.length())&&(!pattern.length())&&(!idx)) return (L"1");
 	if(StringCompare<wchar_t>(target, pattern, idx, pattern.size())==0)
@@ -145,7 +145,7 @@ wstring KIS_char_at::Function(const vector<wstring>& args){
 	if(!AssertArgument(args, 3)) return (L"");
 
 	wstring target=(args[1]);
-	int idx=normalizeIndex(StringToInt(args[2]), target.length());
+	int idx=normalizeIndex(StringToInt(args[2]), static_cast<int>(target.length()));
 	// 空文字列の index 0 は normalizeIndex が通すので、ここで弾く
 	if((idx<0)||(idx>=static_cast<int>(target.length()))) return (L"");
 	wstring retstr;
@@ -166,7 +166,7 @@ wstring KIS_sub::Function(const vector<wstring>& args){
 	wstring subst=(args[3]);
 	if(!pattern.length()){
 		int idx=(args.size()>4)? StringToInt(args[4]):0;
-		if(idx<0) idx+=target.length();
+		if(idx<0) idx+=static_cast<int>(target.length());
 		if(idx<0) return (args[1]);
 		if(idx<static_cast<int>(target.length()))
 			return (target.replace(idx, 0, subst));
@@ -208,14 +208,14 @@ wstring KIS_gsub::Function(const vector<wstring>& args){
 	wstring pattern=(args[2]);
 	wstring subst=(args[3]);
 	int tmp=(args.size()>4)?
-		normalizeIndex(StringToInt(args[4]), target.length()):0;
+		normalizeIndex(StringToInt(args[4]), static_cast<int>(target.length())):0;
 	if(tmp<0) return (args[1]);
 	wstring::size_type pos=tmp;
 	if(!target.length()) return args[1];
 	if((!pattern.length())&&(!subst.length())) return args[1];
 	// int stride=max(subst.length(), 1);
 	// int stride=max(subst.length(), static_cast<wstring::size_type>(1));
-	int stride=subst.length();
+	int stride=static_cast<int>(subst.length());
 	if(!pattern.length()) stride++;
 
 	while (pos<target.length()){

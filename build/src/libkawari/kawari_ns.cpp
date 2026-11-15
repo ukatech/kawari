@@ -45,7 +45,7 @@ TEntry TNameSpace::Create(const wstring& entry)
 	wstring entryname;
 	TEntryID parent=0,id=0;
 
-	for(unsigned int i=0, max=entryname_node.size();i<max;i++) {
+	for(unsigned int i=0, max=static_cast<unsigned int>(entryname_node.size());i<max;i++) {
 		entryname=entryname+entryname_node[i];
 
 		id=0;
@@ -113,7 +113,7 @@ unsigned int TEntry::Size(void) const
 	if(!IsValid()) return(0);
 	TDictionary::const_iterator it=ns->Dictionary.find(entry);
 	if(it==ns->Dictionary.end()) return(0);
-	return(it->second.size());
+	return(static_cast<unsigned int>(it->second.size()));
 }
 //---------------------------------------------------------------------------
 // 指定されたエントリを空にする
@@ -199,7 +199,7 @@ void TEntry::Erase(unsigned int st,unsigned int end)
 	if((!IsValid())||(st>end)||(st==NPos)) return;
 	if(AssertIfProtected()) return;
 
-	unsigned int entry_size=ns->Dictionary[entry].size();
+	unsigned int entry_size=static_cast<unsigned int>(ns->Dictionary[entry].size());
 	if (entry_size<=st) return;
 	if (entry_size<=end) end=entry_size-1;
 	vector<TWordID>::iterator itst,itend;
@@ -276,7 +276,7 @@ unsigned int TEntry::Find(TWordID id,unsigned int pos) const
 	TDictionary::const_iterator it=ns->Dictionary.find(entry);
 	if(it==ns->Dictionary.end()) return(NPos);
 
-	for(unsigned int i=pos, max=it->second.size();i<max;i++) {
+	for(unsigned int i=pos, max=static_cast<unsigned int>(it->second.size());i<max;i++) {
 		if(it->second[i]==id) return(i);
 	}
 
@@ -291,7 +291,7 @@ unsigned int TEntry::RFind(TWordID id,unsigned int pos) const
 	TDictionary::const_iterator it=ns->Dictionary.find(entry);
 	if((it==ns->Dictionary.end())||(!it->second.size())) return(NPos);
 
-	if(pos==NPos) pos=it->second.size()-1;
+	if(pos==NPos) pos=static_cast<unsigned int>(it->second.size()-1);
 	unsigned int i=pos;
 	while(i<it->second.size()) {
 		if (it->second[i]==id) return(i);
@@ -311,7 +311,7 @@ unsigned int TEntry::FindAll(vector<TWordID> &wordcol) const
 	TDictionary::const_iterator it=ns->Dictionary.find(entry);
 	wordcol.insert(wordcol.end(),it->second.begin(),it->second.end());
 
-	return(it->second.size());
+	return(static_cast<unsigned int>(it->second.size()));
 }
 //---------------------------------------------------------------------------
 // サブエントリIDを全て列挙

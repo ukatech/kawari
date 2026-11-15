@@ -152,7 +152,7 @@ wstring TKosuiDSSTPInterface::Parse(const wstring& script){
 
 	COPYDATASTRUCT cds;
 	cds.dwData = DIRECT_SSTP_PORT;
-	cds.cbData = reqmes.size();
+	cds.cbData = static_cast<DWORD>(reqmes.size());
 	cds.lpData = (LPVOID)reqmes.c_str();
 
 	DWORD_PTR dwret;	// 64bitではPDWORD_PTR(8バイト)を要求される

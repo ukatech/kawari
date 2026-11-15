@@ -25,7 +25,7 @@ wstring TKVMSetCode_base::Run(TKawariVM &vm){
 	Evaluate(vm, wordset);
 	if (!wordset.size()) return L"";
 
-	unsigned int index=Random(wordset.size());
+	unsigned int index=Random(static_cast<int>(wordset.size()));
 	set<TWordID>::iterator it=wordset.begin();
 	for(unsigned int i=0; i<index; i++) it++;
 

@@ -33,7 +33,7 @@ string EncryptString(const string& str)
 	string encodedstr;
 	encodedstr.reserve(str.size());
 
-	for(unsigned int i=0,max=str.size();i<max;i++) {
+	for(unsigned int i=0,max=static_cast<unsigned int>(str.size());i<max;i++) {
 		encodedstr+=str[i]^0xcc;
 	}
 
@@ -56,7 +56,7 @@ string DecryptString(const string& encodedstr)
 
 	string decodedstr;
 	decodedstr.reserve(str.size());
-	for(unsigned int i=skip,max=str.size();i<max;i++) {
+	for(unsigned int i=skip,max=static_cast<unsigned int>(str.size());i<max;i++) {
 		decodedstr+=str[i]^k;
 	}
 
@@ -93,7 +93,7 @@ string DecryptString(const string& encodedstr)
 static unsigned char Kawa0001CalcKey(const string &key)
 {
 	unsigned char k=0;
-	for(unsigned int i=0,max=key.size();i<max;i++) {
+	for(unsigned int i=0,max=static_cast<unsigned int>(key.size());i<max;i++) {
 		k+=key[i];
 	}
 
@@ -108,7 +108,7 @@ string EncryptString2(const string& str,const wstring &key)
 	encodedstr.reserve(str.size()+1);
 	encodedstr+=k;
 
-	for(unsigned int i=0,max=str.size();i<max;i++) {
+	for(unsigned int i=0,max=static_cast<unsigned int>(str.size());i<max;i++) {
 		encodedstr+=str[i]^k;
 	}
 
@@ -128,7 +128,7 @@ string DecryptString2(const string& encodedstr,const wstring &key)
 
 	string decodedstr;
 	decodedstr.reserve(str.size());
-	for(unsigned int i=1,max=str.size();i<max;i++) {
+	for(unsigned int i=1,max=static_cast<unsigned int>(str.size());i<max;i++) {
 		decodedstr+=str[i]^k;
 	}
 

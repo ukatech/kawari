@@ -534,13 +534,13 @@ unsigned int TKawariShioriFactory::CreateInstance(const wstring &datapath){
 
 	// serching NULL entry
 	int index=-1;
-	int list_max=list.size();
+	int list_max=static_cast<int>(list.size());
 	for(int i=0; i<list_max; i++)
 		if (!list[i])
 			index=i;
 	if (index==-1){
 		list.push_back(instance);
-		return list.size();
+		return static_cast<unsigned int>(list.size());
 	}else{
 		list[index]=instance;
 		return index+1;

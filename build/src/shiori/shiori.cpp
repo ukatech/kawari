@@ -32,7 +32,7 @@ using namespace std;
 namespace {
 	unsigned int handle=0;
 	inline MEMORY_HANDLE string2memory(const string &s, long *len){
-		*len=s.length();
+		*len=static_cast<long>(s.length());
 		MEMORY_HANDLE reth=(MEMORY_HANDLE)SHIORI_MALLOC(*len);
 		if(!reth) {
 			*len=0;

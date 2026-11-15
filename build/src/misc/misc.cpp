@@ -26,7 +26,7 @@ static inline bool _isdigit(wchar_t ch){
 //---------------------------------------------------------------------------
 // 整数値判定
 bool IsInteger (const std::wstring &str){
-	unsigned int max=str.length();
+	unsigned int max=static_cast<unsigned int>(str.length());
 	if (!max) return false;
 	unsigned int i=(str[0]==L'-')? 1:0;
 	if (i>=max) return false;	// "-" だけ
@@ -130,7 +130,7 @@ kawari_int64 StringToInt64(const std::wstring &str)
 
 wstring CanonicalPath(const wstring &path){
 	wstring ret=path;
-	unsigned int len=ret.length();
+	unsigned int len=static_cast<unsigned int>(ret.length());
 	for (unsigned int i=0; i<len; i++)
 		if (ret[i]==BADSEPARATOR) ret[i]=SEPARATOR;
 	return ret;

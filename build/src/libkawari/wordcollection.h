@@ -67,7 +67,7 @@ public:
 	// 総単語数を取得
 	unsigned int Size(void) const
 	{
-		return(WordIDMap.size());
+		return(static_cast<unsigned int>(WordIDMap.size()));
 	}
 
 	// データの追加
@@ -136,7 +136,7 @@ bool TWordCollection<T,Compare>::Insert(const T& word,unsigned int *id_)
 		IDMap[id]=id;
 	}else{
 		WordList.push_back(word);
-		id=WordList.size();
+		id=static_cast<unsigned int>(WordList.size());
 
 		IDMap.push_back(id);
 		IDIter.push_back(WordIDMap.insert(it,std::pair<const T,unsigned int>(word,id)));

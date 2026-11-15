@@ -23,7 +23,7 @@ unsigned int TSourceMap::FileIndex(const wstring &name)
 {
 	map<wstring, unsigned int>::const_iterator it=fileindex.find(name);
 	if (it!=fileindex.end()) return it->second;
-	unsigned int idx=files.size();
+	unsigned int idx=static_cast<unsigned int>(files.size());
 	files.push_back(name);
 	fileindex[name]=idx;
 	return idx;

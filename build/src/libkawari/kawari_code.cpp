@@ -57,7 +57,7 @@ wostream& TKVMCode_base::DebugIndent(wostream& os,unsigned int level) const
 bool TKVMCodeList_base::Less(const TKVMCode_base &r_) const{
 	// 比較子で同一クラスであることを確認済みなのでstatic_cast
 	const TKVMCodeList_base& r=static_cast<const TKVMCodeList_base&>(r_);
-	unsigned int lsize=list.size();
+	unsigned int lsize=static_cast<unsigned int>(list.size());
 	if(lsize!=r.list.size()) return(lsize<r.list.size());
 
 	for(unsigned int i=0;i<lsize;i++) {
@@ -119,7 +119,7 @@ wstring TKVMCodeString::DisCompile(void) const{
 	const static wstring wdq=L"\"";
 	const wstring &ws=s;
 	wstring retstr=L"\"";
-	unsigned int len=ws.size();
+	unsigned int len=static_cast<unsigned int>(ws.size());
 	unsigned int pos=0;
 
 	while(pos<len) {
@@ -129,7 +129,7 @@ wstring TKVMCodeString::DisCompile(void) const{
 			break;
 		}else{
 			retstr+=ws.substr(pos, pos2-pos)+wbs+ws[pos2];
-			pos=pos2+1;
+			pos=static_cast<unsigned int>(pos2+1);
 		}
 	}
 
@@ -383,7 +383,7 @@ wstring TKVMCodeScriptStatement::Run(TKawariVM &vm){
 	}else if(kind==K_RANDOM){
 		if(list.size()>1) {
 			// 第1パラメータ以降から一つ選択
-			unsigned int index=Random(list.size()-1)+1;
+			unsigned int index=Random(static_cast<int>(list.size()-1))+1;
 			retstr=vm.RunWithCurrentContext(list[index]);
 			vm.Dictionary().PushToHistory(retstr);
 		}
@@ -408,7 +408,7 @@ wstring TKVMCodeScriptStatement::Run(TKawariVM &vm){
 wstring TKVMCodeScriptStatement::DisCompile(void) const{
 	wstring retstr;
 	if (list.size()){
-		for (unsigned int i=0,max=list.size()-1;i<max;i++){
+		for (unsigned int i=0,max=static_cast<unsigned int>(list.size()-1);i<max;i++){
 			retstr+=list[i]->DisCompile()+L" ";
 		}
 		retstr+=list.back()->DisCompile();
@@ -425,7 +425,7 @@ wstring TKVMCodeInlineScript::Run(TKawariVM &vm){
 	for (TCodePVector::iterator it=list.begin(); (it!=list.end())&&(!vm.IsOnException()); it++){
 		// おのおのの行について
 		if (lines.size()){
-			unsigned int idx=it-list.begin();
+			unsigned int idx=static_cast<unsigned int>(it-list.begin());
 			if (idx<lines.size()) vm.SetZoneLine(lines[idx]);
 		}
 		TKVMCodeScriptStatement *code=dynamic_cast<TKVMCodeScriptStatement *>(*it);
@@ -445,7 +445,7 @@ wstring TKVMCodeInlineScript::Run(TKawariVM &vm){
 wstring TKVMCodeInlineScript::DisCompile(void) const{
 	if(list.size()){
 		wstring retstr=L"$(";
-		for (unsigned int i=0,max=list.size()-1; i<max; i++)
+		for (unsigned int i=0,max=static_cast<unsigned int>(list.size()-1); i<max; i++)
 			retstr+=list[i]->DisCompile()+L";";
 		retstr+=list.back()->DisCompile()+L")";
 		return retstr;

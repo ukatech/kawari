@@ -19,7 +19,7 @@ using namespace std;
 namespace {
 	// utility(pointer must be free)
 	inline const char *string2cstr(const string &s, long *length){
-		*length=s.length();
+		*length=static_cast<long>(s.length());
 		char *d=new char[(int)*length];
 		s.copy(d, (int)*length);
 		return d;

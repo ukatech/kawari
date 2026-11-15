@@ -135,7 +135,7 @@ void TKawariVM::GetCallChain(vector<wstring> &lines, unsigned int maxdepth) cons
 	unsigned int count=0;
 	for (vector<TFrame>::const_reverse_iterator it=frames.rbegin(); it!=frames.rend(); ++it){
 		if (count>=maxdepth){
-			unsigned int rest=(frames.rend()-it);
+			unsigned int rest=static_cast<unsigned int>(frames.rend()-it);
 			lines.push_back(L"... "+IntToString(rest)+L" more");
 			break;
 		}
@@ -291,6 +291,6 @@ bool TKawariVM::GetFunctionInfo(const wstring &name, TKisFunctionInfo &info){
 unsigned int TKawariVM::GetFunctionList(vector<wstring> &list) const{
 	for (vector<TKisFunction_base*>::const_iterator it=FunctionList.begin();it!=FunctionList.end();it++)
 		list.push_back(wstring((*it)->Name()));
-	return FunctionList.size();
+	return static_cast<unsigned int>(FunctionList.size());
 }
 //---------------------------------------------------------------------------

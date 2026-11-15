@@ -22,7 +22,7 @@ string EncodeBase64(string& str)
 	if(rest==1) str+='\0';	// ダミーデータ
 	if(rest>0) str+='\0';	// ダミーデータ
 
-	unsigned int len=str.size()/3;
+	unsigned int len=static_cast<unsigned int>(str.size()/3);
 	for(unsigned int i=0;i<len;i++) {
 		unsigned int dat
 		 =(((unsigned int)str[i*3  ])&0xff)<<16
@@ -100,7 +100,7 @@ string DecodeBase64(const string& encodedstr)
 
 	unsigned int rest=0;
 
-	unsigned int len=encodedstr.size()/4;
+	unsigned int len=static_cast<unsigned int>(encodedstr.size()/4);
 	for(unsigned int i=0;i<len;i++) {
 		unsigned int dat=0;
 		for(unsigned int j=0;j<4;j++) {
@@ -128,7 +128,7 @@ string DecodeBase64(const string& encodedstr)
 	}
 
 	// 壊れた入力で'='が復号結果より多いと、size()-restが負になりerase()が例外を投げる
-	if(rest>str.size()) rest=str.size();
+	if(rest>str.size()) rest=static_cast<unsigned int>(str.size());
 	str=str.erase(str.size()-rest,rest);
 
 	return(str);

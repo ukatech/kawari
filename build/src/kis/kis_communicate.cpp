@@ -70,7 +70,7 @@ wstring KIS_communicate::Function(const vector<wstring>& args)
 
 	wstring retstr;
 	if(matched.size()) {
-		unsigned int index=Random(matched.size());
+		unsigned int index=Random(static_cast<int>(matched.size()));
 		TEntry entry2=Engine->GetEntry(matched[index]);
 		if(!entry2.IsValid()) return(L"");
 

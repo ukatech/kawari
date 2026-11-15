@@ -288,7 +288,7 @@ int TKawariCompiler::compileEntryIdList(vector<wstring> &list){
 		}
 	}
 	list.insert(list.end(), tmplist.begin(), tmplist.end());
-	return tmplist.size();
+	return static_cast<int>(tmplist.size());
 }
 
 //-------------------------------------------------------------------------
@@ -345,7 +345,7 @@ int TKawariCompiler::compileNRStatementList(vector<TKVMCode_base *> &list, vecto
 	list.insert(list.end(), tmplist.begin(), tmplist.end());
 	if (lines)
 		lines->insert(lines->end(), tmplines.begin(), tmplines.end());
-	return tmplist.size();
+	return static_cast<int>(tmplist.size());
 }
 
 //-------------------------------------------------------------------------
@@ -401,7 +401,7 @@ int TKawariCompiler::compileStatementList(vector<TKVMCode_base *> &list, vector<
 	list.insert(list.end(), tmplist.begin(), tmplist.end());
 	if (lines)
 		lines->insert(lines->end(), tmplines.begin(), tmplines.end());
-	return tmplist.size();
+	return static_cast<int>(tmplist.size());
 }
 
 //-------------------------------------------------------------------------
@@ -454,7 +454,7 @@ TKVMCode_base *TKawariCompiler::compileScriptStatement(void){
 		if (str==L"if"){
 			return compileScriptIF();
 		}else{
-			lexer->UngetChars(str.size());
+			lexer->UngetChars(static_cast<unsigned int>(str.size()));
 		}
 	}
 
@@ -523,7 +523,7 @@ TKVMCode_base *TKawariCompiler::compileScriptIF(void){
 				if (str==L"if"){
 					continue;
 				}else{
-					lexer->UngetChars(str.size());
+					lexer->UngetChars(static_cast<unsigned int>(str.size()));
 					code=compileWord(SCRIPT_MODE);
 					if (!code) break;
 					list.push_back(code);
@@ -536,7 +536,7 @@ TKVMCode_base *TKawariCompiler::compileScriptIF(void){
 				break;
 			}
 		}else{
-			lexer->UngetChars(str.size());
+			lexer->UngetChars(static_cast<unsigned int>(str.size()));
 			break;
 		}
 	}
@@ -806,7 +806,7 @@ TKVMExprCode_base *TKawariCompiler::compileExpr0(void){
 			if (!r) { lexer->error(ERR_COMPILER_PARSE_ERROR_AFTER, L"'||'"); return l; }
 			l=new TKVMExprCodeLOR(l, r);
 		}else{
-			lexer->UngetChars(token.str.size());
+			lexer->UngetChars(static_cast<unsigned int>(token.str.size()));
 			return l;
 		}
 	}
@@ -824,7 +824,7 @@ TKVMExprCode_base *TKawariCompiler::compileExpr1(void){
 			if (!r) { lexer->error(ERR_COMPILER_PARSE_ERROR_AFTER, L"'&&'"); return l; }
 			l=new TKVMExprCodeLAND(l, r);
 		}else{
-			lexer->UngetChars(token.str.size());
+			lexer->UngetChars(static_cast<unsigned int>(token.str.size()));
 			return l;
 		}
 	}
@@ -853,7 +853,7 @@ TKVMExprCode_base *TKawariCompiler::compileExpr2(void){
 		if (!r) { lexer->error(ERR_COMPILER_PARSE_ERROR_AFTER, L"'!~'"); return l; }
 		return new TKVMExprCodeNMATCH(l, r);
 	}else{
-		lexer->UngetChars(token.str.size());
+		lexer->UngetChars(static_cast<unsigned int>(token.str.size()));
 		return l;
 	}
 }
@@ -882,7 +882,7 @@ TKVMExprCode_base *TKawariCompiler::compileExpr3(void){
 		if (!r) { lexer->error(ERR_COMPILER_PARSE_ERROR_AFTER, L"'>='"); return l; }
 		return new TKVMExprCodeGTE(l, r);
 	}else{
-		lexer->UngetChars(token.str.size());
+		lexer->UngetChars(static_cast<unsigned int>(token.str.size()));
 		return l;
 	}
 }
@@ -903,7 +903,7 @@ TKVMExprCode_base *TKawariCompiler::compileExpr4(void){
 			if (!r) { lexer->error(ERR_COMPILER_PARSE_ERROR_AFTER, L"'~'"); return l; }
 			l=new TKVMExprCodeBXOR(l, r);
 		}else{
-			lexer->UngetChars(token.str.size());
+			lexer->UngetChars(static_cast<unsigned int>(token.str.size()));
 			return l;
 		}
 	}
@@ -921,7 +921,7 @@ TKVMExprCode_base *TKawariCompiler::compileExpr5(void){
 			if (!r) { lexer->error(ERR_COMPILER_PARSE_ERROR_AFTER, L"'&'"); return l; }
 			l=new TKVMExprCodeBAND(l, r);
 		}else{
-			lexer->UngetChars(token.str.size());
+			lexer->UngetChars(static_cast<unsigned int>(token.str.size()));
 			return l;
 		}
 	}
@@ -943,7 +943,7 @@ TKVMExprCode_base *TKawariCompiler::compileExpr6(void){
 			if (!r) { lexer->error(ERR_COMPILER_PARSE_ERROR_AFTER, L"'-'"); return l; }
 			l=new TKVMExprCodeMINUS(l, r);
 		}else{
-			lexer->UngetChars(token.str.size());
+			lexer->UngetChars(static_cast<unsigned int>(token.str.size()));
 			return l;
 		}
 	}
@@ -969,7 +969,7 @@ TKVMExprCode_base *TKawariCompiler::compileExpr7(void){
 			if (!r) { lexer->error(ERR_COMPILER_PARSE_ERROR_AFTER, L"'%'"); return l; }
 			l=new TKVMExprCodeMOD(l, r);
 		}else{
-			lexer->UngetChars(token.str.size());
+			lexer->UngetChars(static_cast<unsigned int>(token.str.size()));
 			return l;
 		}
 	}
@@ -997,7 +997,7 @@ TKVMExprCode_base *TKawariCompiler::compileExpr8(void){
 		if (!c) return NULL;
 		return new TKVMExprCodeCOMP(c);
 	}else{
-		lexer->UngetChars(token.str.size());
+		lexer->UngetChars(static_cast<unsigned int>(token.str.size()));
 		return compileExpr9();
 	}
 }
@@ -1014,7 +1014,7 @@ TKVMExprCode_base *TKawariCompiler::compileExpr9(void){
 			if (!r) { lexer->error(ERR_COMPILER_PARSE_ERROR_AFTER, L"'**'"); return l; }
 			l=new TKVMExprCodePOW(l, r);
 		}else{
-			lexer->UngetChars(token.str.size());
+			lexer->UngetChars(static_cast<unsigned int>(token.str.size()));
 			return l;
 		}
 	}
@@ -1156,7 +1156,7 @@ TKVMSetCode_base *TKawariCompiler::compileSetExpr0(void){
 		if (!r) { lexer->error(ERR_COMPILER_PARSE_ERROR_AFTER, L"'-'"); return l; }
 		return new TKVMSetCodeMINUS(l, r);
 	}else{
-		lexer->UngetChars(token.str.size());
+		lexer->UngetChars(static_cast<unsigned int>(token.str.size()));
 		return l;
 	}
 }
@@ -1172,7 +1172,7 @@ TKVMSetCode_base *TKawariCompiler::compileSetExpr1(void){
 		if (!r) { lexer->error(ERR_COMPILER_PARSE_ERROR_AFTER, L"'&'"); return l; }
 		return new TKVMSetCodeAND(l, r);
 	}else{
-		lexer->UngetChars(token.str.size());
+		lexer->UngetChars(static_cast<unsigned int>(token.str.size()));
 		return l;
 	}
 }

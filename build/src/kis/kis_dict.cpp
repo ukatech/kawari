@@ -477,7 +477,7 @@ void KIS_copytree::_Function(const vector<wstring>& args, bool rmflag){
 
 	const wstring &srcparent=args[1];
 	const wstring &dstparent=(args[2]==L".")?wstring(L""):args[2];
-	const int splen=(srcparent==L".")?0:srcparent.size();
+	const int splen=(srcparent==L".")?0:static_cast<int>(srcparent.size());
 	TEntry srcparententry=Engine->CreateEntry(srcparent);
 
 	vector<TEntry> srccol;

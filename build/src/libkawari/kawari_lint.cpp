@@ -100,7 +100,7 @@ unsigned int TKawariLint::Run(const vector<Zone> &zones, const TLintNotes *notes
 			Finding f;
 			f.file=srcmap.FileIndex(it->file);
 			f.line=(int)it->line;
-			f.seq=findings.size();
+			f.seq=static_cast<unsigned int>(findings.size());
 			f.code=it->code;
 			f.name=it->name;
 			findings.push_back(f);
@@ -316,7 +316,7 @@ void TKawariLint::Report(unsigned int code, const wstring &name, const Ctx &ctx)
 	Finding f;
 	f.file=ctx.file;
 	f.line=ctx.line;
-	f.seq=findings.size();
+	f.seq=static_cast<unsigned int>(findings.size());
 	f.code=code;
 	f.name=name;
 	if (ctx.entry) f.entry=*ctx.entry;

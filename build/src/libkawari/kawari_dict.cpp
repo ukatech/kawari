@@ -109,7 +109,7 @@ unsigned int TNS_KawariDictionary::GetWordCollection(TEntry start_entry,set<TWor
 		}
 	}
 
-	return(wordcol.size());
+	return(static_cast<unsigned int>(wordcol.size()));
 }
 //---------------------------------------------------------------------------
 // 現在のコンテキストのスタックフレームのポインタを取得
@@ -117,7 +117,7 @@ unsigned int TNS_KawariDictionary::GetWordCollection(TEntry start_entry,set<TWor
 unsigned int TNS_KawariDictionary::LinkFrame(void){
 	TContext *ctx=GetCurrentContext();
 	if (!ctx) return 0;
-	return ctx->history.size();
+	return static_cast<unsigned int>(ctx->history.size());
 }
 //---------------------------------------------------------------------------
 // 現在のコンテキストのスタックフレームのポインタを復帰
@@ -199,7 +199,7 @@ wstring TNS_KawariDictionary::GetHistory (int index){
 	TContext *ctx=GetCurrentContext();
 	if (!ctx) return L"";
 	if (index<0)
-		index = ctx->history.size()+index;
+		index = static_cast<int>(ctx->history.size())+index;
 	if ((index<0)||(ctx->history.size()>INT_MAX)||(index>=(int)ctx->history.size())){
 		return L"";
 	}else{

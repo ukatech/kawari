@@ -20,7 +20,7 @@ using namespace std;
 
 // 実行
 wstring TKVMKISCodeIF::Run(TKawariVM &vm){
-	const unsigned int cmax=condlist.size();
+	const unsigned int cmax=static_cast<unsigned int>(condlist.size());
 	bool finished=false;
 	wstring retstr;
 	unsigned int i=0;
@@ -45,8 +45,8 @@ wstring TKVMKISCodeIF::Run(TKawariVM &vm){
 }
 // 逆コンパイル
 wstring TKVMKISCodeIF::DisCompile(void) const{
-	const unsigned int cmax=condlist.size();
-	const unsigned int max=list.size();
+	const unsigned int cmax=static_cast<unsigned int>(condlist.size());
+	const unsigned int max=static_cast<unsigned int>(list.size());
 	wstring retstr;
 	unsigned int i=0;
 	for (; i<cmax; i++){
@@ -59,8 +59,8 @@ wstring TKVMKISCodeIF::DisCompile(void) const{
 }
 // デバッグ用ツリー表示
 wostream &TKVMKISCodeIF::Debug(wostream& os, unsigned int level) const{
-	const unsigned int cmax=condlist.size();
-	const unsigned int max=list.size();
+	const unsigned int cmax=static_cast<unsigned int>(condlist.size());
+	const unsigned int max=static_cast<unsigned int>(list.size());
 	unsigned int i=0;
 	DebugIndent(os, level) << L"(" << endl;
 	for (; i<cmax; i++){
@@ -80,8 +80,8 @@ wostream &TKVMKISCodeIF::Debug(wostream& os, unsigned int level) const{
 // 序列 同じクラスの場合のみ呼ばれる。
 bool TKVMKISCodeIF::Less(const TKVMCode_base& r_) const{
 	const TKVMKISCodeIF &r=dynamic_cast<const TKVMKISCodeIF &>(r_);
-	unsigned int cmax=condlist.size();
-	unsigned int lmax=list.size();
+	unsigned int cmax=static_cast<unsigned int>(condlist.size());
+	unsigned int lmax=static_cast<unsigned int>(list.size());
 	if (cmax!=r.condlist.size()) return(cmax<r.condlist.size());
 	if (lmax!=r.list.size()) return(lmax<r.list.size());
 

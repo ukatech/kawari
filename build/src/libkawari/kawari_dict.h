@@ -279,7 +279,7 @@ inline TNS_KawariDictionary::TContext *TNS_KawariDictionary::GetCurrentContext(v
 //--------------------------------------------------------------------------
 // コンテキストスタックの現在の深さ
 inline unsigned int TNS_KawariDictionary::GetContextStackDepth(void){
-	return ContextStack.size();
+	return static_cast<unsigned int>(ContextStack.size());
 }
 //--------------------------------------------------------------------------
 // ループに入る

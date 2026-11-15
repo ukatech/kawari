@@ -292,7 +292,7 @@ inline void TNameSpace::Reserve(unsigned int n)
 // 有効エントリ数を取得
 inline unsigned int TNameSpace::Size(void) const
 {
-	return Dictionary.size();
+	return static_cast<unsigned int>(Dictionary.size());
 }
 //---------------------------------------------------------------------------
 // エントリID取得

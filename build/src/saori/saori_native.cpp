@@ -229,7 +229,7 @@ bool TModuleNative::Load(void){
 	}
 
 	string bytes=func_loadu?WtoUTF8(basepath):WtoACP(basepath);
-	long len=bytes.size();
+	long len=static_cast<long>(bytes.size());
 	MEMORY_HANDLE h=(MEMORY_HANDLE)SHIORI_MALLOC(len);
 	if (!h) return false;
 	bytes.copy((char *)h, len);

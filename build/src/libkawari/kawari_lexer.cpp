@@ -184,7 +184,7 @@ wstring TKawariLexer::DecodeQuotedString(const wstring& orgsen)
 	wstring retstr;
 	retstr.reserve(orgsen.size());
 
-	unsigned int max=orgsen.size();
+	unsigned int max=static_cast<unsigned int>(orgsen.size());
 	while(pos<max) {
 		if(orgsen[pos]==quote) break;
 
@@ -422,7 +422,7 @@ Token::Type TKawariLexer::skipS(Mode m){
 // 文字列をエントリ名で使用可能な文字列にエンコードする
 wstring TKawariLexer::EncodeEntryName(const wstring &orgsen){
 	wstring entsen(orgsen);
-	unsigned cntsen = entsen.size();
+	unsigned cntsen = static_cast<unsigned int>(entsen.size());
 
 	for(unsigned int pos=0;pos<cntsen;pos++) {
 		// 非ASCII文字(漢字など)は受容
@@ -498,7 +498,7 @@ bool TKawariPreProcessor::processNextLine(void){
 			isMS=true;
 		}else{
 			// 1行コメントの処理
-			unsigned int max=linebuf.size();
+			unsigned int max=static_cast<unsigned int>(linebuf.size());
 			for(unsigned int i=0; i<max; i++){
 				if ((linebuf[i]==L' ')||(linebuf[i]==L'\t')){
 					continue;
@@ -517,7 +517,7 @@ bool TKawariPreProcessor::processNextLine(void){
 }
 wstring TKawariPreProcessor::getline(void){
 	wstring retstr=linebuf.substr(pos, linebuf.size()-pos);
-	pos=linebuf.size();
+	pos=static_cast<unsigned int>(linebuf.size());
 	return retstr;
 }
 // バッファの一部を切り出す

@@ -137,9 +137,9 @@ def environment_lines(target, vs_dir, vc6_dir):
     ]
 
 
-def cl_flags(target):
-    f = ("/nologo /EHsc /W3 /O2 /MT /I. /DNDEBUG /DUSEKDB /DENABLE_SAORI_NATIVE "
-         "/DUNICODE /D_UNICODE /DWINVER=0x0500 /D_WIN32_WINNT=0x0500")
+def cl_flags(target, wlevel=3):
+    f = ("/nologo /EHsc /W%d /O2 /MT /I. /DNDEBUG /DUSEKDB /DENABLE_SAORI_NATIVE "
+         "/DUNICODE /D_UNICODE /DWINVER=0x0500 /D_WIN32_WINNT=0x0500" % wlevel)
     if target == "vc6":
         return f + " /GR"
     return f + " /utf-8 /D_CRT_SECURE_NO_WARNINGS /D_WINSOCK_DEPRECATED_NO_WARNINGS"
@@ -170,6 +170,7 @@ def main():
     ap.add_argument("--vc6-dir")
     ap.add_argument("-j", type=int, default=os.cpu_count() or 4)
     ap.add_argument("--warnings", action="store_true")
+    ap.add_argument("--wlevel", type=int, default=3, choices=[1, 2, 3, 4], help="cl /W level (default 3)")
     ap.add_argument("--no-link", action="store_true")
     a = ap.parse_args()
     if os.name != "nt":
@@ -200,7 +201,7 @@ def main():
     def objname(s):
         return os.path.join(obj, s.replace("/", "_")[:-4] + ".obj")
 
-    flags = cl_flags(target)
+    flags = cl_flags(target, a.wlevel)
 
     def compile_one(s):
         rc, text = runner.run('cl %s /c /Fo"%s" %s' % (flags, objname(s), s), src)
