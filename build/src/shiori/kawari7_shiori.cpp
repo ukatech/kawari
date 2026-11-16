@@ -176,11 +176,18 @@ void TKawariShioriAdapter::Request7(TPHMessage &request, TPHMessage &response)
 		sender=StripSuffix(sender, L"(external)");
 	}
 
+	// 本体への送信 (getproperty / executesstp / SAORI over DirectSSTP) は local のリクエストからだけ許す。
+	// 9 の Request() と同じ。7 モードでも =kis ゾーンや 9 の関数から届くので、止めておく。
+	Engine.GetBaseware().SetAllowed((sender_path==TSecurityLevel::tsidLocal)||(sender_path==TSecurityLevel::tsidSystem));
+
 	if(!saori) {
 		SetSystemEntry7(L"system.Sender", sender);
 		request.erase(L"Sender");
 		if(sender.size()) request[L"Sender"]=sender;
 		SetSystemEntry7(L"system.Sender.Path", sender_path_name);
+		// 9 の callsaori が SAORI に渡す SecurityLevel は System.Sender.Path から読む
+		// (平坦なエントリ名では、大文字小文字の違う別のエントリ)
+		SetSystemEntry7(L"System.Sender.Path", sender_path_name);
 
 		if(SecurityLevel.Check(sender_path)) {
 			if(type==L"NOTIFY"||type==L"NOTIFY Ghost"||type==L"NOTIFY OwnerGhostName") {

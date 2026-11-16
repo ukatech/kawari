@@ -340,6 +340,28 @@ cmd rand 1
 cmd rand 0
 = 0
 
+# save and load: a word is written in the 7 syntax and read back (the backslash must not double)
+cmd set r1 "a\b" ; save r.txt r1 ; clear r1 ; load r.txt ; array r1 0
+= a\b
+cmd set r1 "a\b" ; save r.txt r1 ; clear r1 ; load r.txt ; load r.txt ; array r1 1
+= a\b
+cmd set r2 "x,y" ; save r.txt r2 ; clear r2 ; load r.txt ; size r2
+= 1
+cmd set r3 "say \"hi\"" ; save r.txt r3 ; clear r3 ; load r.txt ; array r3 0
+= say hi
+cmd set r4 "$(if 1 a b)" ; save r.txt r4 ; clear r4 ; load r.txt ; get r4 0
+= $("if" "1" "a" "b" )
+cmd set r4 "$(if 1 a b)" ; save r.txt r4 ; clear r4 ; load r.txt ; array r4 0
+= a
+cmd set r5 "${b}${0}" ; save r.txt r5 ; clear r5 ; load r.txt ; array r5 0
+= xx
+cmd adddict r6 one ; adddict r6 "t w o" ; save r.txt r6 ; clear r6 ; load r.txt ; enumerate r6
+= "one" "t w o"
+cmd set r7 secret ; savecrypt r.txt r7 ; clear r7 ; load r.txt ; array r7 0
+= secret
+cmd set r8 "a b" ; get r8 0
+= "a"" ""b"
+
 # files and splitting
 cmd textload t.txt tx ; echo ${tx.1}/${tx.2}/${tx.3}/${tx.size}
 = line1//line3/3
@@ -386,3 +408,7 @@ echo ${zone2}
 = 6
 echo ${from_zone}
 = 9-syntax
+cmd setstr s1 "a\b" ; save r.txt s1 ; clear s1 ; load r.txt ; get s1 0
+= "a\b"
+cmd adddict s2 "$[ 1 + 2 ]" ; save r.txt s2 ; clear s2 ; load r.txt ; array s2 0
+= 3

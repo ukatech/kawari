@@ -149,6 +149,9 @@ def sentence_of(resp):
     return m.group(1).decode('cp932', 'replace') if m else None
 
 
+REAL_SAORI = set()
+
+
 def prepare(src, dest, dll, stub):
     if os.path.exists(dest):
         shutil.rmtree(dest)
@@ -159,7 +162,7 @@ def prepare(src, dest, dll, stub):
             p = os.path.join(root, f)
             if low.endswith(gc.PROGRAM_EXT):
                 os.remove(p)
-            elif low.endswith('.dll'):
+            elif low.endswith('.dll') and low not in REAL_SAORI:
                 shutil.copy(stub, p)
     shutil.copy(dll, os.path.join(dest, 'shiori.dll'))
     ini = os.path.join(dest, 'kawari.ini')
@@ -226,7 +229,10 @@ def main():
     ap.add_argument('--limit', type=int, default=400, help='max number of requests')
     ap.add_argument('--timeout', type=int, default=240)
     ap.add_argument('--keep', action='store_true', help='keep the work folder')
+    ap.add_argument('--real-saori', default='', help='comma separated names of SAORI DLLs that are kept as they are '
+                    '(only for harmless ones that do not start programs or open windows)')
     a = ap.parse_args()
+    REAL_SAORI.update(n.strip().lower() for n in a.real_saori.split(',') if n.strip())
 
     ghost = os.path.abspath(a.ghost)
     if not os.path.exists(os.path.join(ghost, 'kawari.ini')):
@@ -274,6 +280,26 @@ def main():
         if len(diffs) > 8:
             print('  ... and %d more' % (len(diffs) - 8))
         failed = bool(diffs or rc != 0)
+
+        # the requests that reached the SAORI (the stub SAORI writes them to <DLL>.log). The new SAORI layer asks
+        # "GET Version" first to find out the charset of the module (the 7.5.0 does not), which is not a difference.
+        def saori_requests(g):
+            return dict((m, [x for x in lst if not x.startswith('GET Version')])
+                        for m, lst in gc.saori_entries(g).items())
+        sa, sb = saori_requests(old_g), saori_requests(new_g)
+        count_a = sum(len(v) for v in sa.values())
+        print('saori: %d requests reached the SAORI (7.5.0), %d (new)%s' % (
+            count_a, sum(len(v) for v in sb.values()), ', the same' if sa == sb else ', DIFFERENT'))
+        if sa != sb:
+            failed = True
+            for m in sorted(set(sa) | set(sb)):
+                la, lb = sa.get(m, []), sb.get(m, [])
+                for i in range(max(len(la), len(lb))):
+                    x = la[i] if i < len(la) else '(none)'
+                    y = lb[i] if i < len(lb) else '(none)'
+                    if x != y:
+                        print('  %s [%d]\n    old: %r\n    new: %r' % (m, i, x[:200], y[:200]))
+                        break
 
         # save data : the first runs left their save data in old_g (written by 7.5.0, Shift_JIS) and in new_g
         # (written by the new DLL, UTF-8 with BOM). A second run from the SAME state must give the same answers

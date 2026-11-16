@@ -414,10 +414,11 @@ wstring TK7Statement::Run(TKawariVM &vm)
 //---------------------------------------------------------------------------
 wstring TK7Statement::DisCompile(void) const
 {
+	// 7.5.0 は引数の後ろに空白を付けて書き出す (最後の引数の後ろにも付く: $("if" "1" "a" "b" ))
 	wstring retstr;
 	for(size_t i=0; i<list.size(); i++) {
-		if(i) retstr+=L" ";
 		retstr+=list[i]->DisCompile();
+		retstr+=L" ";
 	}
 	return retstr;
 }

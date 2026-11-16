@@ -451,6 +451,9 @@ inline TWordID TKawariEngine::CreateWord(const wstring& word)
 //---------------------------------------------------------------------------
 inline TWordID TKawariEngine::CreateStrWord(const wstring& word)
 {
+	// 7 モードでは、7 の書き方 ("..." で囲み、中の " は \") で逆コンパイルされる文字列にする。
+	// 9 の文字列は \ を \\ にして書き出すので、7 の読み込みで \ が増えてしまう。
+	if(Legacy7) return(Dictionary->CreateWord(new TK7String(word)));
 	return(Dictionary->CreateWord(TKawariCompiler::CompileAsString(word)));
 }
 //---------------------------------------------------------------------------
