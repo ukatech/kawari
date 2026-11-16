@@ -69,12 +69,21 @@ protected:
 	// グローバルなガベッジコレクタへの参照
 	TGarbageCollector *gc;
 
+	// 平坦な名前空間か (華和梨7互換モード)
+	// true のとき、エントリ名を「.」で階層に分解せず、名前全体を 1 つの名前として扱う。
+	// 7 のエントリ名は平坦な文字列で、"A." "A..B" ".A" "A.B" はすべて別の名前になる。
+	// (9 は空の節を捨てて "A" "A.B" "A" "A.B" にそろえる)
+	bool flat;
+
 	// 指定されたエントリから始まるエントリIDを全て列挙
 	unsigned int FindTree(TEntryID entry, vector<class TEntry>& entrycol);
 
 public:
-	TNameSpace(TGarbageCollector *col): gc(col) {}
+	TNameSpace(TGarbageCollector *col): gc(col), flat(false) {}
 	virtual ~TNameSpace();
+
+	// 平坦な名前空間にする (エントリを作る前に呼ぶこと)
+	void SetFlat(bool f) { flat=f; }
 
 	// WordCollectionのヒープを確保
 	void Reserve(unsigned int n);

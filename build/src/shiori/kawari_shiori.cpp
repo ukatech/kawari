@@ -117,6 +117,17 @@ bool TKawariShioriAdapter::Load(const wstring& datapath)
 	Engine.CreateEntry(L"System.DataPath").Push(Engine.CreateStrWord(datapath));
 	Engine.WriteProtect(L"System.DataPath");
 
+	// 華和梨7のゴースト (kawarirc.kis が無く kawari.ini がある)
+	wstring legacyini;
+	if (TKawariEngine::DetectLegacy7(datapath, L"kawarirc.kis", legacyini)) {
+		Engine.SetLegacy7(true);
+		Engine.LoadKawari7Ini(legacyini);
+		SecurityLevel.Set(Engine.GetLegacy7State()->securitylevel);
+		initialized=true;
+		Engine.GetLogger().GetStream(LOG_INFO) << L"[SHIORI/SAORI Adapter] Load finished (Kawari 7 compatible mode)." << endl;
+		return(true);
+	}
+
 	// 初期実行スクリプト
 	Engine.LoadKawariDict(datapath+L"kawarirc.kis");
 
@@ -140,6 +151,10 @@ bool TKawariShioriAdapter::Load(const wstring& datapath)
 // DLLアンロード時に呼ばれる
 bool TKawariShioriAdapter::Unload(void)
 {
+	if (Engine.IsLegacy7()) {
+		Engine.RandomSelect(L"system.OnUnload");
+		return(true);
+	}
 	wstring aistr=EnumExec(L"System.Callback.OnUnload");
 
 	Engine.GetLogger().GetStream(LOG_INFO) << L"[SHIORI/SAORI Adapter] Unload." << endl;
@@ -171,6 +186,12 @@ void TKawariShioriAdapter::Request(TPHMessage &request, TPHMessage &response, TK
 		}
 		return;
 		// KIU_TODO: エラーログを吐きましょう
+	}
+
+	// 華和梨7互換モードは 7.5.0 の振り分けで処理する
+	if (Engine.IsLegacy7()){
+		Request7(request, response);
+		return;
 	}
 
 	// ログ取りのチェック

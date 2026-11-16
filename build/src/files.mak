@@ -55,6 +55,7 @@ CORESRC =  libkawari/kawari_engine.cpp \
            $(CRYPTSRC)
 
 SHIOSRC =  shiori/kawari_shiori.cpp \
+           shiori/kawari7_shiori.cpp \
            shiori/shiori_object.cpp \
            shiori/shiori.cpp
 

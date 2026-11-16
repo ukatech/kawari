@@ -102,6 +102,7 @@ bool TKawariEngine::DetectLegacy7(const wstring &datapath, const wstring &rcfile
 void TKawariEngine::SetLegacy7(bool enable)
 {
 	Legacy7=enable;
+	Dictionary->SetFlatEntryNames(enable);
 	if(enable) {
 		if(!Legacy7State) Legacy7State=new TKawari7State();
 		KawariVM->EnableLegacy7();

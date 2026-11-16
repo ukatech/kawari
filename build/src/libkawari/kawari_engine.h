@@ -164,6 +164,7 @@ public:
 	// エントリ最後尾への単語の追加
 	// 戻り値 : 成功でtrue
 	void Push(const wstring& entryname,const wstring& word);
+	void PushStr(const wstring& entryname,const wstring& word);
 
 	// エントリ最後尾の単語の削除
 	void Pop(const wstring& entryname);
@@ -499,6 +500,12 @@ inline void TKawariEngine::Replace2(const wstring& entryname,unsigned int pos,co
 }
 //---------------------------------------------------------------------------
 // 指定されたエントリを空にしてから単語を追加
+// エントリ最後尾への、文字列としての単語の追加 (${ や $( があっても展開しない)
+inline void TKawariEngine::PushStr(const wstring& entryname,const wstring& word)
+{
+	Dictionary->CreateEntry(entryname).Push(CreateStrWord(word));
+}
+//---------------------------------------------------------------------------
 inline void TKawariEngine::PushAfterClear(const wstring& entryname,const wstring& word)
 {
 	TWordID id=CreateWord(word);

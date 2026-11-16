@@ -97,6 +97,11 @@ public:
 
 	~TKawariKosuiAdapter()
 	{
+		if (engine.IsLegacy7()) {
+			// 華和梨7 : 切り離しイベント
+			engine.RandomSelect(L"system.OnUnload");
+			return;
+		}
 		TEntry entry=engine.GetEntry(L"System.Callback.OnUnload");
 		unsigned int size=entry.Size();
 		for(unsigned int i=0;i<size;i++) engine.Parse(entry.Index(i));

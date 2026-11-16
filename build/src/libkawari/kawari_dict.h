@@ -99,6 +99,9 @@ public:
 		GlobalNameSpace = NULL;
 	}
 
+	// グローバルな名前空間を平坦にする (華和梨7互換モード。エントリを作る前に呼ぶこと)
+	void SetFlatEntryNames(bool flat) { GlobalNameSpace->SetFlat(flat); }
+
 	// 範囲外のインデックス
 	static const unsigned int NPos;		// UINT_MAX
 

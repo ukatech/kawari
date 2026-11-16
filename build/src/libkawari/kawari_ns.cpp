@@ -38,6 +38,17 @@ TEntry TNameSpace::Create(const wstring& entry)
 		if(found) return(TEntry(this,found));
 	}
 
+	// 平坦な名前空間 (華和梨7互換モード) : 名前全体を 1 つのエントリ名にする
+	if(flat) {
+		if(entry.size()==0) return(TEntry(this,0));
+		TEntryID id=0;
+		if(EntryCollection.Insert(entry,&id)) {
+			ParentEntry[id]=0;
+			SubEntry.insert(pair<TEntryID,TEntryID>(0,id));
+		}
+		return(TEntry(this,id));
+	}
+
 	vector<wstring> entryname_node;
 	SplitEntryName(entry,entryname_node);
 	if(entryname_node.size()==0) return(TEntry(this,0));

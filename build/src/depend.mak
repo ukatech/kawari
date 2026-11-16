@@ -216,6 +216,8 @@
 
 ./saori/saori_unique.h : ./config.h ./saori/saori_module.h
 
+./shiori/kawari7_shiori.cpp : ./config.h ./shiori/kawari_shiori.h ./libkawari/kawari7.h ./libkawari/kawari_log.h ./misc/misc.h ./misc/charset.h
+
 ./shiori/kawari_shiori.cpp : ./config.h ./shiori/kawari_shiori.h ./libkawari/kawari_log.h ./misc/misc.h ./misc/charset.h
 
 ./shiori/kawari_shiori.h : ./config.h ./libkawari/kawari_engine.h ./misc/phttp.h ./libkawari/kawari_version.h

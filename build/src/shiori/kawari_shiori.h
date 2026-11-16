@@ -63,6 +63,7 @@
 //---------------------------------------------------------------------------
 #include <string>
 #include <vector>
+#include <set>
 //---------------------------------------------------------------------------
 #include "libkawari/kawari_engine.h"
 #include "misc/phttp.h"
@@ -143,6 +144,19 @@ private:
 
 	// Loadが呼ばれたか
 	bool initialized;
+
+	// 華和梨7互換モード (kawari7_shiori.cpp)
+	// 7.5.0 の SHIORI/2.x の振り分け (event.* / system.On* / resource.* / compatible.* / match.Response)
+	void Request7(TPHMessage &request, TPHMessage &response);
+	unsigned int RequestGetSentence7(TPHMessage &request, TPHMessage &response);
+	bool SearchCommunicateTarget7(const std::wstring &targetghost, TPHMessage &response);
+	std::wstring GetResponse7(void);
+	void SetSystemEntry7(const std::wstring &name, const std::wstring &value);
+	std::wstring FirstWord7(const std::wstring &name);
+
+	// NOTIFY で通知されたゴースト名 (華和梨7互換モード)
+	std::set<std::wstring> OtherGhostName;
+	std::set<std::wstring> OtherGhostExName;
 
 public:
 	// 複数インスタンスを許可
