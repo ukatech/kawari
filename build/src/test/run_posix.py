@@ -96,7 +96,8 @@ def test_kosui(bin_dir, work, timeout, suite="kosui"):
     banner = "'.' is mode change command.\n"
     for index, case in enumerate(cases, 1):
         name = "%s:%d %s %s" % (suite, case["line"], case["verb"], case["rest"])
-        d = os.path.join(work, "%s%d" % (suite, index))
+        # kosui の 71 番と kosui7 の 1 番が同じ名前にならないよう、区切りを入れる
+        d = os.path.join(work, "%s_%d" % (suite, index))
         os.mkdir(d)
         copy_fixture(fixture, d)
         if case["verb"] == "cmd":
