@@ -7,9 +7,8 @@
 //                            SearchCommunicateTarget / GetResponse) から移植
 //
 //  7.5.0 は SHIORI/2.x しか話さない。応答の先頭行は SHIORI/2.6 にする
-//  (ベースウェアは先頭行の版で 2.x か 3.0 かを決める)。
-//  SHIORI/3.0 の GET / NOTIFY が来たときは (7.5.0 には無い拡張)、2.x の Event /
-//  リソースへ読み替えて処理し、先頭行を SHIORI/3.0 にして Value で返す。
+//  (ベースウェアは先頭行の版で 2.x か 3.0 かを決める)。SHIORI/3.0 の GET / NOTIFY (ID ヘッダ) には、
+//  7.5.0 と同じく 400 Bad Request を返し、ベースウェアに 2.x へ切り替えさせる。
 //
 //---------------------------------------------------------------------------
 #include "config.h"
@@ -161,7 +160,6 @@ void TKawariShioriAdapter::Request7(TPHMessage &request, TPHMessage &response)
 	wstring type=reqline.substr(0, pos);
 
 	unsigned int statuscode=400;
-	bool v3=false;
 
 	// 伝達経路 (SecurityLevel ヘッダ。local / external 以外は unknown)
 	wstring sender=Hdr(request, L"Sender");
@@ -185,7 +183,7 @@ void TKawariShioriAdapter::Request7(TPHMessage &request, TPHMessage &response)
 		SetSystemEntry7(L"system.Sender.Path", sender_path_name);
 
 		if(SecurityLevel.Check(sender_path)) {
-			if((type==L"NOTIFY"&&!request.count(L"ID"))||type==L"NOTIFY Ghost"||type==L"NOTIFY OwnerGhostName") {
+			if(type==L"NOTIFY"||type==L"NOTIFY Ghost"||type==L"NOTIFY OwnerGhostName") {
 				wstring ghost=Hdr(request, L"Ghost");
 				SetSystemEntry7(L"system.Ghost", ghost);
 				GhostName=ghost;
@@ -285,56 +283,10 @@ void TKawariShioriAdapter::Request7(TPHMessage &request, TPHMessage &response)
 				wstring aistr=Engine.RandomSelect(L"system.OnTranslate");
 				if(aistr.size()) response[L"Sentence"]=aistr;
 				else statuscode=400;
-			} else if(((type==L"GET")||(type==L"NOTIFY"))&&request.count(L"ID")) {
-				// SHIORI/3.0 (7.5.0 には無い拡張) : 2.x の Event / リソース / NOTIFY に読み替える
-				v3=true;
-				wstring id=Hdr(request, L"ID");
-				if(type==L"NOTIFY") {
-					if(id==L"ownerghostname") {
-						wstring ghost=Hdr(request, L"Reference0");
-						SetSystemEntry7(L"system.Ghost", ghost);
-						GhostName=ghost;
-						Engine.RandomSelect(L"system.OnNotifyGhost");
-					} else if(id==L"otherghostname") {
-						OtherGhostName.clear();
-						OtherGhostExName.clear();
-						Engine.ClearEntry(L"system.OtherGhost");
-						Engine.ClearEntry(L"system.OtherGhostEx");
-						for(int i=0; i<64; i++) {
-							wstring r=L"Reference"+IntToString(i);
-							if(!request.count(r)) break;
-							wstring v=Hdr(request, r.c_str());
-							OtherGhostName.insert(v);
-							Engine.PushStr(L"system.OtherGhost", v);
-						}
-						Engine.RandomSelect(L"system.OnNotifyOther");
-					}
-					statuscode=204;
-				} else if(id.compare(0, 2, L"On")==0) {
-					for(int i=0; i<=7; i++) {
-						wstring refno=IntToString(i);
-						SetSystemEntry7(L"system.Reference"+refno, Hdr(request, (L"Reference"+refno).c_str()));
-					}
-					SetSystemEntry7(L"system.EventName", id);
-					wstring aistr=Engine.RandomSelect(L"event."+TKawari7Compiler::EncodeEntryName(id));
-					if(aistr.size()==0) aistr=Engine.RandomSelect(L"system.OnEventUnknown");
-					if(aistr.size()) {
-						response[L"Value"]=aistr;
-						statuscode=200;
-					} else {
-						statuscode=204;
-					}
-				} else {
-					SetSystemEntry7(L"system.ID", id);
-					wstring aistr=Engine.RandomSelect(L"resource."+TKawari7Compiler::EncodeEntryName(id));
-					if(aistr.size()) {
-						response[L"Value"]=aistr;
-						statuscode=200;
-					} else {
-						statuscode=204;
-					}
-				}
 			}
+			// SHIORI/3.0 の GET / NOTIFY (ID ヘッダ) は、7.5.0 と同じく 400 Bad Request にする。
+			// ベースウェアはその応答で 2.x に切り替える (3.0 で応答すると、COMMUNICATE や TEACH など
+			// 2.x だけの機能が使われなくなる)
 		}
 	}
 
@@ -369,8 +321,6 @@ void TKawariShioriAdapter::Request7(TPHMessage &request, TPHMessage &response)
 
 	if(saori)
 		response.SetStartline(L"SAORI/" KW_WIDE(SAORIVER) L" "+statusheader);
-	else if(v3)
-		response.SetStartline(L"SHIORI/3.0 "+statusheader);
 	else
 		response.SetStartline(L"SHIORI/2.6 "+statusheader);
 }

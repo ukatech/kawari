@@ -111,6 +111,18 @@ REQ GET Sentence SHIORI/2.3b | Sentence: hello | Age: 19 | Sender: emily | Secur
 REQ GET Sentence SHIORI/2.2 | Event: OnBoot | SecurityLevel: external
 ~ SHIORI/2.6 400 Bad Request
 
+# SHIORI/3.0 : 400 Bad Request, as in 7.5.0. The baseware switches to SHIORI/2.x by this answer (an answer in
+# SHIORI/3.0 would keep it in 3.0, where COMMUNICATE and TEACH of 2.x are not used).
+GET OnBoot
+~ SHIORI/2.6 400 Bad Request
+
+GET homeurl
+~ SHIORI/2.6 400 Bad Request
+
+# a 3.0 NOTIFY has the same type "NOTIFY" as a 2.x one, so 7.5.0 answers it (the name of the ghost is empty)
+NOTIFY ownerghostname kuro2
+~ SHIORI/2.6 200 OK
+
 # extensions (not in 7.5.0)
 #
 # a value of a request is not evaluated: it is only the text of the request (7.5.0 compiled it as a word,
@@ -120,21 +132,3 @@ REQ GET Sentence SHIORI/2.2 | Event: OnRef | Reference0: "x"
 
 REQ GET Sentence SHIORI/2.2 | Event: OnRef | Reference0: ${greet}
 ~ Sentence: r0=${greet} r1=
-
-# SHIORI/3.0 requests are read as SHIORI/2.x ones and answered in SHIORI/3.0.
-GET OnBoot
-~ SHIORI/3.0 200 OK
-~ Value: \0\s[0]Hello 7\e
-
-GET OnRef a,b
-~ Value: r0=a r1=b
-
-GET homeurl
-~ SHIORI/3.0 200 OK
-~ Value: http://example.invalid/
-
-GET nosuchresource
-~ SHIORI/3.0 204 No Content
-
-NOTIFY ownerghostname kuro2
-~ SHIORI/3.0 204 No Content
