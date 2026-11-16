@@ -43,6 +43,7 @@ Phase 9 系は、オリジナルの華和梨をフォークし、[ponapalt](http
 - `save` / `savecrypt` は UTF-8 (BOM あり) で書き出します。7.5.0 が書いたセーブはそのまま読めますが、7 互換モードが書いたセーブを 7.5.0 の `shiori.dll` に戻して読めるとは限りません (差し替えを戻す可能性があるなら、セーブのバックアップを)
 - リクエストの値と SAORI の応答の値は、文字列としてそのまま扱います (7.5.0 は単語として読んだので、`"` が消えたり `${` `$(` が実行されたりしました)
 - `ver` と `GET Version` は、この華和梨のバージョンを返します。`locale` の Big5 と ISO-8859-1 は扱えません
+- Phase 9.3.1 以降は SHIORI/3.0 で動きます。`GET Version SHIORI/2.6` に `SHIORI/3.0` で答えて、本体に 3.0 を選ばせます (7.5.0 は 2.6 と答えました)。3.0 の `GET` は、ID に大文字があればイベント (`OnBoot` など)、全部小文字なら資源 (`homeurl` など) として、7.5.0 と同じ辞書 (`event.*` `resource.*` など) で答えます
 - 7 互換モードのゴーストでも、`=kis` ～ `=end` と、単語の中の `$[ ]` は、Phase 8 以降の文法で読めます
 
 ## 目次
@@ -64,6 +65,12 @@ Phase 9 系は、オリジナルの華和梨をフォークし、[ponapalt](http
 新しい順に並べています。「非公開」とあるものは一般には公開されなかった版です。
 
 ### Phase 9
+
+#### 2026/11/16 Phase 9.3.1 (Core 4.3.1)
+
+- 7 互換モードを SHIORI/3.0 で動かすようにした。`GET Version SHIORI/2.6` に `SHIORI/3.0 200 OK` で答えて、本体に 3.0 を選ばせる (7.5.0 は `SHIORI/2.6`、3.0 の要求には 400 を返した)。SHIORI/2.x の要求への答えは変わらない
+- 3.0 の `GET` は 2.x の要求に読み替えて、`Value` で答える。ID に大文字があればイベント (`event.<ID>`)、全部小文字なら資源 (`resource.<ID>`)。`OnCommunicate` = COMMUNICATE、`OnTeach` = TEACH、`OnTranslate`、`\` で始まる ID = GET Word、`getaistate` / `getaistateex` = GET Status。3.0 の `NOTIFY` は `event.<ID>` を評価する (`ownerghostname` / `otherghostname` は 2.x の NOTIFY と同じ、`hwnd` は本体のウィンドウを覚える)。8 個より多い Reference も `system.ReferenceN` に入れる
+- テスト: `shiori7` に 3.0 のケースを追加した (「extensions」より前は、本物の 7.5.0 でも同じ答え)
 
 #### 2026/11/16 Phase 9.3.0 (Core 4.3.0)
 

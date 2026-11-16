@@ -209,6 +209,10 @@ def normalize(b):
     """the version numbers and the name of the two DLLs are not a difference"""
     t = b.decode('cp932', 'replace')
     t = re.sub(r'(?m)^(ID|Craftman|Version): .*$', r'\1: <v>', t)
+    # the answer to GET Version says SHIORI/3.0 (the 7.5.0 says SHIORI/2.6): the baseware decides 2.x or 3.0 by it.
+    # The response of GET Version is the only one that has ID / Craftman / Version
+    if '<v>' in t and t.startswith('SHIORI/2.6 200 OK'):
+        t = 'SHIORI/3.0 200 OK' + t[len('SHIORI/2.6 200 OK'):]
     # GET Status : the numbers of words and entries are internal statistics (they differ by how
     # the two engines store words), so only the shape is compared
     t = re.sub(r'(?m)^(Status): (\d+),(\d+),(\d+),[^,\r\n]*,', r'\1: <n>,<n>,\4,<v>,', t)

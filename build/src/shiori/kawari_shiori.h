@@ -148,11 +148,16 @@ private:
 	// 華和梨7互換モード (kawari7_shiori.cpp)
 	// 7.5.0 の SHIORI/2.x の振り分け (event.* / system.On* / resource.* / compatible.* / match.Response)
 	void Request7(TPHMessage &request, TPHMessage &response);
-	unsigned int RequestGetSentence7(TPHMessage &request, TPHMessage &response);
+	unsigned int RequestGetSentence7(TPHMessage &request, TPHMessage &response, int refmax);
+	unsigned int RequestNotify30(TPHMessage &request);
+	void StoreReferences7(const TPHMessage &request, int refmax, bool evaluate);
 	bool SearchCommunicateTarget7(const std::wstring &targetghost, TPHMessage &response);
 	std::wstring GetResponse7(void);
 	void SetSystemEntry7(const std::wstring &name, const std::wstring &value);
 	std::wstring FirstWord7(const std::wstring &name);
+
+	// system.ReferenceN に入れた最大の N (SHIORI/3.0 は 8 個より多い Reference を送るので、古い値を消すために覚える)
+	int LastRefMax7;
 
 	// NOTIFY で通知されたゴースト名 (華和梨7互換モード)
 	std::set<std::wstring> OtherGhostName;
@@ -160,7 +165,7 @@ private:
 
 public:
 	// 複数インスタンスを許可
-	TKawariShioriAdapter(void) : SecurityLevel(2), initialized(false) { }
+	TKawariShioriAdapter(void) : SecurityLevel(2), initialized(false), LastRefMax7(7) { }
 
 	virtual ~TKawariShioriAdapter() {}
 

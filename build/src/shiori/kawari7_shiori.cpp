@@ -6,9 +6,10 @@
 //  2026.11.16  Phase 9.3.0   華和梨 7.5.0 の kawari.cpp (Request / RequestGetSentence /
 //                            SearchCommunicateTarget / GetResponse) から移植
 //
-//  7.5.0 は SHIORI/2.x しか話さない。応答の先頭行は SHIORI/2.6 にする
-//  (ベースウェアは先頭行の版で 2.x か 3.0 かを決める)。SHIORI/3.0 の GET / NOTIFY (ID ヘッダ) には、
-//  7.5.0 と同じく 400 Bad Request を返し、ベースウェアに 2.x へ切り替えさせる。
+//  7.5.0 は SHIORI/2.x しか話さない。ベースウェアは GET Version への応答の先頭行の版で 2.x か 3.0 かを決める。
+//  GET Version には SHIORI/3.0 で答え、ベースウェアに 3.0 を選ばせる。
+//  SHIORI/3.0 の要求 (GET / NOTIFY の ID ヘッダ) は、2.x の要求に読み替えて同じ振り分けで処理し、
+//  応答は SHIORI/3.0 で返す (Value ヘッダ)。2.x の要求への応答の先頭行は SHIORI/2.6 のままにする。
 //
 //---------------------------------------------------------------------------
 #include "config.h"
@@ -59,6 +60,98 @@ static wstring StripSuffix(const wstring &s, const wchar_t *suffix)
 	return s;
 }
 //---------------------------------------------------------------------------
+// 要求の 1 行目の版が 3 で始まるか (SHIORI/3.0)
+static bool IsShiori3(const wstring &reqline)
+{
+	wstring::size_type pos=reqline.find(L" SHIORI/");
+	if(pos==wstring::npos) return false;
+	pos+=8;
+	return (pos<reqline.size())&&(reqline[pos]==L'3');
+}
+//---------------------------------------------------------------------------
+// ReferenceN ヘッダの最大の N (無ければ -1)
+static int MaxReference(const TPHMessage &m)
+{
+	int mx=-1;
+	for(TPHMessage::const_iterator it=m.begin(); it!=m.end(); ++it) {
+		const wstring &k=it->first;
+		if((k.size()<10)||(k.size()>13)||(k.compare(0, 9, L"Reference")!=0)) continue;
+		bool digits=true;
+		for(size_t i=9; i<k.size(); i++)
+			if((k[i]<L'0')||(k[i]>L'9')) digits=false;
+		if(!digits) continue;
+		int n=StringToInt(k.substr(9));
+		if(n>mx) mx=n;
+	}
+	return mx;
+}
+//---------------------------------------------------------------------------
+// 半角の大文字 (A-Z) を含むか
+static bool HasUpper(const wstring &s)
+{
+	for(size_t i=0; i<s.size(); i++)
+		if((s[i]>=L'A')&&(s[i]<=L'Z')) return true;
+	return false;
+}
+//---------------------------------------------------------------------------
+// ヘッダを 1 つだけにして値を入れる
+static void SetHdr(TPHMessage &m, const wchar_t *key, const wstring &value)
+{
+	m.erase(key);
+	m[key]=value;
+}
+//---------------------------------------------------------------------------
+// SHIORI/3.0 の GET (ID ヘッダ) を、7.5.0 の振り分けが分かる 2.x の要求に読み替える。
+// 戻り値は 2.x での要求の型。ID が大文字を含まなければ GET String、含めば GET Sentence (Event)。
+// 読み替え先は ID で決まる (大文字を含まない ID は資源、含む ID はイベント):
+//   OnCommunicate -> GET Sentence (Sender = Reference0, Sentence = Reference1)
+//   OnTeach       -> TEACH (Word = Reference0)
+//   OnTranslate   -> TRANSLATE Sentence (Sentence = Reference0)
+//   \ で始まる    -> GET Word (Type = ID)
+//   getaistate / getaistateex -> GET Status
+//   大文字を含む  -> GET Sentence (Event = ID)
+//   それ以外      -> GET String
+static wstring Normalize30(TPHMessage &request, const wstring &id)
+{
+	if(id==L"OnCommunicate") {
+		wstring from=Hdr(request, L"Reference0");
+		wstring text=Hdr(request, L"Reference1");
+		request.erase(L"Sender");
+		if(from.size()) request[L"Sender"]=from;
+		SetHdr(request, L"Sentence", text);
+		return L"GET Sentence";
+	}
+	if(id==L"OnTeach") {
+		SetHdr(request, L"Word", Hdr(request, L"Reference0"));
+		return L"TEACH";
+	}
+	if(id==L"OnTranslate") {
+		SetHdr(request, L"Sentence", Hdr(request, L"Reference0"));
+		return L"TRANSLATE Sentence";
+	}
+	if((id.size()>0)&&(id[0]==L'\\')) {
+		SetHdr(request, L"Type", id);
+		return L"GET Word";
+	}
+	if((id==L"getaistate")||(id==L"getaistateex")) return L"GET Status";
+	// 大文字を 1 つでも含めばイベント (On... のほか ShioriEcho / KawariCommand も)、全部小文字なら資源
+	if(HasUpper(id)) {
+		SetHdr(request, L"Event", id);
+		return L"GET Sentence";
+	}
+	return L"GET String";
+}
+//---------------------------------------------------------------------------
+// SHIORI/3.0 の資源 version / craftman / craftmanw / shioriid / name の既定値 (辞書の resource.* で上書きできる)
+static wstring Builtin30(const wstring &id)
+{
+	if(id==L"version")
+		return KW_WIDE(KAWARI_MAJOR) L"." KW_WIDE(KAWARI_MINOR) L"." KW_WIDE(KAWARI_SUBMINOR);
+	if((id==L"craftman")||(id==L"craftmanw")) return KW_WIDE(KAWARI_AUTHOR);
+	if((id==L"shioriid")||(id==L"name")) return KW_WIDE(KAWARI_NAME);
+	return L"";
+}
+//---------------------------------------------------------------------------
 // system.* などの書き込み先エントリに、リクエストの値を文字列としてそのまま入れる
 // (7.5.0 は値を単語としてコンパイルしていたが、${ や $( を含む入力が実行されてしまうので、
 //  文字列として入れる。${system.Reference0} などで読み出した結果は同じ)
@@ -72,6 +165,68 @@ void TKawariShioriAdapter::SetSystemEntry7(const wstring &name, const wstring &v
 wstring TKawariShioriAdapter::FirstWord7(const wstring &name)
 {
 	return Engine.IndexParse(name);
+}
+//---------------------------------------------------------------------------
+// system.Reference0〜refmax に、要求の Reference を入れる。以前に入れた番号が多いときは、余りを空にする
+// (evaluate が真なら、値を単語として読む。7 の debug : debugger のイベント用)
+void TKawariShioriAdapter::StoreReferences7(const TPHMessage &request, int refmax, bool evaluate)
+{
+	int top=(refmax>LastRefMax7)?refmax:LastRefMax7;
+	for(int i=0; i<=top; i++) {
+		wstring name=L"system.Reference"+IntToString(i);
+		if(i>refmax) {
+			Engine.ClearEntry(name);
+			continue;
+		}
+		wstring value=Hdr(request, (L"Reference"+IntToString(i)).c_str());
+		if(evaluate) Engine.PushAfterClear(name, value);
+		else SetSystemEntry7(name, value);
+	}
+	LastRefMax7=refmax;
+}
+//---------------------------------------------------------------------------
+// SHIORI/3.0 の NOTIFY (ID ヘッダ)
+// ownerghostname / otherghostname は、2.x の NOTIFY OwnerGhostName / OtherGhostName と同じに扱う。
+// どの ID でも、event.ID があれば評価する (結果は使わない)
+unsigned int TKawariShioriAdapter::RequestNotify30(TPHMessage &request)
+{
+	wstring id=Hdr(request, L"ID");
+	if(id.size()==0) return 400;
+
+	int refmax=MaxReference(request);
+	if(refmax<7) refmax=7;
+
+	if(id==L"hwnd") {
+		// 本体のウィンドウ (getproperty, 内蔵モジュールなどの送り先。9 と同じ)
+		Engine.GetBaseware().SetHandleFromReference(Hdr(request, L"Reference0"));
+	} else if(id==L"ownerghostname") {
+		wstring ghost=Hdr(request, L"Reference0");
+		SetSystemEntry7(L"system.Ghost", ghost);
+		GhostName=ghost;
+		Engine.RandomSelect(L"system.OnNotifyGhost");
+	} else if(id==L"otherghostname") {
+		// Reference N は「ゴースト名 \1 サーフェス \1 サーフェス」(2.x の GhostEx と同じ形)
+		OtherGhostName.clear();
+		OtherGhostExName.clear();
+		Engine.ClearEntry(L"system.OtherGhost");
+		Engine.ClearEntry(L"system.OtherGhostEx");
+		for(int i=0; i<=refmax; i++) {
+			wstring ex=Hdr(request, (L"Reference"+IntToString(i)).c_str());
+			if(ex.size()==0) continue;
+			wstring::size_type p=ex.find(L'\1');
+			wstring name=(p==wstring::npos)?ex:ex.substr(0, p);
+			OtherGhostName.insert(name);
+			OtherGhostExName.insert(ex);
+			Engine.PushStr(L"system.OtherGhost", name);
+			Engine.PushStr(L"system.OtherGhostEx", ex);
+		}
+		Engine.RandomSelect(L"system.OnNotifyOther");
+	}
+
+	StoreReferences7(request, refmax, false);
+	SetSystemEntry7(L"system.EventName", id);
+	Engine.RandomSelect(L"event."+TKawari7Compiler::EncodeEntryName(id));
+	return 204;
 }
 //---------------------------------------------------------------------------
 // 入力に返答する単語 (COMMUNICATE)
@@ -102,7 +257,8 @@ bool TKawariShioriAdapter::SearchCommunicateTarget7(const wstring &targetghost, 
 }
 //---------------------------------------------------------------------------
 // リクエストに応じて返答を作る (GET Sentence)
-unsigned int TKawariShioriAdapter::RequestGetSentence7(TPHMessage &request, TPHMessage &response)
+// refmax は読む Reference の最大の番号 (2.x は 7。SHIORI/3.0 はそれより多いことがある)
+unsigned int TKawariShioriAdapter::RequestGetSentence7(TPHMessage &request, TPHMessage &response, int refmax)
 {
 	wstring aistr;
 
@@ -111,12 +267,7 @@ unsigned int TKawariShioriAdapter::RequestGetSentence7(TPHMessage &request, TPHM
 		// ini でデバッガを有効にしたゴーストの、そのイベントだけは 7 のとおりコンパイルする。
 		wstring ev=Hdr(request, L"Event");
 		bool evaluate=(ev==L"ShioriEcho")||(ev==L"KawariCommand");
-		for(int i=0; i<=7; i++) {
-			wstring refno=IntToString(i);
-			wstring value=Hdr(request, (L"Reference"+refno).c_str());
-			if(evaluate) Engine.PushAfterClear(L"system.Reference"+refno, value);
-			else SetSystemEntry7(L"system.Reference"+refno, value);
-		}
+		StoreReferences7(request, refmax, evaluate);
 	}
 
 	if(request.count(L"Event")) {
@@ -159,6 +310,22 @@ void TKawariShioriAdapter::Request7(TPHMessage &request, TPHMessage &response)
 	}
 	wstring type=reqline.substr(0, pos);
 
+	// SHIORI/3.0 の要求は、2.x の要求に読み替えて同じ振り分けで処理し、応答を 3.0 の形 (Value) に戻す。
+	// GET の ID が大文字を含めばイベント (GET Sentence)、全部小文字なら資源 (GET String) である。
+	// ログには、読み替える前の要求を出す
+	bool shiori3=(!saori)&&IsShiori3(reqline);
+	wstring id30;
+	TPHMessage original;
+	int refmax=7;
+	if(shiori3) {
+		original=request;
+		id30=Hdr(request, L"ID");
+		if(type==L"GET") type=Normalize30(request, id30);
+		// 2.x は Reference0〜7 だけを読んだが、3.0 は 8 個より多い Reference を送る
+		int mx=MaxReference(request);
+		if(mx>refmax) refmax=mx;
+	}
+
 	// debug : log (kawari.ini) のログ。7.5.0 は OnMouseMove 以外の要求と応答を全て記録した
 	TKawariLogger &Logger=Engine.GetLogger();
 	unsigned int evtchk=kawari_log::LOG_BASEEVENTS;
@@ -173,7 +340,7 @@ void TKawariShioriAdapter::Request7(TPHMessage &request, TPHMessage &response)
 	if(logmode) {
 		Logger.GetStream() << L"[SHIORI/SAORI Adapter] Query sequence begin." << endl;
 		Logger.GetStream() << L"---------------------- REQUEST" << endl;
-		request.Dump(Logger.GetStream());
+		(shiori3?original:request).Dump(Logger.GetStream());
 	}
 
 	unsigned int statuscode=400;
@@ -207,7 +374,9 @@ void TKawariShioriAdapter::Request7(TPHMessage &request, TPHMessage &response)
 		SetSystemEntry7(L"System.Sender.Path", sender_path_name);
 
 		if(SecurityLevel.Check(sender_path)) {
-			if(type==L"NOTIFY"||type==L"NOTIFY Ghost"||type==L"NOTIFY OwnerGhostName") {
+			if(shiori3&&(type==L"NOTIFY")) {
+				statuscode=RequestNotify30(request);
+			} else if(type==L"NOTIFY"||type==L"NOTIFY Ghost"||type==L"NOTIFY OwnerGhostName") {
 				wstring ghost=Hdr(request, L"Ghost");
 				SetSystemEntry7(L"system.Ghost", ghost);
 				GhostName=ghost;
@@ -236,7 +405,7 @@ void TKawariShioriAdapter::Request7(TPHMessage &request, TPHMessage &response)
 				response[L"Version"]=KW_WIDE(KAWARI_MAJOR) L"." KW_WIDE(KAWARI_MINOR) L"." KW_WIDE(KAWARI_SUBMINOR);
 				statuscode=200;
 			} else if(type==L"GET Sentence") {
-				statuscode=RequestGetSentence7(request, response);
+				statuscode=RequestGetSentence7(request, response, refmax);
 
 				// 話しかける相手 (無ければ、話しかけてきた相手)
 				wstring targetghost=FirstWord7(L"system.communicate");
@@ -268,26 +437,32 @@ void TKawariShioriAdapter::Request7(TPHMessage &request, TPHMessage &response)
 					statuscode=204;
 				}
 			} else if(type==L"GET Status") {
-				wstring aistr=Engine.RandomSelect(L"system.OnGetStatus");
-				if(aistr.size()>0) {
-					response[L"Status"]=aistr;
+				if(shiori3&&(id30==L"getaistateex")&&(StringToInt(Hdr(request, L"Reference0"))>=1)) {
+					// AI の状態は 1 組だけ (2 組目以降は無い)
+					statuscode=204;
 				} else {
-					unsigned int nmatch=static_cast<unsigned int>(Engine.GetLegacy7State()->matches.size());
-					response[L"Status"]=
-					 IntToString(static_cast<int>(Engine.WordCollectionSize()))+L","
-					 +IntToString(static_cast<int>(Engine.EntryCollectionSize()-nmatch))+L","
-					 +IntToString(static_cast<int>(nmatch))+L","
-					 +KW_WIDE(KAWARI_MAJOR) KW_WIDE(KAWARI_MINOR) KW_WIDE(KAWARI_SUBMINOR) L","
-					 +L"100,"
-					 +L"100";
+					wstring aistr=Engine.RandomSelect(L"system.OnGetStatus");
+					if(aistr.size()>0) {
+						response[L"Status"]=aistr;
+					} else {
+						unsigned int nmatch=static_cast<unsigned int>(Engine.GetLegacy7State()->matches.size());
+						response[L"Status"]=
+						 IntToString(static_cast<int>(Engine.WordCollectionSize()))+L","
+						 +IntToString(static_cast<int>(Engine.EntryCollectionSize()-nmatch))+L","
+						 +IntToString(static_cast<int>(nmatch))+L","
+						 +KW_WIDE(KAWARI_MAJOR) KW_WIDE(KAWARI_MINOR) KW_WIDE(KAWARI_SUBMINOR) L","
+						 +L"100,"
+						 +L"100";
+					}
+					statuscode=200;
 				}
-				statuscode=200;
 			} else if(type==L"GET String") {
-				// SHIORI/2.5
+				// SHIORI/2.5 (SHIORI/3.0 の On で始まらない ID もここ)
 				if(request.count(L"ID")) {
 					wstring id=Hdr(request, L"ID");
 					SetSystemEntry7(L"system.ID", id);
 					wstring aistr=Engine.RandomSelect(L"resource."+TKawari7Compiler::EncodeEntryName(id));
+					if(shiori3&&(aistr.size()==0)) aistr=Builtin30(id);
 					if(aistr.size()) {
 						statuscode=200;
 						response[L"String"]=aistr;
@@ -306,11 +481,21 @@ void TKawariShioriAdapter::Request7(TPHMessage &request, TPHMessage &response)
 				statuscode=200;
 				wstring aistr=Engine.RandomSelect(L"system.OnTranslate");
 				if(aistr.size()) response[L"Sentence"]=aistr;
-				else statuscode=400;
+				else statuscode=shiori3?204:400;
 			}
-			// SHIORI/3.0 の GET / NOTIFY (ID ヘッダ) は、7.5.0 と同じく 400 Bad Request にする。
-			// ベースウェアはその応答で 2.x に切り替える (3.0 で応答すると、COMMUNICATE や TEACH など
-			// 2.x だけの機能が使われなくなる)
+		}
+	}
+
+	// 3.0 の応答は、文の本体を Value ヘッダに入れる
+	if(shiori3) {
+		static const wchar_t *const keys[]={L"Sentence", L"Word", L"Status", L"String"};
+		for(size_t k=0; k<sizeof(keys)/sizeof(keys[0]); k++) {
+			TPHMessage::iterator it=response.find(keys[k]);
+			if(it==response.end()) continue;
+			wstring value=it->second;
+			response.erase(keys[k]);
+			response[L"Value"]=value;
+			break;
 		}
 	}
 
@@ -345,6 +530,8 @@ void TKawariShioriAdapter::Request7(TPHMessage &request, TPHMessage &response)
 
 	if(saori)
 		response.SetStartline(L"SAORI/" KW_WIDE(SAORIVER) L" "+statusheader);
+	else if(shiori3||(type==L"GET Version"))
+		response.SetStartline(L"SHIORI/" KW_WIDE(SHIORIVER) L" "+statusheader);
 	else
 		response.SetStartline(L"SHIORI/2.6 "+statusheader);
 

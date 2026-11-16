@@ -17,3 +17,6 @@ system.OnTranslate : [${system.Sentence}]
 system.OnTeach : taught ${system.Sentence}
 system.OnNotifyGhost : ${system.Ghost}
 system.BalloonOffset : "1,2"
+event.OnLast : [${system.Reference9}]
+event.basewareversion : $(set seen.ver ${system.Reference0})
+event.OnSeen : ver=${seen.ver}

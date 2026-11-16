@@ -11,10 +11,9 @@
 # The REQ cases before "extensions" give the same answers on the real Kawari 7.5.0 shiori.dll
 # (run this suite with -BinDir pointing at a folder that has the 7.5.0 files). Use ASCII only.
 
-# version : the module answers by itself. The status line says SHIORI/2.6: the baseware decides 2.x or 3.0
-# by the version of the status line.
+# version : the module answers by itself (the version of the status line is checked in "extensions")
 REQ GET Version SHIORI/2.6
-~ SHIORI/2.6 200 OK
+~ 200 OK
 ~ Charset: Shift_JIS
 
 # system.BalloonOffset is answered once (with the first response) and then cleared
@@ -111,18 +110,6 @@ REQ GET Sentence SHIORI/2.3b | Sentence: hello | Age: 19 | Sender: emily | Secur
 REQ GET Sentence SHIORI/2.2 | Event: OnBoot | SecurityLevel: external
 ~ SHIORI/2.6 400 Bad Request
 
-# SHIORI/3.0 : 400 Bad Request, as in 7.5.0. The baseware switches to SHIORI/2.x by this answer (an answer in
-# SHIORI/3.0 would keep it in 3.0, where COMMUNICATE and TEACH of 2.x are not used).
-GET OnBoot
-~ SHIORI/2.6 400 Bad Request
-
-GET homeurl
-~ SHIORI/2.6 400 Bad Request
-
-# a 3.0 NOTIFY has the same type "NOTIFY" as a 2.x one, so 7.5.0 answers it (the name of the ghost is empty)
-NOTIFY ownerghostname kuro2
-~ SHIORI/2.6 200 OK
-
 # extensions (not in 7.5.0)
 #
 # a value of a request is not evaluated: it is only the text of the request (7.5.0 compiled it as a word,
@@ -132,3 +119,110 @@ REQ GET Sentence SHIORI/2.2 | Event: OnRef | Reference0: "x"
 
 REQ GET Sentence SHIORI/2.2 | Event: OnRef | Reference0: ${greet}
 ~ Sentence: r0=${greet} r1=
+
+# GET Version is answered in SHIORI/3.0 (7.5.0 : SHIORI/2.6): the baseware decides 2.x or 3.0 by the version of
+# the status line, and this makes it use 3.0
+REQ GET Version SHIORI/2.6
+~ SHIORI/3.0 200 OK
+~ Charset: Shift_JIS
+
+# SHIORI/3.0 (7.5.0 answers these with 400 Bad Request). A request is read as the 2.x one and answered in SHIORI/3.0
+# with Value. An ID that has an upper case letter is an event (GET Sentence), the others (all lower case) are
+# resources (GET String).
+GET OnBoot
+~ SHIORI/3.0 200 OK
+~ Value: \0\s[0]Hello 7\e
+
+GET OnRef a,b,c
+~ Value: r0=a r1=b
+
+GET OnNoSuchEvent
+~ Value: unknown=OnNoSuchEvent
+
+# a Reference over 7 is kept, and a value that is left from the last request is cleared
+GET OnLast 0,1,2,3,4,5,6,7,8,nine
+~ Value: [nine]
+
+GET OnLast a
+~ Value: []
+
+GET homeurl
+~ SHIORI/3.0 200 OK
+~ Value: http://example.invalid/
+
+GET nosuch
+~ SHIORI/3.0 204 No Content
+
+GET sakura.recommendsites
+~ Value: Site,http://example.invalid/site,
+
+# only the case matters: onboot is a resource (there is none), OnBoot2 and ShioriEcho are events
+GET onboot
+~ SHIORI/3.0 204 No Content
+
+GET OnBoot2
+~ Value: unknown=OnBoot2
+
+GET ShioriEcho
+~ Value: unknown=ShioriEcho
+
+# version, craftman, name and so on are answered by the module unless the dictionary has resource.*
+GET version
+~ SHIORI/3.0 200 OK
+~ Value: 9.
+
+GET name
+~ Value: KAWARI.kdt
+
+# COMMUNICATE = OnCommunicate (Reference0 : the sender, Reference1 : the sentence)
+GET OnCommunicate user,hello there
+~ Value: matched hello
+
+GET OnCommunicate emily,hello
+~ Value: matched hello
+~ To: emily
+~ Age: 0
+
+# TEACH = OnTeach, TRANSLATE Sentence = OnTranslate
+GET OnTeach pizza
+~ Value: taught pizza
+
+GET OnTranslate hi
+~ Value: [hi]
+
+# GET Word : the ID is the type
+GET \ms
+~ Value: Tom
+
+GET \mh
+~ SHIORI/3.0 204 No Content
+
+# GET Status = getaistate / getaistateex (there is only one set)
+GET getaistate
+~ SHIORI/3.0 200 OK
+~ Value:
+
+GET getaistateex 0
+~ SHIORI/3.0 200 OK
+
+GET getaistateex 1
+~ SHIORI/3.0 204 No Content
+
+# NOTIFY : ownerghostname and otherghostname are the same as the ones of 2.x, and event.<ID> is run for any ID
+NOTIFY ownerghostname kuro3
+~ SHIORI/3.0 204 No Content
+
+GET OnCommunicate emily,hello
+~ Sender: kuro3
+
+NOTIFY otherghostname bob
+~ SHIORI/3.0 204 No Content
+
+GET OnCommunicate bob,hello
+~ To: bob
+
+NOTIFY basewareversion 1.2.3
+~ SHIORI/3.0 204 No Content
+
+GET OnSeen
+~ Value: ver=1.2.3
