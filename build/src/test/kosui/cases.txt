@@ -273,6 +273,30 @@ echo $(date "%Y-%m-%d %H:%M:%S" $(mktime 2100 12 31 23 59 59))
 echo $(date "%Y-%m-%d %H:%M:%S" $(mktime 2000 2 29 0 0 0))
 = 2000-02-29 00:00:00
 
+# the range does not depend on the C runtime: before 1970 and after the year 3000 work too
+echo $(date "%Y-%m-%d %H:%M:%S" $(mktime 1969 12 31 23 59 59))
+= 1969-12-31 23:59:59
+
+echo $(date "%Y-%m-%d %H:%M:%S" $(mktime 1900 1 1 0 0 0))
+= 1900-01-01 00:00:00
+
+echo $(date "%Y-%m-%d %H:%M:%S" $(mktime 3100 12 31 23 59 59))
+= 3100-12-31 23:59:59
+
+echo $(date "%Y-%m-%d %H:%M:%S" $(mktime 9000 6 15 12 30 45))
+= 9000-06-15 12:30:45
+
+# weekday (0=Sunday) and day of the year, including leap years (2400 is a leap year, 2100 is not)
+echo $(date "%w %j" $(mktime 1900 1 1 12 0 0))/$(date "%w %j" $(mktime 1969 12 31 12 0 0))/$(date "%w %j" $(mktime 2400 2 29 12 0 0))/$(date "%w %j" $(mktime 3000 3 1 12 0 0))/$(date "%w %j" $(mktime 3100 12 31 12 0 0))
+= 1 001/3 365/2 060/6 060/1 365
+
+echo $[ $(mktime 1970 1 2 0 0 0) - $(mktime 1969 12 31 0 0 0) ]/$[ $(mktime 2101 1 1 0 0 0) - $(mktime 2100 1 1 0 0 0) ]/$[ $(mktime 2401 1 1 0 0 0) - $(mktime 2400 1 1 0 0 0) ]
+= 172800/31536000/31622400
+
+# a value that cannot be converted gives an empty string
+echo [$(date "%Y" 99999999999999999)]
+= []
+
 # Function lookup cache of a statement: the same statement node runs while the
 # function is undefined, defined, removed, and then shadowed by a user function
 # with a builtin's name.

@@ -20,7 +20,7 @@
 
 ./kis/kis_counter.h : ./config.h ./kis/kis_base.h
 
-./kis/kis_date.cpp : ./config.h ./kis/kis_date.h ./misc/misc.h
+./kis/kis_date.cpp : ./config.h ./kis/kis_date.h ./misc/misc.h ./misc/epochtime.h
 
 ./kis/kis_date.h : ./config.h ./kis/kis_base.h
 
@@ -122,7 +122,7 @@
 
 ./libkawari/kawari_engine.cpp : ./config.h ./libkawari/kawari_engine.h ./libkawari/kawari_dict.h ./libkawari/kawari_compiler.h ./libkawari/kawari_vm.h ./libkawari/kawari_crypt.h ./libkawari/kawari_codeset.h ./libkawari/kawari_rc.h ./misc/misc.h ./misc/wfile.h ./saori/saori.h
 
-./libkawari/kawari_engine.h : ./config.h ./libkawari/kawari_compiler.h ./libkawari/kawari_dict.h ./libkawari/kawari_code.h ./libkawari/kawari_vm.h ./libkawari/kawari_log.h ./libkawari/kawari_lint.h ./libkawari/kawari7.h ./saori/saori.h ./misc/dsstp.h ./misc/charset.h
+./libkawari/kawari_engine.h : ./config.h ./libkawari/kawari_compiler.h ./libkawari/kawari_dict.h ./libkawari/kawari_code.h ./libkawari/kawari_vm.h ./libkawari/kawari_log.h ./libkawari/kawari_lint.h ./libkawari/kawari7.h ./saori/saori.h ./misc/dsstp.h ./misc/charset.h ./misc/mt19937ar.h
 
 ./libkawari/kawari_lexer.cpp : ./config.h ./libkawari/kawari_lexer.h ./misc/misc.h ./misc/charset.h ./libkawari/kawari_crypt.h ./libkawari/kawari_log.h ./libkawari/kawari_rc.h
 
@@ -165,6 +165,8 @@
 ./misc/dsstp.cpp : ./config.h ./misc/dsstp.h ./misc/charset.h ./misc/misc.h
 
 ./misc/dsstp.h : ./config.h
+
+./misc/epochtime.h : ./config.h
 
 ./misc/fastalloc.cpp : ./config.h
 
