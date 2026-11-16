@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-華和梨 (KAWARI) — 伺か用の SHIORI (擬似AI) モジュール。C++ 製、Phase 9.2.2 (Core 4.2.2)。
+華和梨 (KAWARI) — 伺か用の SHIORI (擬似AI) モジュール。C++ 製、Phase 9.3.0 (Core 4.3.0)。
 CI は無い。最低限のテストは `build/src/test/` (下記「テスト」)。
 旧 ACP (SJIS の std::string) 版のコードは `v8acp` ブランチに保存してある。
 
@@ -104,6 +104,21 @@ make -f gcc.mak
   - コンパイラで拾うもの (木には残らない): **K-W2003** (`regex_*` の引数に引用符のない `( )`。素の括弧は `compileBlock` が中身だけを残して消すので、`(a)` と `a` が同じ木になる)。`TKawariCompiler::SetLintNotes(TLintNotes *)` で受け取り先を付けたときだけ、`compileWord` が「スクリプト中にブロックを読んだ」旗 (`lastwordblock`) を立て、`compileScriptStatement` が所見を `TLintNotes` に積む。受け取り先は `TKawariEngine` が持ち (`LoadKawariDictStream` が `KeepZones` のときだけ付ける)、通常の読み込みでは NULL で何もしない。`compileWord` の旗は終わるときに設定するので、入れ子の単語の旗は外側が上書きする。木で拾うもの: **K-W2004** (`regex_replace(_first)` の置換文字列に引用符のない `${N}` = `TKVMCodeHistoryCall`)。
   - 抑制は `# lint:disable-next-line=K-W2001, K-W2003` (次の行だけ。ユーザーが決めた)。`TKawariPreProcessor` がコメント行を捨てる所で `TLintNotes::ReadComment` に渡し、`TKawariLint::Run` が出力前に `IsSuppressed` で捨てる。K-W2xxx にだけ効き、実行時の診断は抑制しない。複数行の単語の所見は単語の先頭行なので、エントリ定義の前の行に書く。
   - **まだ無い**: カンマによる意図しない単語分割 (「意図しない」を判定できず偽陽性が出るので見送り)。
+
+## 華和梨 7 互換モード (Phase 9.3.0)
+
+`kawarirc.kis` が無く `kawari.ini` があるゴーストを、Phase 7.5.0 の動作で動かす。仕様は `../kawari-docs` の `spec/07-kawari7-compat.md` (正本。変えたら合わせる)。基準のソースは 7.5.0 の配布物 (`kawari-750-kdt`。`kosui.exe` と `shiori.dll` を含む)。
+
+- **モードはゴースト単位**で、辞書を読む前に `TKawariEngine::SetLegacy7(true)` で決める (`DetectLegacy7`: shiori の `Load` と kosui が呼ぶ)。ファイル単位の混在はしない。9 のコンパイラには手を入れず、7.5.0 の字句・文法を `libkawari/kawari7.*` に別に移植し、9 の中間コードに合わせて 7 専用ノード (`TK7*`) を作る。実行時にコンパイルする経路 (`CreateWord` / `GetWordID` / `Parse` / `LoadKawariDict`) は、必ず `CompileWordString` かモード分岐を通すこと (通さないと `adddict` / `set` / `eval` が 9 の文法になって、混在が裏口から入る)。
+- ファイル: `libkawari/kawari7.*` (字句・ノード・コンパイラ)、`libkawari/kawari7_engine.cpp` (kawari.ini・辞書・マッチエントリ・ピロ)、`kis/kis7.*` (9 と意味が違うコマンド。**`TKawariVM::LegacyTable` という別の表**に入れて `FunctionCall7` が先に引く。9 の `FunctionTable` や help・lint には出さない)、`shiori/kawari7_shiori.cpp` (SHIORI/2.x の振り分け)。
+- **同じ書き方で意味が違うもの** (実在のゴーストで見つかったものを含む): 履歴参照はエントリ呼び出しだけを数える。`if c t f` の `else` 無し。**エントリ名は平坦** (`TNameSpace::SetFlat`。9 は `.` で階層に分け空の節を捨てるので、`A.` が `A` になる。OpenKEEPS 系の辞書が空の変数を連結した `X.` に依存する)。`@` 始まりもローカルにしない (`FlatNames`)。`${A}` は重複を数えて一様に選ぶ (9 の純粋仮想単語・`set` の重複除去は使わない)。`CreateStrWord` は 7 モードでは `TK7String` (9 の文字列は `\` を `\\` で書き出すので、保存→読み込みのたびに `\` が増える)。
+- **乱数は 7.5.0 と同じ** (MT19937 と `Random()` の式)。種と呼び出し順が同じなら応答が 1 バイトも違わない。これが実ゴーストの差分テストの根拠なので、**乱数を引く回数・順序を変える変更は 7 モードでは禁止** (`${A}` で単語が無いとき引かない、など 7.5.0 に合わせてある)。
+- SHIORI は応答の先頭行を `SHIORI/2.6` にする。**3.0 の GET / NOTIFY には 7.5.0 と同じ 400 を返す** (本体がそれで 2.x に切り替える。3.0 で答えると本体が 3.0 と誤認して COMMUNICATE / TEACH が使われなくなる。読み替えの拡張は一度作って撤回した)。本体への送信 (`SetAllowed`) は伝達経路が local のときだけ。`callsaori` は `System.Sender.Path` (大文字始まり) を読むので、7 の `system.Sender.Path` と両方に書く。
+- 意図して 7.5.0 と違う点 (仕様書の「意図した違い」と同じ。増やすときは両方に書く): `ver`・`GET Version` は 9 の名乗り、リクエストと SAORI 応答の値は文字列のまま (例外: `debug : debugger` の `ShioriEcho` / `KawariCommand`)、`save` は UTF-8 BOM、`GET Status` の統計、`expr` / `test` の文字列比較は UTF-16、`include` は 16 段まで、Big5 / ISO-8859-1 の `locale` は無し、lint は 7 の単語を調べない。
+- 9 の文法の取り込み: `=kis` ～ `=end` は行を集めて 9 の `LoadKawariDictStream` に渡す。単語の中の `$[ ... ]` は、対応する `]` までを切り出して `TKawariCompiler::Compile` に渡す (引用符と `${ }` `$( )` の中の `]` は数えない)。取り込んだ範囲の中は 9 の意味。
+- **テスト**: `run.ps1 -Suite kosui7` (`test/kosui7/`。期待値は `test/gen_kosui7_cases.py` で本物の 7.5.0 の `kosui.exe` から作る。手で書いた期待値は「extensions」以降だけ)、`-Suite shiori7` (`REQ` 動詞で SHIORI/2.x の要求をそのまま送る。**`-BinDir` に 7.5.0 のフォルダを渡すと本物の 7.5.0 でも実行でき**、拡張以外が通ることを確かめられる)、`check` の `legacy7_*`。**`test/ghost_compat7.py --ghost <7 のゴースト>/ghost/master`** は、ゴースト同梱の `shiori.dll` (7.5.0) を基準に、SHIORI/2.x の要求列を流して応答のバイト列・SAORI への送信・セーブの往復を比べる (SAORI はスタブ化する。`--real-saori` で無害なものだけ残せる。ゴーストが実時間を使うので、基準どうしの対照と往復比較は 3 回まで再試行する)。提供された実ゴースト: `D:\ssp_src_set\ssp\ghost\kuro_degwin_integration_type` (OpenKEEPS 系)。
+- PowerShell の変数名は大文字小文字を区別しない (`run.ps1` でケースのラベル `$name` が引数 `$Name` を上書きして落ちた)。
+- 実際の SSP の上では未確認。`run_posix.py` の 7 のスイートは Windows では動かせないので未実行 (構文だけ確認)。
 
 ## 実行速度 (Phase 9.2.1)
 

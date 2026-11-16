@@ -3,8 +3,10 @@
 ビルド済みの `kosui.exe` と `shiori.dll` を確かめる、最低限のテスト。リポジトリには何も書き込まず、作業ファイルは一時フォルダに作る。
 
 ```
-powershell -NoProfile -ExecutionPolicy Bypass -File build/src/test/run.ps1 [-Suite kosui|check|shiori|baseware] [-BinDir <dir>] [-CC <gcc>] [-KeepWork]
+powershell -NoProfile -ExecutionPolicy Bypass -File build/src/test/run.ps1 [-Suite kosui|check|shiori|baseware|kosui7|shiori7] [-BinDir <dir>] [-CC <gcc>] [-KeepWork]
 ```
+
+`kosui7` と `shiori7` は、華和梨 7 互換モード (kawari.ini のゴースト) のスイート。下の「7 互換モードのスイート」を参照。
 
 - 先に `build/src` で `gmake -f gcc.mak` を済ませておく。`-BinDir` の既定は `build/mach/mingw`。
 - 終了コード: 0 = 全件成功、1 = 失敗あり、2 = テストを実行できない (バイナリが無い、gcc のビット数が DLL と違う等)。
@@ -119,3 +121,22 @@ python build/src/test/ghost_compat.py --ghost <ゴースト>/ghost/master [--old
 python build/src/test/ghost_compat.py --ghost <kakera>/ghost/master ^
   --append-dict "event.OnCompatMenu : ${Mainmenu}" --start "GET OnCompatMenu"
 ```
+
+## 7 互換モードのスイート (`kosui7/` `shiori7/` `check/legacy7_*`、`ghost_compat7.py`)
+
+華和梨 7 互換モード (`kawari.ini` があり `kawarirc.kis` が無いゴースト。仕様は `../kawari-docs` の `spec/07-kawari7-compat.md`) のテスト。フィクスチャのフォルダは `kawarirc.kis` ではなく `kawari.ini` と辞書を持つ。
+
+- **`kosui7`**: `kosui7/cases.txt` の書式は kosui スイートと同じ。ケースごとにフォルダの全ファイル (`cases.txt` 以外) を新しいフォルダへコピーして実行する。**`cases.txt` の「extensions」の前は、本物の 7.5.0 の `kosui.exe` に同じ行を流した出力が期待値**で、`gen_kosui7_cases.py` が作る (`python build/src/test/gen_kosui7_cases.py <7.5.0 の kosui.exe> build/src/test/kosui7 build/src/test/kosui7/cases.txt`)。ケースを足すときは、そのスクリプトの `CASES` に書いて作り直す。「extensions」以降 (7 にない `$[ ]`・`=kis`・`setstr`) は手書き。
+- **`shiori7`**: `shiori7/cases.txt` は `REQ <リクエストの 1 行目> | <ヘッダ>: <値> | ...` で、SHIORI/2.x の要求をそのまま送る (`Charset`・`Sender`・`SecurityLevel` は既定を足す。ケースで指定すれば上書き)。`GET` / `NOTIFY` (SHIORI/3.0) も使える。**`-BinDir` に 7.5.0 の配布フォルダ (`shiori.dll` がある) を渡すと、本物の 7.5.0 でも実行できる**。「extensions」より前は、どちらでも通る。
+- **`check/legacy7_clean` `check/legacy7_sandbox`**: 7 互換モードの `kosui --check`。診断だけが出て、ファイルを書かず、SAORI の実体も読み込まないこと。
+- **`ghost_compat7.py`**: 実在の華和梨 7 のゴースト (`ghost/master` に `kawari.ini` と、7.5.0 の `shiori.dll`) を使う。
+
+```
+python build/src/test/ghost_compat7.py --ghost <ghost>/ghost/master [--old-dll <基準の DLL>] [--new-dll <試す DLL>] [--real-saori a.dll]
+```
+
+  - 基準は既定でゴースト同梱の `shiori.dll` (本物の 7.5.0)、試す側は既定で `build/mach/mingw/shiori.dll`。ゴーストには触れず、コピーのプログラムを消し、`shiori.dll` 以外の DLL をスタブ SAORI に差し替え、`kawari.ini` の末尾に `randomseed` を足す。
+  - 7.5.0 は SHIORI/2.x だけを話すので、要求は `GET Sentence` (`Event`) / COMMUNICATE / `GET Status` / `GET String` / `GET Word` / `TEACH` / `TRANSLATE` / `NOTIFY` など。応答の `\q[]` のリンクもたどる。応答が**バイト単位で**同じであることを比べる (バージョンの数字と `GET Status` の統計だけは除く)。MT19937 が 7.5.0 と同じなので、乱数を引く順序が違えば応答がずれる。
+  - チェック: `replay` (応答)、`saori` (SAORI へ届いた要求。`GET Version` は除く)、`upgrade` (7.5.0 が書いたセーブを新 DLL が読む)、`own save` (新 DLL が書いたセーブ (UTF-8 BOM) を新 DLL が読む。基準の旧 DLL には SJIS に変換したコピーを読ませる)。
+  - ゴーストが実時間 (分の境目) を使うので、基準どうしの対照と往復の比較は 3 回まで再試行する。
+  - 終了コード: 0 = 全件一致、1 = 差あり、2 = 実行できない。

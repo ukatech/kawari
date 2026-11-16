@@ -21,6 +21,14 @@
     baseware  Same as shiori, with the ghost and cases in test/baseware and a stub baseware window in the
             harness (HARNESS_BASEWARE): getproperty / setproperty / executesstp and SAORI over DirectSSTP.
 
+    kosui7  Same as kosui, with the folder test/kosui7: it has kawari.ini and no kawarirc.kis, so kosui runs
+            in the Kawari 7 compatible mode. Most of the expected outputs are the outputs of the real
+            Kawari 7.5.0 kosui.exe (test/gen_kosui7_cases.py makes them).
+
+    shiori7 Same as shiori, with the ghost and cases in test/shiori7 (Kawari 7 compatible mode, SHIORI/2.x).
+            The verb REQ sends a request line as it is. With -BinDir pointing at the Kawari 7.5.0 files, the
+            cases before "extensions" also pass on the real 7.5.0 shiori.dll.
+
     The binaries must already be built (build/src: gmake -f gcc.mak). Nothing is written to the
     repository: the work files go to a temporary folder.
 
@@ -29,7 +37,7 @@
 .PARAMETER BinDir
     Folder with kosui.exe and shiori.dll (default: build/mach/mingw).
 .PARAMETER Suite
-    all (default), kosui, check, shiori or baseware.
+    all (default), kosui, check, shiori, baseware, kosui7 or shiori7.
 .PARAMETER CC
     C compiler for the harness (default: gcc). Put the 32bit MinGW first in PATH or give its full path.
 .PARAMETER KeepWork
