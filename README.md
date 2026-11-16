@@ -74,6 +74,7 @@ Phase 9 系は、オリジナルの華和梨をフォークし、[ponapalt](http
 - `loop` / `substr` / `rand` / エントリの添字など、式の外の整数は 32bit のまま
 - Windows 版の `date` と `mktime` は、C ランタイムの `localtime` / `mktime` を使わず、64bit の暦計算で変換するようにした (OS には、その時刻でのタイムゾーンの UTC との差だけを尋ねる。yaya-shiori と同じ方式)。1970 年より前 (負の秒数) と 3000 年より後も扱える (これまでは変換できず、`date` は空文字、`mktime` は -1 だった)。VC6 でも 2038 年以降が扱える
 - 夏時間の規則は OS のものに従う。環境変数 `TZ` は見ない。`mktime` で、夏時間の切り替えで存在しない時刻 (春の 2:30) は夏時間側、2 回ある時刻 (秋の 1:30) は先の (夏時間の) ほうになる。POSIX 版はこれまでどおり OS の `localtime` / `mktime`
+- 7 互換モードで、`kawari.ini` に `locale : Shift_JIS` などを指定していると、Phase 9 の `save` が書いた UTF-8 (BOM あり) のセーブデータまで Shift_JIS として読んでしまい、ユーザー名などが文字化けすることがあったのを直した。BOM 付きの辞書は `locale` に関わらず UTF-8 として読む。BOM が無い辞書は、これまでどおり `locale` に従う
 - テスト: `kosui` に 16 件、`kosui7` に 11 件を追加した。暦の計算は Python の `datetime` (年 1〜9999)、夏時間は `zoneinfo` と突き合わせた。夏時間のある地域の実際の Windows では試していない。`run.ps1` は、`kosui` が 71 件を超えると作業フォルダの名前が `kosui7` と重なって止まっていたのを直した
 
 #### 2026/11/16 Phase 9.3.1 (Core 4.3.1)
