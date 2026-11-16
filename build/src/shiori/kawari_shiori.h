@@ -196,10 +196,18 @@ class TKawariShioriFactory{
 private:
 	// Singleton
 	static TKawariShioriFactory *instance;
-	TKawariShioriFactory (void) {}
 
-	// 栞のリスト
+	// 栞のリスト (so_* と multi_* が扱う。ハンドルは添字+1で、0は無効)
 	std::vector<TKawariShioriAdapter *> list;
+
+	// 従来の load / request / unload が扱うインスタンス
+	// list とは別枠なので、multi_* の id からは決して届かない
+	TKawariShioriAdapter *legacy;
+
+	// リクエストを処理して応答のバイト列を返す
+	static std::string RequestAdapter(TKawariShioriAdapter *adapter, const std::string &reqstr);
+
+	TKawariShioriFactory (void) : legacy(NULL) {}
 
 public:
 	// ファクトリの獲得
@@ -229,8 +237,22 @@ public:
 	unsigned int CreateInstance(const std::wstring &datapath);
 	// インスタンスの削除
 	bool DisposeInstance(unsigned int handle);
+	// ハンドルが生きているインスタンスを指しているか
+	bool HasInstance(unsigned int handle) const;
 	// インスタンスへのリクエスト
 	std::string RequestInstance(unsigned int handle, const std::string &reqstr);
+
+	// 従来の load / request / unload が扱うインスタンス (1つだけ。作り直すと前のは破棄する)
+	// datapath : DLLのディレクトリパス
+	// 戻り値 : 成功でtrue
+	bool CreateLegacy(const std::wstring &datapath);
+	// 破棄する。無ければfalse
+	bool DisposeLegacy(void);
+	// リクエスト。無ければ空文字列
+	std::string RequestLegacy(const std::string &reqstr);
+
+	// 生きているインスタンスが1つも無いか (従来のものも含む)
+	bool Empty(void) const;
 };
 //---------------------------------------------------------------------------
 #endif // KAWARI_SHIORI_H

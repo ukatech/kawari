@@ -42,7 +42,7 @@ public:
 	// インタープリタ
     virtual wstring Function(const vector<wstring>& args){
         if (args.size()>=2) 
-            return (IntToString(Random(StringToInt(args[1]))));
+            return (IntToString(Engine->Random(StringToInt(args[1]))));
         else
             return (L"");
     }
@@ -65,7 +65,7 @@ public:
 	// インタープリタ
     virtual wstring Function(const vector<wstring>& args){
 		if (args.size()>=2) 
-			SRandom(StringToInt(args[1]));
+			Engine->SRandom(StringToInt(args[1]));
 		return (L"");
     }
 

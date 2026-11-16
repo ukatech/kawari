@@ -23,19 +23,7 @@ using namespace std;
 #include "misc/wfile.h"
 #include "libkawari/kawari_log.h"
 //---------------------------------------------------------------------------
-extern TMTRandomGenerator MTRandomGenerator;
-//---------------------------------------------------------------------------
-// 0からnum-1までの乱数を発生
-inline int Random(int num)
-{
-	return((int)(MTRandomGenerator.genrand_real2()*num));
-}
-//---------------------------------------------------------------------------
-// 乱数のシードを設定
-inline void SRandom(int seed)
-{
-	MTRandomGenerator.init_genrand((unsigned long)seed);
-}
+// 乱数の状態はエンジンごと (TKawariEngine::Random / SRandom)
 //---------------------------------------------------------------------------
 // 文字列の前後の空白を取り除く
 inline wstring StringTrim(const wstring& str)

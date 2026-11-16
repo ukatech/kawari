@@ -43,13 +43,15 @@ const wstring &Arg(const vector<wstring>& args, vector<wstring>::size_type n)
 // パターンの中の(?&name)\g<name>で、パターンに定義の無いサブルーチン名を
 // 辞書の${name}の展開結果に解決する。展開の中でまた正規表現を使うと
 // 入れ子になるので、無限に再帰しないよう深さを制限する。
+// 深さはエンジンが持つ (TKawariEngine::RegexResolveDepthRef)。
 const int RESOLVE_MAX_DEPTH=16;
-int ResolveDepth=0;
 
 class TResolveDepthGuard {
 public:
-	TResolveDepthGuard(void) { ResolveDepth++; }
-	~TResolveDepthGuard() { ResolveDepth--; }
+	TResolveDepthGuard(int &d) : depth(d) { depth++; }
+	~TResolveDepthGuard() { depth--; }
+private:
+	int &depth;
 };
 //---------------------------------------------------------------------------
 // コンパイル済みの正規表現と、エラーのログ出力
@@ -114,7 +116,7 @@ bool TRegex::Resolve(const wchar_t *name, CRegexpString &pattern, void *user)
 
 	// 定義の無い名前は、エンジンが構文エラー(名前入り)にする
 	if(self->engine->EntrySize(name)==0) return false;
-	if(ResolveDepth>=RESOLVE_MAX_DEPTH){
+	if(self->engine->RegexResolveDepthRef()>=RESOLVE_MAX_DEPTH){
 		self->logger.Diag(LOG_ERROR, kawari_log::E_KIS_REGEX_NESTED) << L"KIS[" << self->command
 			<< L"] the subroutine '" << name << L"' is nested too deeply.";
 		return false;
@@ -123,7 +125,7 @@ bool TRegex::Resolve(const wchar_t *name, CRegexpString &pattern, void *user)
 	self->resolved.push_back(name);
 	wstring text;
 	{
-		TResolveDepthGuard guard;
+		TResolveDepthGuard guard(self->engine->RegexResolveDepthRef());
 		text=self->engine->Parse(wstring(L"${")+name+L"}");
 	}
 	pattern.append(text.c_str(), static_cast<int>(text.size()));

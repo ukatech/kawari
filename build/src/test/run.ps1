@@ -29,6 +29,10 @@
             The verb REQ sends a request line as it is. With -BinDir pointing at the Kawari 7.5.0 files, the
             cases before "extensions" also pass on the real 7.5.0 shiori.dll.
 
+    multi   Builds test/harness/multi_harness.c and tests the multi instance exports (multi_load / multi_loadu /
+            multi_unload / multi_request) together with the legacy load / request / unload: independent
+            random numbers per instance, invalid ids, unload in either order, OnUnload for every instance.
+
     The binaries must already be built (build/src: gmake -f gcc.mak). Nothing is written to the
     repository: the work files go to a temporary folder.
 
@@ -37,7 +41,7 @@
 .PARAMETER BinDir
     Folder with kosui.exe and shiori.dll (default: build/mach/mingw).
 .PARAMETER Suite
-    all (default), kosui, check, shiori, baseware, kosui7 or shiori7.
+    all (default), kosui, check, shiori, baseware, kosui7, shiori7 or multi.
 .PARAMETER CC
     C compiler for the harness (default: gcc). Put the 32bit MinGW first in PATH or give its full path.
 .PARAMETER KeepWork
@@ -50,7 +54,7 @@
 [CmdletBinding()]
 param(
     [string]$BinDir,
-    [ValidateSet('all', 'kosui', 'check', 'shiori', 'baseware', 'kosui7', 'shiori7')]
+    [ValidateSet('all', 'kosui', 'check', 'shiori', 'baseware', 'kosui7', 'shiori7', 'multi')]
     [string]$Suite = 'all',
     [string]$CC = 'gcc',
     [int]$TimeoutSeconds = 30,
@@ -285,13 +289,11 @@ function Test-Check([string]$Work) {
 
 # ---- shiori ---------------------------------------------------------------------------------
 
-function Test-Shiori([string]$Work, [string]$Name) {
+# Builds a C harness from test/harness. The harness loads the DLL into its own process, so the
+# compiler and shiori.dll must have the same bitness. Returns the path of the executable.
+function Build-Harness([string]$Work, [string]$Source, [string]$Exe) {
     $dll = Join-Path $BinDir 'shiori.dll'
     if (-not (Test-Path -LiteralPath $dll)) { Stop-Setup "shiori.dll was not found in $BinDir" }
-    $fixture = Join-Path $PSScriptRoot $Name
-    $cases = Read-Cases (Join-Path $fixture 'cases.txt') '~' @('GET', 'NOTIFY', 'REQ')
-
-    # The harness loads the DLL into its own process, so both must be the same bitness.
     $dllMachine = Get-PeMachine $dll
     try {
         $target = (Invoke-Program $CC @('-dumpmachine') $PSScriptRoot '').StdOut.Trim()
@@ -304,11 +306,21 @@ function Test-Shiori([string]$Work, [string]$Name) {
         Stop-Setup "shiori.dll is $dllMachine but '$CC' builds for $target. Put a matching MinGW first in PATH or use -CC"
     }
 
-    $harness = Join-Path $Work 'shiori_harness.exe'
-    $build = Invoke-Program $CC @('-O1', '-Wall', '-o', (Quote-Arg $harness), (Quote-Arg (Join-Path $PSScriptRoot 'harness\shiori_harness.c'))) $Work ''
+    $harness = Join-Path $Work $Exe
+    $build = Invoke-Program $CC @('-O1', '-Wall', '-o', (Quote-Arg $harness), (Quote-Arg (Join-Path $PSScriptRoot $Source))) $Work ''
     if ($build.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $harness)) {
         Stop-Setup "building the harness failed:`n$($build.StdErr)"
     }
+    return $harness
+}
+
+function Test-Shiori([string]$Work, [string]$Name) {
+    $dll = Join-Path $BinDir 'shiori.dll'
+    if (-not (Test-Path -LiteralPath $dll)) { Stop-Setup "shiori.dll was not found in $BinDir" }
+    $fixture = Join-Path $PSScriptRoot $Name
+    $cases = Read-Cases (Join-Path $fixture 'cases.txt') '~' @('GET', 'NOTIFY', 'REQ')
+
+    $harness = Build-Harness $Work 'harness\shiori_harness.c' 'shiori_harness.exe'
 
     $ghost = Join-Path $Work "ghost_$Name"
     New-Item -ItemType Directory -Path $ghost | Out-Null
@@ -381,6 +393,48 @@ function Test-Shiori([string]$Work, [string]$Name) {
     }
 }
 
+# ---- multi ----------------------------------------------------------------------------------
+
+# The multi instance exports (multi_load / multi_loadu / multi_unload / multi_request) next to the
+# legacy load / request / unload. The checks are in harness/multi_harness.c; it prints "ok <name>" or
+# "NG <name> | <detail>" per check.
+function Test-Multi([string]$Work) {
+    $dll = Join-Path $BinDir 'shiori.dll'
+    $harness = Build-Harness $Work 'harness\multi_harness.c' 'multi_harness.exe'
+
+    # Three copies of the fixture ghost: L (legacy load), A and B (multi_load*).
+    $dirs = @()
+    foreach ($n in 'L', 'A', 'B') {
+        $d = Join-Path $Work "ghost_$n"
+        New-Item -ItemType Directory -Path $d | Out-Null
+        Copy-Item -Path (Join-Path $PSScriptRoot 'multi\*') -Destination $d
+        $dirs += $d
+    }
+    $copy = Join-Path $dirs[0] 'shiori.dll'
+    Copy-Item -Path $dll -Destination $copy
+
+    $argList = @((Quote-Arg $copy)) + @($dirs | ForEach-Object { Quote-Arg $_ })
+    $run = Invoke-Program $harness $argList $Work ''
+    if ($run.TimedOut) { Stop-Setup "the multi harness did not finish within $TimeoutSeconds seconds" }
+    if ($run.ExitCode -ge 100) { Stop-Setup "the multi harness could not run (exit code $($run.ExitCode)): $($run.StdErr.Trim())" }
+
+    Write-Host '== multi'
+    $seen = 0
+    foreach ($line in ($run.StdOut -split "`r?`n")) {
+        if ($line -match '^ok (.+)$') {
+            $seen++
+            Write-Result $true "multi: $($Matches[1])" @()
+        } elseif ($line -match '^NG ([^|]+?)\s*\|\s*(.*)$') {
+            $seen++
+            Write-Result $false "multi: $($Matches[1])" @("detail: $($Matches[2])")
+        }
+    }
+    if ($seen -eq 0) { Write-Result $false 'multi: the harness printed no result' @($run.StdErr.Trim()) }
+    if ($run.ExitCode -ne 0 -and $run.StdOut -notmatch '(?m)^NG ') {
+        Write-Result $false 'multi: the harness exit code' @("exit code $($run.ExitCode) without an NG line")
+    }
+}
+
 # ---- main -----------------------------------------------------------------------------------
 
 if (-not $BinDir) { $BinDir = Join-Path $PSScriptRoot '..\..\mach\mingw' }
@@ -396,6 +450,7 @@ try {
     if ($Suite -eq 'all' -or $Suite -eq 'baseware') { Test-Shiori $work 'baseware' }
     if ($Suite -eq 'all' -or $Suite -eq 'kosui7') { Test-Kosui $work 'kosui7' }
     if ($Suite -eq 'all' -or $Suite -eq 'shiori7') { Test-Shiori $work 'shiori7' }
+    if ($Suite -eq 'all' -or $Suite -eq 'multi') { Test-Multi $work }
 } finally {
     if ($KeepWork) {
         Write-Host "work folder kept: $work"

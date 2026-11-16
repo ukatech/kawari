@@ -48,7 +48,7 @@ CFLAGS_darwin =
 
 LDFLAGS_cygwin = -Wl,--enable-auto-import -Wl,--enable-stdcall-fixup
 LDFLAGS_mingw = -Wl,--enable-auto-import -Wl,--enable-stdcall-fixup -static
-EXPORTED_FUNCTIONS = "['_load','_loadu','_unload','_request','_so_library_init','_so_library_cleanup','_so_getmoduleversion','_so_create','_so_createu','_so_dispose','_so_request','_so_free']"
+EXPORTED_FUNCTIONS = "['_load','_loadu','_unload','_request','_multi_load','_multi_loadu','_multi_unload','_multi_request','_so_library_init','_so_library_cleanup','_so_getmoduleversion','_so_create','_so_createu','_so_dispose','_so_request','_so_free']"
 LDFLAGS_js = -Wl,--enable-auto-import -Wl,--enable-stdcall-fixup -Os --memory-init-file 0 --pre-js em-pre.js --post-js em-post.js -s EXPORTED_FUNCTIONS=$(EXPORTED_FUNCTIONS) -s EXTRA_EXPORTED_RUNTIME_METHODS="['ccall','cwrap','intArrayFromString','intArrayToString']" -s ALLOW_MEMORY_GROWTH=1
 LDFLAGS_wasm = -Wl,--enable-auto-import -Wl,--enable-stdcall-fixup -O1 --memory-init-file 0 --pre-js em-pre.js --post-js em-post.js -s EXPORTED_FUNCTIONS=$(EXPORTED_FUNCTIONS) -s EXTRA_EXPORTED_RUNTIME_METHODS="['ccall','cwrap','intArrayFromString','intArrayToString']" -s ALLOW_MEMORY_GROWTH=1 -s WASM=1
 LDFLAGS_linux = 

@@ -3,7 +3,7 @@
 ビルド済みの `kosui.exe` と `shiori.dll` を確かめる、最低限のテスト。リポジトリには何も書き込まず、作業ファイルは一時フォルダに作る。
 
 ```
-powershell -NoProfile -ExecutionPolicy Bypass -File build/src/test/run.ps1 [-Suite kosui|check|shiori|baseware|kosui7|shiori7] [-BinDir <dir>] [-CC <gcc>] [-KeepWork]
+powershell -NoProfile -ExecutionPolicy Bypass -File build/src/test/run.ps1 [-Suite kosui|check|shiori|baseware|kosui7|shiori7|multi] [-BinDir <dir>] [-CC <gcc>] [-KeepWork]
 ```
 
 `kosui7` と `shiori7` は、華和梨 7 互換モード (kawari.ini のゴースト) のスイート。下の「7 互換モードのスイート」を参照。
@@ -90,6 +90,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File build/src/test/run.ps1 -Suit
 
 - スタブが答えるもの: `EXECUTE SSTP` の `GetProperty` (`test.value` だけ。他は 204) / `SetProperty` (空の値は 400) / `GetNames` (alpha, beta, gamma)、他は 501。`EXECUTE SAORI` の `internal_system` `ListModules` (`internal_test` だけ) / `internal_test` `Echo`、他のモジュールは 400 `unknown module`。
 - DLL と窓が同じスレッドなので、`SendMessage` は窓プロシージャを直接呼ぶ (実際の SSP は別スレッド)。ninix (POSIX) は対象外。
+
+## multi スイート (`multi/`, `harness/multi_harness.c`)
+
+マルチインスタンス用の関数 (`multi_load` / `multi_loadu` / `multi_unload` / `multi_request`) を、従来の `load` / `request` / `unload` と一緒に試す。ケースの表ではなく、C のハーネス (`harness/multi_harness.c`) が検査をコードで持ち、1 件ごとに `ok <名前>` / `NG <名前> | <詳細>` を出す (ランナーがそれを集計する)。フィクスチャ `multi/kawarirc.kis` は、`OnSeed` (`srand`)・`OnRand` (`rand 1000000`)・`OnWho` (`System.DataPath`)・`OnUnload` (`unloaded.txt` を書く) だけの小さなゴースト。ランナーが 3 つのコピー (従来の `load` 用 L、`multi_load*` 用 A / B) を作って渡す。
+
+```
+powershell -NoProfile -ExecutionPolicy Bypass -File build/src/test/run.ps1 -Suite multi
+```
+
+- 乱数: 従来のインスタンス 1 つだけで `srand 42` して引いた 20 個を基準に、従来 + multi 2 つの 3 つを (他のインスタンスを load した後でも) 同じ種にして交互に引き、それぞれが基準と同じ列になること。別の種のインスタンスが間に挟まっても乱れないこと。乱数を大域に戻すと落ちる。
+- 無効な id (0・負・存在しない・解放済み) は `multi_request` が NULL、`multi_unload` が FALSE。従来のインスタンスだけのとき、`multi_request(1)` / `multi_unload(1)` はそこに届かない。
+- 終了の順 (従来が先 / multi が先)、解放した id の再利用、全部終了した後の再 load、`OnUnload` が全インスタンスで動くこと。
+- `shiori.dll` と同じビット数の gcc が要る (shiori スイートと同じ)。
 
 ## スタブ SAORI (`harness/stub_saori.c`)
 

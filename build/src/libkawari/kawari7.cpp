@@ -313,7 +313,7 @@ wstring TK7EntryCall::Run(TKawariVM &vm)
 		vector<TWordID> wordlist;
 		entry.FindAll(wordlist);
 		if(wordlist.size()==0) return L"";
-		id=wordlist[Random(static_cast<int>(wordlist.size()))];
+		id=wordlist[vm.GetEngine().Random(static_cast<int>(wordlist.size()))];
 		from=entry;
 	} else {
 		// 存在するエントリだけの積集合
@@ -335,7 +335,7 @@ wstring TK7EntryCall::Run(TKawariVM &vm)
 			}
 		}
 		if(result.size()==0) return L"";
-		size_t index=static_cast<size_t>(Random(static_cast<int>(result.size())));
+		size_t index=static_cast<size_t>(vm.GetEngine().Random(static_cast<int>(result.size())));
 		set<TWordID>::const_iterator it=result.begin();
 		for(size_t i=0; i<index; i++) ++it;
 		id=*it;
@@ -507,7 +507,7 @@ wstring TK7InlineScript::Run(TKawariVM &vm)
 			}
 		} else if(arg0==L"?") {
 			if(code.size()>1) {
-				size_t index=static_cast<size_t>(Random(static_cast<int>(code.size()-1)))+1;
+				size_t index=static_cast<size_t>(vm.GetEngine().Random(static_cast<int>(code.size()-1)))+1;
 				result+=code[index]->Run(vm);
 			}
 		} else if(arg0==L"silent") {

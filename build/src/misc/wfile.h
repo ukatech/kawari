@@ -18,12 +18,6 @@
 // Win: _wfopen, POSIX: fopen(WtoUTF8(path))
 FILE* kawari_wfopen(const std::wstring &path, const wchar_t *mode);
 //---------------------------------------------------------------------------
-// ファイルへの書き込みを止める (kosui --check の安全モード用)
-// 止めている間、WriteWholeFile / WriteTextFile は何も書かずに成功を返し、
-// kawari_wfopen は書き込み系のモード("w" "a" "+")を拒否してNULLを返す。
-void SetFileWritesDisabled(bool disabled);
-bool GetFileWritesDisabled(void);
-//---------------------------------------------------------------------------
 // POSIXのnarrow APIに渡す用 (UTF-8)
 std::string PathToNative(const std::wstring &path);
 //---------------------------------------------------------------------------

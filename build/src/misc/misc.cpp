@@ -17,8 +17,6 @@
 #include <iostream>
 using namespace std;
 //---------------------------------------------------------------------------
-TMTRandomGenerator MTRandomGenerator;
-//---------------------------------------------------------------------------
 // isdigit() problem wa
 static inline bool _isdigit(wchar_t ch){
 	return ((L'0'<=ch) && (ch<=L'9'));

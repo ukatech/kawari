@@ -1,0 +1,20 @@
+# Fixture ghost for the multi suite (build/src/test/run.ps1, harness/multi_harness.c).
+#
+# OnSeed  : srand with Reference0
+# OnRand  : a random number below 1000000
+# OnWho   : the folder of the ghost (to tell the instances apart)
+# OnUnload: writes unloaded.txt into the folder (to see that OnUnload runs for each instance)
+# This file is ASCII only.
+
+System.Callback.OnGET: $(
+    if $(match_at ${System.Request.ID} On)
+        ${event.${System.Request.ID}}
+    else
+        ${resource.${System.Request.ID}} )
+
+event.OnSeed: $(srand ${System.Request.Reference0})
+event.OnRand: $(rand 1000000)
+event.OnWho: ${System.DataPath}
+
+System.Callback.OnUnload: $(textsave unloaded.txt marker)
+marker: unloaded

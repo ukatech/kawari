@@ -61,6 +61,8 @@ TKawariEngine::TKawariEngine(void)
 	Baseware=new dsstp::TBasewareLink();
 	SaoriPark=new saori::TSaoriPark((*logger), Baseware);
 	Sandbox=false;
+	LambdaCount=0;
+	RegexResolveDepth=0;
 	KeepZones=false;
 	Legacy7=false;
 	Legacy7State=NULL;
@@ -84,12 +86,10 @@ void TKawariEngine::SetSandbox(bool enable)
 	Sandbox=enable;
 	SaoriPark->SetSandbox(enable);
 	Baseware->SetAllowed(!enable);
-	SetFileWritesDisabled(enable);
 }
 //---------------------------------------------------------------------------
 TKawariEngine::~TKawariEngine()
 {
-	if (Sandbox) SetFileWritesDisabled(false);
 	for (vector<TKawariLint::Zone>::iterator it=Zones.begin(); it!=Zones.end(); ++it)
 		delete const_cast<TKVMCode_base *>(it->code);
 	delete SaoriPark;
@@ -414,6 +414,8 @@ bool TKawariEngine::SaveKawariDict(const wstring &filename,const vector<wstring>
 		}
 	}
 
+	// 安全モードでは、書いたことにして何もしない
+	if(Sandbox) return true;
 	return WriteWholeFile(filename, out);
 }
 //---------------------------------------------------------------------------

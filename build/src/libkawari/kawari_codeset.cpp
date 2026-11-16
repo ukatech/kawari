@@ -25,7 +25,7 @@ wstring TKVMSetCode_base::Run(TKawariVM &vm){
 	Evaluate(vm, wordset);
 	if (!wordset.size()) return L"";
 
-	unsigned int index=Random(static_cast<int>(wordset.size()));
+	unsigned int index=vm.GetEngine().Random(static_cast<int>(wordset.size()));
 	set<TWordID>::iterator it=wordset.begin();
 	for(unsigned int i=0; i<index; i++) it++;
 
@@ -217,7 +217,7 @@ wstring TKVMCodePVW::Run(class TKawariVM &vm){
 	if (!eid.IsValid()) return L"";
 
 	unsigned int size=eid.Size();
-	TWordID wid=eid.Index(Random(size));
+	TWordID wid=eid.Index(vm.GetEngine().Random(size));
 	if (!wid) return L"";
 
 	TKVMCode_base *code=vm.Dictionary().GetWordFromID(wid);

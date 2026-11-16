@@ -46,6 +46,7 @@ using namespace std;
 #include "saori/saori.h"
 #include "misc/dsstp.h"
 #include "misc/charset.h"
+#include "misc/mt19937ar.h"
 //---------------------------------------------------------------------------
 struct TEntryRange;
 //---------------------------------------------------------------------------
@@ -71,6 +72,15 @@ private:
 
 	// 安全モード
 	bool Sandbox;
+
+	// 乱数の状態 (MT19937)。複数のインスタンスが独立した乱数列を持つ
+	TMTRandomGenerator RandomGenerator;
+
+	// function ... lambda で作る関数の通し番号 (System.Lambda.N の N)
+	int LambdaCount;
+
+	// regex_* のサブルーチン展開の入れ子の深さ (kis_regex.cpp)
+	int RegexResolveDepth;
 
 	// 静的検査のために残す =kis ゾーンの中間コード
 	bool KeepZones;
@@ -292,9 +302,28 @@ public:
 	//  - ファイルを書かない (save / textsave / logfile など。書いたことにして成功を返す)
 	//  - SAORI の実体を作らない (DLL も exe も起動しない。呼び出しは Result: 0 で成功する)
 	//  - 本体への通信 (Direct SSTP) をしない
-	// ファイルを書き込めないのは、このプロセス全体に及ぶ (misc/wfile.h)。
+	// ファイルを書かない経路は、save / savecrypt (SaveKawariDict)、textsave 系 (kis_file.cpp)、
+	// logfile (kis_system.cpp) で、それぞれ IsSandbox() を見ている。
+	// 状態はエンジンごとで、他のインスタンスには及ばない。
 	void SetSandbox(bool enable);
 	bool IsSandbox(void) const { return Sandbox; }
+
+	// 乱数・通し番号 API (状態はエンジンごと)
+
+	// 0 から num-1 までの乱数を発生する
+	int Random(int num)
+	{
+		return static_cast<int>(RandomGenerator.genrand_real2()*num);
+	}
+	// 乱数の種を設定する
+	void SRandom(int seed)
+	{
+		RandomGenerator.init_genrand(static_cast<unsigned long>(seed));
+	}
+	// lambda の関数名に使う、次の通し番号
+	int NextLambdaNumber(void) { return ++LambdaCount; }
+	// regex_* のサブルーチン展開の入れ子の深さ (増減は TResolveDepthGuard が行う)
+	int &RegexResolveDepthRef(void) { return RegexResolveDepth; }
 
 	// 静的検査 API (kosui --check 用)
 

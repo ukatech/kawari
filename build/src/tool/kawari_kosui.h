@@ -37,7 +37,7 @@ public:
 	TKawariKosuiAdapter(const wstring& datapath,const wstring& inifile)
 	{
 		// 乱数初期化
-		SRandom((unsigned int)time(NULL));
+		engine.SRandom((unsigned int)time(NULL));
 
 		engine.CreateEntry(L"System.DataPath").Push(engine.CreateStrWord(datapath));
 		engine.WriteProtect(L"System.DataPath");
@@ -67,7 +67,7 @@ public:
 						wostream *diagsink, TDiagCollector *collector,
 						unsigned int level, bool useseed, unsigned int seed, bool &loaded)
 	{
-		SRandom(useseed ? seed : (unsigned int)time(NULL));
+		engine.SRandom(useseed ? seed : (unsigned int)time(NULL));
 
 		// 辞書を読む前に、外へ影響する経路を全て止める
 		engine.SetSandbox(true);

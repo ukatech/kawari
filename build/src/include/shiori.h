@@ -89,5 +89,33 @@ SHIORI_EXPORT BOOL SHIORI_CALL unload(void);
   */
 SHIORI_EXPORT MEMORY_HANDLE SHIORI_CALL request(const MEMORY_HANDLE h,long *len);
 //---------------------------------------------------------------------------
+// マルチインスタンス用 (任意の関数。SSPは使わない)
+// 従来の load / request / unload とは別のインスタンスを、id (1以上) で区別して扱う。
+//---------------------------------------------------------------------------
+/**
+  * @brief		新しいインスタンスを作る (load()と同じ引数。パスはOSの既定コードページ)
+  *
+  * @return		インスタンスの id (1以上)。失敗のとき、-1。
+  *				h は成功でも失敗でも華和梨が解放する。
+  */
+SHIORI_EXPORT long SHIORI_CALL multi_load(const MEMORY_HANDLE h,long len);
+/**
+  * @brief		multi_load()のUTF-8版 (loadu()と同じ引数)
+  */
+SHIORI_EXPORT long SHIORI_CALL multi_loadu(const MEMORY_HANDLE h,long len);
+/**
+  * @brief		id で指したインスタンスを終了する
+  *
+  * @return		成功のとき、TRUE。存在しない id (0以下を含む) のとき、FALSE。
+  */
+SHIORI_EXPORT BOOL SHIORI_CALL multi_unload(long id);
+/**
+  * @brief		id で指したインスタンスへリクエストを渡す (request()と同じ形式)
+  *
+  * @return		返答文字列へのポインタ。存在しない id のとき、NULL (*len は 0)。
+  *				h は成功でも失敗でも華和梨が解放する。
+  */
+SHIORI_EXPORT MEMORY_HANDLE SHIORI_CALL multi_request(long id,const MEMORY_HANDLE h,long *len);
+//---------------------------------------------------------------------------
 #endif // SHIORI_H__
 //---------------------------------------------------------------------------

@@ -246,10 +246,9 @@ wstring TKVMCodeScriptStatement::Run(TKawariVM &vm){
 			wstring funcdecl=list[1]->DisCompile();
 			if (funcdecl.size()){
 				// 既存の関数と重ならない名前を作る。
-				static int lambda_count=0;
 				wstring funcname;
 				do {
-					funcname=L"System.Lambda."+IntToString(++lambda_count);
+					funcname=L"System.Lambda."+IntToString(vm.GetEngine().NextLambdaNumber());
 				} while (vm.Dictionary().GetEntry(
 					TKawariVM::SYSTEM_FUNCTION_PREFIX+funcname).Size());
 				TEntry entry=vm.Dictionary().CreateEntry(
@@ -383,7 +382,7 @@ wstring TKVMCodeScriptStatement::Run(TKawariVM &vm){
 	}else if(kind==K_RANDOM){
 		if(list.size()>1) {
 			// 第1パラメータ以降から一つ選択
-			unsigned int index=Random(static_cast<int>(list.size()-1))+1;
+			unsigned int index=vm.GetEngine().Random(static_cast<int>(list.size()-1))+1;
 			retstr=vm.RunWithCurrentContext(list[index]);
 			vm.Dictionary().PushToHistory(retstr);
 		}

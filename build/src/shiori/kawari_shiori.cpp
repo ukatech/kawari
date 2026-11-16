@@ -110,7 +110,7 @@ static TKawariCharset FixResponseCharset(TPHMessage &response, TKawariCharset cs
 bool TKawariShioriAdapter::Load(const wstring& datapath)
 {
 	// このタイミングで乱数初期化
-	SRandom((unsigned int)time(NULL));
+	Engine.SRandom((unsigned int)time(NULL));
 
 	Engine.SetDataPath(datapath);
 
@@ -543,6 +543,8 @@ TKawariShioriFactory::~TKawariShioriFactory(){
 		if (*it)
 			delete (*it);
 	list.clear();
+	delete legacy;
+	legacy=NULL;
 }
 //---------------------------------------------------------------------------
 // 新規インスタンスの作成
@@ -579,12 +581,19 @@ bool TKawariShioriFactory::DisposeInstance(unsigned int h){
 	return true;
 }
 //---------------------------------------------------------------------------
+bool TKawariShioriFactory::HasInstance(unsigned int h) const{
+	return (h!=0)&&(h<=list.size())&&(list[(int)h-1]!=NULL);
+}
+//---------------------------------------------------------------------------
 // リクエスト
 // リクエストのCharsetヘッダ(無い/不明ならShift_JIS)でデコードし、
 // 同じ文字コード(辞書側がSystem.Response.Charsetを指定していればそれ)でエンコードして返す
 string TKawariShioriFactory::RequestInstance(unsigned int h, const string &reqstr){
 	if ((h==0)||(h>list.size())) return ("");
-	TKawariShioriAdapter *instance=list[(int)h-1];
+	return RequestAdapter(list[(int)h-1], reqstr);
+}
+//---------------------------------------------------------------------------
+string TKawariShioriFactory::RequestAdapter(TKawariShioriAdapter *instance, const string &reqstr){
 	if (!instance) return ("");
 
 	TKawariCharset cs=TPHMessage::ScanCharset(reqstr);
@@ -595,6 +604,38 @@ string TKawariShioriFactory::RequestInstance(unsigned int h, const string &reqst
 	instance->Request(mreq, mres, cs);
 	TKawariCharset rcs=FixResponseCharset(mres, cs);
 	return mres.Serialize(rcs);
+}
+//---------------------------------------------------------------------------
+// 従来の load で作るインスタンス
+bool TKawariShioriFactory::CreateLegacy(const wstring &datapath){
+	DisposeLegacy();
+	TKawariShioriAdapter *adapter=new TKawariShioriAdapter();
+	if (!adapter->Load(datapath)){
+		delete adapter;
+		return false;
+	}
+	legacy=adapter;
+	return true;
+}
+//---------------------------------------------------------------------------
+bool TKawariShioriFactory::DisposeLegacy(void){
+	if (!legacy) return false;
+	TKawariShioriAdapter *adapter=legacy;
+	legacy=NULL;
+	adapter->Unload();
+	delete adapter;
+	return true;
+}
+//---------------------------------------------------------------------------
+string TKawariShioriFactory::RequestLegacy(const string &reqstr){
+	return RequestAdapter(legacy, reqstr);
+}
+//---------------------------------------------------------------------------
+bool TKawariShioriFactory::Empty(void) const{
+	if (legacy) return false;
+	for(size_t i=0; i<list.size(); i++)
+		if (list[i]) return false;
+	return true;
 }
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------

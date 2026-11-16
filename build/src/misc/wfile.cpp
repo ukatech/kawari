@@ -31,22 +31,8 @@ std::string PathToNative(const std::wstring &path)
 	return WtoUTF8(path);
 }
 //---------------------------------------------------------------------------
-static bool FileWritesDisabled=false;
-//---------------------------------------------------------------------------
-void SetFileWritesDisabled(bool disabled)
-{
-	FileWritesDisabled=disabled;
-}
-//---------------------------------------------------------------------------
-bool GetFileWritesDisabled(void)
-{
-	return FileWritesDisabled;
-}
-//---------------------------------------------------------------------------
 FILE* kawari_wfopen(const std::wstring &path, const wchar_t *mode)
 {
-	// 書き込みを止めているとき、書き込み系のモードで開くことは拒否する (最後の砦)
-	if(FileWritesDisabled&&mode&&(wcspbrk(mode, L"wa+")!=NULL)) return NULL;
 #ifdef KAWARI_WIN32
 	return _wfopen(path.c_str(), mode);
 #else
@@ -72,9 +58,6 @@ bool ReadWholeFile(const std::wstring &path, std::string &out)
 //---------------------------------------------------------------------------
 bool WriteWholeFile(const std::wstring &path, const std::string &data, bool append)
 {
-	// 書き込みを止めているときは、書いたことにして何もしない
-	// (失敗扱いにすると、辞書の誤りでない save / textsave のエラーが出てしまう)
-	if(FileWritesDisabled) return true;
 	FILE *fp=kawari_wfopen(path, append ? L"ab" : L"wb");
 	if(!fp) return false;
 

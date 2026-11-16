@@ -188,7 +188,9 @@ wstring KIS_textsave::Function_(const vector<wstring>& args,bool flag,bool withc
 	}
 
 	// BOMなしで書き出す
-	if(!WriteWholeFile(filename, data, !flag)) {
+	// 安全モードでは、書いたことにして何もしない
+	// (失敗扱いにすると、辞書の誤りでない save / textsave のエラーが出てしまう)
+	if(!Engine->IsSandbox()&&!WriteWholeFile(filename, data, !flag)) {
 		// エラー
 		GetLogger().Diag(LOG_ERROR, kawari_log::E_KIS_FILE_SAVE_FAILED) << args[0] << RC.S(ERR_KIS_FILE_SAVE_FAILED) << L" " << filename;
 		return(L"");

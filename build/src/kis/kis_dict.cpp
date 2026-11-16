@@ -219,7 +219,7 @@ wstring KIS_getrandom::Function(const vector<wstring>& args)
 	unsigned int size=entry.Size();
 	if(size==0) return(failstr);
 
-	wstring retstr=Engine->IndexParse(entry,Random(size));
+	wstring retstr=Engine->IndexParse(entry,Engine->Random(size));
 	if(retstr.size()==0) return(failstr);
 
 	return(retstr);

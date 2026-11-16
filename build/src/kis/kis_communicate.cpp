@@ -70,12 +70,12 @@ wstring KIS_communicate::Function(const vector<wstring>& args)
 
 	wstring retstr;
 	if(matched.size()) {
-		unsigned int index=Random(static_cast<int>(matched.size()));
+		unsigned int index=Engine->Random(static_cast<int>(matched.size()));
 		TEntry entry2=Engine->GetEntry(matched[index]);
 		if(!entry2.IsValid()) return(L"");
 
 		unsigned int size=entry2.Size();
-		retstr=Engine->IndexParse(entry2,Random(size));
+		retstr=Engine->IndexParse(entry2,Engine->Random(size));
 	} else if(args.size()>=3) {
 		retstr=args[2];
 	}
