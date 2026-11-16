@@ -55,7 +55,9 @@ static void SplitLines(const string &raw, vector<string> &lines)
 }
 //---------------------------------------------------------------------------
 // ファイルを読み、文字コードを決めて、行に分ける
-//   cs : 辞書の文字コード (ini の locale があればそれ、なければ BOM / 内容から判定)
+//   cs : 辞書の文字コード (BOM があれば UTF-8、なければ ini の locale、それも無ければ内容から判定)
+//        BOM を優先するのは、9 の save / savecrypt が UTF-8 BOM で書くため。
+//        locale が Shift_JIS のゴーストでも、保存し直したセーブデータを UTF-8 で読めるようにする
 static bool ReadLines7(const wstring &filename, TKawariCharset locale, vector<string> &lines, TKawariCharset &cs)
 {
 	string raw;
@@ -63,8 +65,9 @@ static bool ReadLines7(const wstring &filename, TKawariCharset locale, vector<st
 
 	bool bom=HasUTF8BOM(raw);
 	if(bom) raw.erase(0, 3);
-	if(locale!=KC_NULL) cs=locale;
-	else cs=bom?KC_UTF8:DetectCharset(raw);
+	if(bom) cs=KC_UTF8;
+	else if(locale!=KC_NULL) cs=locale;
+	else cs=DetectCharset(raw);
 
 	SplitLines(raw, lines);
 	return true;
