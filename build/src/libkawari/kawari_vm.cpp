@@ -29,6 +29,7 @@
 #include "libkawari/kawari_rc.h"
 #include "kis/kis_config.h"
 #include "kis/kis_base.h"
+#include "kis/kis7.h"
 #include "misc/misc.h"
 using namespace kawari::resource;
 //---------------------------------------------------------------------------
@@ -75,6 +76,29 @@ TKawariVM::~TKawariVM(){
 	for (vector<TKisFunction_base *>::iterator it=FunctionList.begin();it!=FunctionList.end();it++)
 		if (*it)
 			delete (*it);
+	for (vector<TKisFunction_base *>::iterator it=LegacyList.begin();it!=LegacyList.end();it++)
+		if (*it)
+			delete (*it);
+}
+//---------------------------------------------------------------------------
+// 華和梨7互換モードの専用関数表を作る
+void TKawariVM::EnableLegacy7(void){
+	if (LegacyList.size()) return;
+	CreateKis7Commands(LegacyList, &engine);
+	for (vector<TKisFunction_base *>::iterator it=LegacyList.begin();it!=LegacyList.end();it++)
+		LegacyTable[wstring((*it)->Name())]=(*it);
+}
+//---------------------------------------------------------------------------
+// 華和梨7互換モードの関数実行
+// 7 には「未定義の関数は空文字を返すだけ」「ユーザ関数 (System.Function.*) は無い」ので、
+// 7 専用の表にあればそれを、なければ 9 の表に任せる。
+wstring TKawariVM::FunctionCall7(const vector<wstring>& args){
+	if (!args.size()) return L"";
+	if (!args[0].size()) return L"";
+	map<wstring, TKisFunction_base *>::const_iterator lit=LegacyTable.find(args[0]);
+	if (lit!=LegacyTable.end())
+		return (lit->second->Function(args));
+	return FunctionCall(args);
 }
 //---------------------------------------------------------------------------
 // フレームの位置 (ファイル名と行) を調べる。分からなければ false

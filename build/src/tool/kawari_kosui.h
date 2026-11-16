@@ -46,8 +46,16 @@ public:
 		engine.GetLogger().SetStreamStdOut();
 		engine.SetDataPath(datapath);
 
-		if (inifile.size())
-			engine.LoadKawariDict(inifile);
+		if (inifile.size()) {
+			wstring legacyini;
+			if (TKawariEngine::DetectLegacy7(datapath, inifile, legacyini)) {
+				// ²ÚÏÂÍü7¤Î kawari.ini
+				engine.SetLegacy7(true);
+				engine.LoadKawari7Ini(legacyini);
+			} else {
+				engine.LoadKawariDict(inifile);
+			}
+		}
 	}
 
 	// ¸¡ººÍÑ (kosui --check)
@@ -76,8 +84,15 @@ public:
 		engine.SetDataPath(datapath);
 
 		loaded=true;
-		if (inifile.size())
-			loaded=engine.LoadKawariDict(inifile);
+		if (inifile.size()) {
+			wstring legacyini;
+			if (TKawariEngine::DetectLegacy7(datapath, inifile, legacyini)) {
+				engine.SetLegacy7(true);
+				loaded=engine.LoadKawari7Ini(legacyini);
+			} else {
+				loaded=engine.LoadKawariDict(inifile);
+			}
+		}
 	}
 
 	~TKawariKosuiAdapter()

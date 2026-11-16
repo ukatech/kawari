@@ -42,6 +42,7 @@ using namespace std;
 #include "libkawari/kawari_vm.h"
 #include "libkawari/kawari_log.h"
 #include "libkawari/kawari_lint.h"
+#include "libkawari/kawari7.h"
 #include "saori/saori.h"
 #include "misc/dsstp.h"
 #include "misc/charset.h"
@@ -76,6 +77,20 @@ private:
 	vector<TKawariLint::Zone> Zones;
 	// 読み込み中にコンパイラが集める所見と抑制コメント (KeepZones のときだけ集める)
 	TLintNotes LintNotes;
+
+	// 華和梨7互換モード (ゴースト単位。辞書を読む前に SetLegacy7 で決める)
+	bool Legacy7;
+	TKawari7State *Legacy7State;
+
+	// 単語の文字列を、モードに応じた文法で中間コードにする
+	// 7 モードで空の文字列なら NULL (7 は空の単語を作らない)
+	TKVMCode_base *CompileWordString(const wstring &word) const;
+
+	// 7 の辞書ファイル (1 行 1 定義) を読む。LoadKawariDict が 7 モードのときに呼ぶ。
+	bool LoadKawari7Dict(const wstring &filename);
+
+	// 7 の辞書の 1 行を処理する (cs : 暗号化行を復号した後の文字コード)
+	void LoadKawari7Line(const wstring &line, const wstring &filename, unsigned int lineno);
 
 public:
 	// 範囲外のインデックス
@@ -319,6 +334,33 @@ public:
 	// 戻り値 : 成功でtrue
 	bool SaveKawariDict(const wstring &filename,const vector<wstring>& entry,bool crypt=false) const;
 
+
+	// 華和梨7互換モード API (Phase 9.3.0)
+
+	// 7 互換モードにする。辞書を読む前に呼ぶこと。ゴースト単位で、途中では切り替えない。
+	void SetLegacy7(bool enable);
+	bool IsLegacy7(void) const { return Legacy7; }
+
+	// 7 の kawari.ini を読む (dict / include / text / adddict / set / saori / locale ... を実行し、
+	// 辞書を読み込む)。7 モードでなければ何もしない。
+	// 戻り値 : ini を開けたら true
+	bool LoadKawari7Ini(const wstring &inifile);
+
+	// 7 モードの状態 (7 モードでなければ NULL)
+	TKawari7State *GetLegacy7State(void) { return Legacy7State; }
+
+	// データフォルダと、最初に読むファイルの名前から、華和梨7の kawari.ini で動かすかを決める。
+	//  ・rcfile の拡張子が .ini なら 7 (inipath = そのファイル)
+	//  ・rcfile が既定の kawarirc.kis で、それが無く、kawari.ini があれば 7 (inipath = kawari.ini)
+	// 戻り値 : 7 モードにするなら true
+	static bool DetectLegacy7(const wstring &datapath, const wstring &rcfile, wstring &inipath);
+
+	// 指定エントリから単語を一様に (重複も数えて) 選んで実行する。無ければ空。
+	wstring RandomSelect(const wstring &entryname);
+
+	// 7 のマッチエントリ (["単語", ...] : 応答) のうち、system.Sentence に合うものから応答を選ぶ。無ければ空。
+	wstring MatchRandomSelect(void);
+
 public:
 
 	// ロガーの取得
@@ -372,9 +414,16 @@ inline unsigned int TKawariEngine::EntrySize(const wstring& entryname) const
 }
 //---------------------------------------------------------------------------
 // 単語ID取得
+inline TKVMCode_base *TKawariEngine::CompileWordString(const wstring &word) const
+{
+	if(Legacy7) return TKawari7Compiler::CompileString(word);
+	return TKawariCompiler::Compile(word, GetLogger());
+}
+//---------------------------------------------------------------------------
 inline TWordID TKawariEngine::GetWordID(const wstring& word) const
 {
-	TKVMCode_base *code=TKawariCompiler::Compile(word, GetLogger());
+	TKVMCode_base *code=CompileWordString(word);
+	if(!code) return(0);
 	TWordID id=Dictionary->GetWordID(code);
 	delete code;
 
@@ -396,7 +445,7 @@ inline TEntry TKawariEngine::CreateEntry(const wstring& entryname)
 // 単語を生成する
 inline TWordID TKawariEngine::CreateWord(const wstring& word)
 {
-	return(Dictionary->CreateWord(TKawariCompiler::Compile(word, (*logger))));
+	return(Dictionary->CreateWord(CompileWordString(word)));
 }
 //---------------------------------------------------------------------------
 inline TWordID TKawariEngine::CreateStrWord(const wstring& word)
@@ -413,7 +462,10 @@ inline void TKawariEngine::ClearEntry(const wstring& entryname)
 // 辞書への単語の追加
 inline void TKawariEngine::Push(const wstring& entryname,const wstring& word)
 {
-	Dictionary->CreateEntry(entryname).Push(CreateWord(word));
+	TWordID id=CreateWord(word);
+	// 7 は空の単語を追加しない
+	if(Legacy7&&(id==0)) return;
+	Dictionary->CreateEntry(entryname).Push(id);
 }
 //---------------------------------------------------------------------------
 // エントリ最後尾の単語の削除
@@ -449,7 +501,13 @@ inline void TKawariEngine::Replace2(const wstring& entryname,unsigned int pos,co
 // 指定されたエントリを空にしてから単語を追加
 inline void TKawariEngine::PushAfterClear(const wstring& entryname,const wstring& word)
 {
-	Dictionary->CreateEntry(entryname).PushAfterClear(CreateWord(word));
+	TWordID id=CreateWord(word);
+	if(Legacy7&&(id==0)) {
+		// 7 は空の単語なら、エントリを空にするだけ
+		Dictionary->CreateEntry(entryname).Clear();
+		return;
+	}
+	Dictionary->CreateEntry(entryname).PushAfterClear(id);
 }
 //---------------------------------------------------------------------------
 inline void TKawariEngine::PushStrAfterClear(const wstring& entryname,const wstring& word)

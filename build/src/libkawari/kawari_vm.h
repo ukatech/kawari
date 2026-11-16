@@ -119,6 +119,10 @@ private:
 	// 関数リスト
 	std::vector<class TKisFunction_base*> FunctionList;
 
+	// 華和梨7互換モードの専用関数表 (7 モードのときだけ FunctionCall7 が先に引く)
+	std::map<std::wstring, class TKisFunction_base *> LegacyTable;
+	std::vector<class TKisFunction_base*> LegacyList;
+
 	// 内部状態
 	InterpState state;
 
@@ -172,6 +176,15 @@ public:
 	// 関数実行
 	// cache : 呼び出し元の文が持つ、ユーザ関数エントリの検索結果の覚え (無ければ NULL)
 	std::wstring FunctionCall(const std::vector<std::wstring>& args, TFunctionCache *cache=NULL);
+
+	// 華和梨エンジン
+	class TKawariEngine &GetEngine(void){ return engine; }
+
+	// 華和梨7互換モードの専用関数表を作る (何度呼んでもよい)
+	void EnableLegacy7(void);
+
+	// 華和梨7互換モードの関数実行。7 専用の表 → 9 の表 の順に引く。
+	std::wstring FunctionCall7(const std::vector<std::wstring>& args);
 
 	// 例外状態(continue, break, return, exception)であるかを知る
 	bool IsOnException(void) { return (state.state!=InterpState::NORMAL); }

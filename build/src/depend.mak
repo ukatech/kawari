@@ -4,6 +4,10 @@
 
 ./include/shiori_object.h : ./include/shiori.h
 
+./kis/kis7.cpp : ./config.h ./kis/kis7.h ./libkawari/kawari_engine.h ./libkawari/kawari7.h ./misc/misc.h ./misc/wfile.h
+
+./kis/kis7.h : ./config.h ./kis/kis_base.h
+
 ./kis/kis_base.h : ./config.h ./libkawari/kawari_engine.h ./libkawari/kawari_log.h
 
 ./kis/kis_communicate.cpp : ./config.h ./kis/kis_communicate.h ./libkawari/kawari_engine.h ./libkawari/kawari_rc.h ./misc/misc.h
@@ -78,6 +82,12 @@
 
 ./kis/kis_xargs.h : ./config.h ./kis/kis_base.h
 
+./libkawari/kawari7.cpp : ./config.h ./libkawari/kawari7.h ./libkawari/kawari_vm.h ./libkawari/kawari_dict.h ./libkawari/kawari_engine.h ./misc/misc.h
+
+./libkawari/kawari7.h : ./config.h ./libkawari/kawari_code.h ./misc/charset.h
+
+./libkawari/kawari7_engine.cpp : ./config.h ./libkawari/kawari_engine.h ./libkawari/kawari7.h ./libkawari/kawari_vm.h ./libkawari/kawari_dict.h ./libkawari/kawari_crypt.h ./misc/misc.h ./misc/wfile.h ./misc/charset.h
+
 ./libkawari/kawari_code.cpp : ./config.h ./libkawari/kawari_code.h ./libkawari/kawari_codeexpr.h ./libkawari/kawari_vm.h ./libkawari/kawari_engine.h ./misc/misc.h
 
 ./libkawari/kawari_code.h :
@@ -112,7 +122,7 @@
 
 ./libkawari/kawari_engine.cpp : ./config.h ./libkawari/kawari_engine.h ./libkawari/kawari_dict.h ./libkawari/kawari_compiler.h ./libkawari/kawari_vm.h ./libkawari/kawari_crypt.h ./libkawari/kawari_codeset.h ./libkawari/kawari_rc.h ./misc/misc.h ./misc/wfile.h ./saori/saori.h
 
-./libkawari/kawari_engine.h : ./config.h ./libkawari/kawari_compiler.h ./libkawari/kawari_dict.h ./libkawari/kawari_code.h ./libkawari/kawari_vm.h ./libkawari/kawari_log.h ./libkawari/kawari_lint.h ./saori/saori.h ./misc/dsstp.h ./misc/charset.h
+./libkawari/kawari_engine.h : ./config.h ./libkawari/kawari_compiler.h ./libkawari/kawari_dict.h ./libkawari/kawari_code.h ./libkawari/kawari_vm.h ./libkawari/kawari_log.h ./libkawari/kawari_lint.h ./libkawari/kawari7.h ./saori/saori.h ./misc/dsstp.h ./misc/charset.h
 
 ./libkawari/kawari_lexer.cpp : ./config.h ./libkawari/kawari_lexer.h ./misc/misc.h ./misc/charset.h ./libkawari/kawari_crypt.h ./libkawari/kawari_log.h ./libkawari/kawari_rc.h
 
@@ -138,7 +148,7 @@
 
 ./libkawari/kawari_version.h :
 
-./libkawari/kawari_vm.cpp : ./config.h ./libkawari/kawari_vm.h ./libkawari/kawari_engine.h ./libkawari/kawari_compiler.h ./libkawari/kawari_code.h ./libkawari/kawari_dict.h ./libkawari/kawari_rc.h ./kis/kis_config.h ./kis/kis_base.h ./misc/misc.h ./kis/kis_config.h
+./libkawari/kawari_vm.cpp : ./config.h ./libkawari/kawari_vm.h ./libkawari/kawari_engine.h ./libkawari/kawari_compiler.h ./libkawari/kawari_code.h ./libkawari/kawari_dict.h ./libkawari/kawari_rc.h ./kis/kis_config.h ./kis/kis_base.h ./kis/kis7.h ./misc/misc.h ./kis/kis_config.h
 
 ./libkawari/kawari_vm.h : ./config.h ./libkawari/kawari_code.h ./libkawari/wordcollection.h ./libkawari/kawari_dict.h
 

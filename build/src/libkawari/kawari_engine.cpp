@@ -62,6 +62,8 @@ TKawariEngine::TKawariEngine(void)
 	SaoriPark=new saori::TSaoriPark((*logger), Baseware);
 	Sandbox=false;
 	KeepZones=false;
+	Legacy7=false;
+	Legacy7State=NULL;
 }
 //---------------------------------------------------------------------------
 // 静的検査のために =kis ゾーンの中間コードを残すか
@@ -95,6 +97,7 @@ TKawariEngine::~TKawariEngine()
 	delete KawariVM;
 	delete Dictionary;
 	delete logger;
+	delete Legacy7State;
 }
 //---------------------------------------------------------------------------
 wstring TKawariEngine::EncodeEntryName(const wstring &orgsen){
@@ -247,7 +250,7 @@ wstring TKawariEngine::Parse(TWordID id)
 // 与えられたスクリプトを解釈・実行する
 wstring TKawariEngine::Parse(const wstring& script)
 {
-	TKVMCode_base *code=TKawariCompiler::Compile(script, GetLogger());
+	TKVMCode_base *code=CompileWordString(script);
 	if(!code) return(L"");
 
 	// デバッグ
@@ -267,6 +270,9 @@ bool TKawariEngine::LoadKawariDict(const wstring &filename)
 {
 	// Debug Assertion避け
 	if(!filename.size()) return(false);
+
+	// 華和梨7互換モードでは 7 の辞書として読む
+	if(Legacy7) return LoadKawari7Dict(filename);
 
 	string raw;
 	if(!ReadWholeFile(filename, raw)) return(false);
