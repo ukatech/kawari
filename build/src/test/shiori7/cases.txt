@@ -1,0 +1,140 @@
+# Cases for the shiori7 suite (the Kawari 7 compatible mode, SHIORI/2.x).
+#
+#   REQ <first line> [| <Header>: <value> ...]   a request as it is (SHIORI/2.x). "Charset: Shift_JIS",
+#                                                "Sender: SSP" and "SecurityLevel: local" are added
+#                                                unless the case gives its own Sender / SecurityLevel.
+#   GET <ID> [<ref0>,<ref1>,...]                 SHIORI/3.0 GET request
+#   NOTIFY <ID> [<ref0>,<ref1>,...]              SHIORI/3.0 NOTIFY request
+#   ~ <text>                                     the response must contain <text> (a substring)
+#
+# The folder has kawari.ini and no kawarirc.kis. All the requests are sent in order to one loaded module.
+# The REQ cases before "extensions" give the same answers on the real Kawari 7.5.0 shiori.dll
+# (run this suite with -BinDir pointing at a folder that has the 7.5.0 files). Use ASCII only.
+
+# version : the module answers by itself. The status line says SHIORI/2.6: the baseware decides 2.x or 3.0
+# by the version of the status line.
+REQ GET Version SHIORI/2.6
+~ SHIORI/2.6 200 OK
+~ Charset: Shift_JIS
+
+# system.BalloonOffset is answered once (with the first response) and then cleared
+~ BalloonOffset: 1,2
+
+# events : event.<name> from the dictionary
+REQ GET Sentence SHIORI/2.2 | Event: OnBoot
+~ SHIORI/2.6 200 OK
+~ Sentence: \0\s[0]Hello 7\e
+
+REQ GET Sentence SHIORI/2.2 | Event: OnRef | Reference0: a | Reference1: b
+~ Sentence: r0=a r1=b
+
+REQ GET Sentence SHIORI/2.2 | Event: OnSender
+~ Sentence: SSP/local
+
+REQ GET Sentence SHIORI/2.2 | Event: OnName
+~ Sentence: OnName
+
+# the history reference counts only the entry calls
+REQ GET Sentence SHIORI/2.2 | Event: OnHist | Reference0: A | Reference1: B
+~ Sentence: AB
+
+# an event the dictionary does not know goes to system.OnEventUnknown
+REQ GET Sentence SHIORI/2.2 | Event: OnNoSuchEvent
+~ Sentence: unknown=OnNoSuchEvent
+
+# no Event, no Sentence : sentence
+REQ GET Sentence SHIORI/2.0
+~ Sentence: plain talk
+
+# COMMUNICATE : a match entry that has all the words (match entries are made by the lines ["word", ...] : answer)
+REQ GET Sentence SHIORI/2.3b | Sentence: hello there | Age: 0 | Surface: 0,10
+~ Sentence: matched hello
+
+REQ GET Sentence SHIORI/2.3b | Sentence: a b c | Age: 0
+~ Sentence: matched a and b
+
+REQ GET Sentence SHIORI/2.3b | Sentence: zzz | Age: 0
+~ Sentence: no idea
+
+# resources (SHIORI/2.5)
+REQ GET String SHIORI/2.5 | ID: homeurl
+~ SHIORI/2.6 200 OK
+~ String: http://example.invalid/
+
+REQ GET String SHIORI/2.5 | ID: sakura.recommendsites
+~ String: Site,http://example.invalid/site,
+
+REQ GET String SHIORI/2.5 | ID: nosuch
+~ SHIORI/2.6 204 No Content
+
+# words for the compatible entries
+REQ GET Word SHIORI/2.0 | Type: \ms
+~ Word: Tom
+
+REQ GET Word SHIORI/2.0 | Type: \mz
+~ Word: table
+
+REQ GET Word SHIORI/2.0 | Type: \mh
+~ SHIORI/2.6 204 No Content
+
+# the other requests of SHIORI/2.x
+REQ TRANSLATE Sentence SHIORI/2.6 | Sentence: hi
+~ Sentence: [hi]
+
+REQ TEACH SHIORI/2.4 | Word: pizza
+~ Sentence: taught pizza
+
+REQ GET Status SHIORI/2.0
+~ SHIORI/2.6 200 OK
+~ Status:
+
+# NOTIFY : the name of the ghost (system.OnNotifyGhost is run)
+REQ NOTIFY OwnerGhostName SHIORI/2.6 | Ghost: kuro
+~ SHIORI/2.6 200 OK
+
+REQ NOTIFY OtherGhostName SHIORI/2.3b | Ghost: emily | Ghost: tama | GhostEx: emily,0
+~ SHIORI/2.6 200 OK
+
+# the module has the name of the ghost and answers a ghost that is in the list: the other ghost is the target,
+# and the age is counted up
+REQ GET Sentence SHIORI/2.3b | Sentence: hello | Age: 0 | Sender: emily | SecurityLevel: local
+~ Sentence: matched hello
+~ To: emily
+~ Age: 1
+~ Sender: kuro
+
+# the age 20 or more ends the COMMUNICATE
+REQ GET Sentence SHIORI/2.3b | Sentence: hello | Age: 19 | Sender: emily | SecurityLevel: local
+~ Sentence: matched hello
+
+# security : the level is 2 (kawari.ini), an external request is not answered
+REQ GET Sentence SHIORI/2.2 | Event: OnBoot | SecurityLevel: external
+~ SHIORI/2.6 400 Bad Request
+
+# extensions (not in 7.5.0)
+#
+# a value of a request is not evaluated: it is only the text of the request (7.5.0 compiled it as a word,
+# so a quote was dropped and a macro was run)
+REQ GET Sentence SHIORI/2.2 | Event: OnRef | Reference0: "x"
+~ Sentence: r0="x" r1=
+
+REQ GET Sentence SHIORI/2.2 | Event: OnRef | Reference0: ${greet}
+~ Sentence: r0=${greet} r1=
+
+# SHIORI/3.0 requests are read as SHIORI/2.x ones and answered in SHIORI/3.0.
+GET OnBoot
+~ SHIORI/3.0 200 OK
+~ Value: \0\s[0]Hello 7\e
+
+GET OnRef a,b
+~ Value: r0=a r1=b
+
+GET homeurl
+~ SHIORI/3.0 200 OK
+~ Value: http://example.invalid/
+
+GET nosuchresource
+~ SHIORI/3.0 204 No Content
+
+NOTIFY ownerghostname kuro2
+~ SHIORI/3.0 204 No Content

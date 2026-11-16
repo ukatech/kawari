@@ -185,7 +185,7 @@ void TKawariShioriAdapter::Request7(TPHMessage &request, TPHMessage &response)
 		SetSystemEntry7(L"system.Sender.Path", sender_path_name);
 
 		if(SecurityLevel.Check(sender_path)) {
-			if(type==L"NOTIFY"||type==L"NOTIFY Ghost"||type==L"NOTIFY OwnerGhostName") {
+			if((type==L"NOTIFY"&&!request.count(L"ID"))||type==L"NOTIFY Ghost"||type==L"NOTIFY OwnerGhostName") {
 				wstring ghost=Hdr(request, L"Ghost");
 				SetSystemEntry7(L"system.Ghost", ghost);
 				GhostName=ghost;

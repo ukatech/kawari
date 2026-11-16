@@ -39,6 +39,10 @@ private:
 	// グローバルな名前空間
 	TNameSpace *GlobalNameSpace;
 
+	// 平坦なエントリ名 (華和梨7互換モード)。このとき「@」始まりのエントリもローカルではなく、
+	// 「.」を含む名前も階層に分解しない (7 のエントリ名は平坦な文字列で、@ はただの文字)。
+	bool FlatNames;
+
 	// コンテキスト
 	class TContext : public TNameSpace {
 	public:
@@ -89,7 +93,7 @@ private:
 	// ログ
 	class TKawariLogger &logger;
 public:
-	TNS_KawariDictionary (TKawariLogger &lgr) : logger(lgr) {
+	TNS_KawariDictionary (TKawariLogger &lgr) : FlatNames(false), logger(lgr) {
 		GlobalNameSpace = new TNameSpace(this);
 		GlobalNameSpace->Reserve(2000);
 		WordCollection.Reserve(10000);
@@ -100,7 +104,7 @@ public:
 	}
 
 	// グローバルな名前空間を平坦にする (華和梨7互換モード。エントリを作る前に呼ぶこと)
-	void SetFlatEntryNames(bool flat) { GlobalNameSpace->SetFlat(flat); }
+	void SetFlatEntryNames(bool flat) { FlatNames=flat; GlobalNameSpace->SetFlat(flat); }
 
 	// 範囲外のインデックス
 	static const unsigned int NPos;		// UINT_MAX
@@ -217,6 +221,7 @@ public:
 //--------------------------------------------------------------------------
 // ローカルエントリ名を判別
 inline bool TNS_KawariDictionary::IsLocalEntry(const std::wstring &entry_name) const{
+	if (FlatNames) return false;
 	return (entry_name.size()&&(entry_name[0]==L'@'));
 }
 //---------------------------------------------------------------------------

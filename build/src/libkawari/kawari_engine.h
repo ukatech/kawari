@@ -417,7 +417,7 @@ inline unsigned int TKawariEngine::EntrySize(const wstring& entryname) const
 // 単語ID取得
 inline TKVMCode_base *TKawariEngine::CompileWordString(const wstring &word) const
 {
-	if(Legacy7) return TKawari7Compiler::CompileString(word);
+	if(Legacy7) return TKawari7Compiler::CompileString(word, &GetLogger());
 	return TKawariCompiler::Compile(word, GetLogger());
 }
 //---------------------------------------------------------------------------

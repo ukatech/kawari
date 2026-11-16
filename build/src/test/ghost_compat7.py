@@ -251,12 +251,18 @@ def main():
         print('         %d answers with 200 OK' % answered)
         if rc != 0:
             gc.stop_setup('the old DLL failed')
-        # the old DLL must answer the same twice, or the answers cannot be compared
-        prepare(ghost, old_g, old_dll, stub)
-        ra2, rc2, err2 = replay(harness, old_g, reqs, a.timeout)
-        if [normalize(x) for x in ra] != [normalize(x) for x in ra2]:
+        # the old DLL must answer the same twice, or the answers cannot be compared. The ghost may use the clock
+        # (a minute boundary between two runs), so this is tried up to 3 times.
+        for attempt in range(3):
+            prepare(ghost, old_g, old_dll, stub)
+            ra2, rc2, err2 = replay(harness, old_g, reqs, a.timeout)
+            if [normalize(x) for x in ra] == [normalize(x) for x in ra2]:
+                break
+            ra = ra2          # the next run is compared with this one
+        else:
             gc.stop_setup('the old DLL does not answer the same twice (the seed does not fix its answers)')
 
+        prepare(ghost, new_g, new_dll, stub)
         rb, rc, err = replay(harness, new_g, reqs, a.timeout)
         print('new DLL: exit %s%s' % (rc, (' ' + err) if err else ''))
         diffs = [i for i in range(len(reqs)) if normalize(ra[i]) != normalize(rb[i])]

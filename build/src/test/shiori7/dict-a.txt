@@ -1,0 +1,19 @@
+# Dictionary of the shiori7 suite (ASCII only). One word per entry (no random).
+event.OnBoot : \0\s[0]Hello 7\e
+event.OnRef : r0=${system.Reference0} r1=${system.Reference1}
+event.OnSender : ${system.Sender}/${system.Sender.Path}
+event.OnName : ${system.EventName}
+event.OnHist : ${system.Reference0}${system.Reference1}${1}/${0}
+system.OnEventUnknown : unknown=${system.EventName}
+sentence : plain talk
+["hello"] : matched hello
+["a" , "b"] : matched a and b
+system.response.unknown : no idea
+resource.homeurl : http://example.invalid/
+resource.sakura.recommendsites : "Site,http://example.invalid/site,"
+compatible.ms : Tom
+compatible.mz : table
+system.OnTranslate : [${system.Sentence}]
+system.OnTeach : taught ${system.Sentence}
+system.OnNotifyGhost : ${system.Ghost}
+system.BalloonOffset : "1,2"

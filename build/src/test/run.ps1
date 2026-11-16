@@ -42,7 +42,7 @@
 [CmdletBinding()]
 param(
     [string]$BinDir,
-    [ValidateSet('all', 'kosui', 'check', 'shiori', 'baseware')]
+    [ValidateSet('all', 'kosui', 'check', 'shiori', 'baseware', 'kosui7', 'shiori7')]
     [string]$Suite = 'all',
     [string]$CC = 'gcc',
     [int]$TimeoutSeconds = 30,
@@ -164,22 +164,26 @@ function Show-Text([string]$Text) {
 
 # ---- kosui ----------------------------------------------------------------------------------
 
-function Test-Kosui([string]$Work) {
+function Test-Kosui([string]$Work, [string]$Suite7 = 'kosui') {
+    # (PowerShell variable names are not case sensitive: $name below is the label of a case, not $Name)
     $exe = Join-Path $BinDir 'kosui.exe'
     if (-not (Test-Path -LiteralPath $exe)) { Stop-Setup "kosui.exe was not found in $BinDir" }
-    $fixture = Join-Path $PSScriptRoot 'kosui'
+    $fixture = Join-Path $PSScriptRoot $Suite7
     $cases = Read-Cases (Join-Path $fixture 'cases.txt') '=' @('echo', 'cmd')
 
-    Write-Host "== kosui ($($cases.Count) cases)"
+    Write-Host "== $Suite7 ($($cases.Count) cases)"
     $banner = "'.' is mode change command.`n"
     $index = 0
     $attachAnswer = ''
     foreach ($case in $cases) {
         $index++
-        $name = "kosui:$($case.Line) $($case.Verb) $($case.Rest)"
-        $dir = Join-Path $Work ('kosui' + $index)
+        $name = "${Suite7}:$($case.Line) $($case.Verb) $($case.Rest)"
+        $dir = Join-Path $Work ($Suite7 + $index)
         New-Item -ItemType Directory -Path $dir | Out-Null
-        Copy-Item -Path (Join-Path $fixture 'kawarirc.kis') -Destination $dir
+        # every file of the fixture folder except the case file (kawarirc.kis, or kawari.ini and the dictionaries)
+        foreach ($f in Get-ChildItem -LiteralPath $fixture -File) {
+            if ($f.Name -ne 'cases.txt') { Copy-Item -LiteralPath $f.FullName -Destination $dir }
+        }
 
         if ($case.Verb -eq 'cmd') { $session = ".`n$($case.Rest)`nexit`n" } else { $session = "$($case.Rest)`nexit`n" }
         $run = Invoke-Program $exe @() $dir ($attachAnswer + $session)
@@ -277,7 +281,7 @@ function Test-Shiori([string]$Work, [string]$Name) {
     $dll = Join-Path $BinDir 'shiori.dll'
     if (-not (Test-Path -LiteralPath $dll)) { Stop-Setup "shiori.dll was not found in $BinDir" }
     $fixture = Join-Path $PSScriptRoot $Name
-    $cases = Read-Cases (Join-Path $fixture 'cases.txt') '~' @('GET', 'NOTIFY')
+    $cases = Read-Cases (Join-Path $fixture 'cases.txt') '~' @('GET', 'NOTIFY', 'REQ')
 
     # The harness loads the DLL into its own process, so both must be the same bitness.
     $dllMachine = Get-PeMachine $dll
@@ -300,7 +304,9 @@ function Test-Shiori([string]$Work, [string]$Name) {
 
     $ghost = Join-Path $Work "ghost_$Name"
     New-Item -ItemType Directory -Path $ghost | Out-Null
-    Copy-Item -Path (Join-Path $fixture 'kawarirc.kis') -Destination $ghost
+    foreach ($f in Get-ChildItem -LiteralPath $fixture -File) {
+        if ($f.Name -ne 'cases.txt') { Copy-Item -LiteralPath $f.FullName -Destination $ghost }
+    }
     Copy-Item -Path $dll -Destination $ghost
 
     # One request file per case.
@@ -308,16 +314,28 @@ function Test-Shiori([string]$Work, [string]$Name) {
     $index = 0
     foreach ($case in $cases) {
         $index++
-        $id, $refs = $case.Rest -split '\s+', 2
         $headers = New-Object System.Collections.Generic.List[string]
-        $headers.Add("$($case.Verb) SHIORI/3.0")
-        $headers.Add('Charset: Shift_JIS')
-        $headers.Add('Sender: SSP')
-        $headers.Add('SecurityLevel: local')
-        $headers.Add("ID: $id")
-        if ($refs) {
-            $n = 0
-            foreach ($ref in ($refs -split ',')) { $headers.Add("Reference${n}: $($ref.Trim())"); $n++ }
+        if ($case.Verb -eq 'REQ') {
+            # "REQ <first line> | <Header>: <value> | ..." : the request line as it is (SHIORI/2.x and so on)
+            $parts = $case.Rest -split '\s\|\s'
+            $headers.Add($parts[0])
+            $headers.Add('Charset: Shift_JIS')
+            # "Sender: SSP" and "SecurityLevel: local" unless the case gives its own
+            $custom = @($parts | Select-Object -Skip 1)
+            if (-not ($custom | Where-Object { $_ -like 'Sender:*' })) { $headers.Add('Sender: SSP') }
+            if (-not ($custom | Where-Object { $_ -like 'SecurityLevel:*' })) { $headers.Add('SecurityLevel: local') }
+            foreach ($h in $custom) { $headers.Add($h) }
+        } else {
+            $id, $refs = $case.Rest -split '\s+', 2
+            $headers.Add("$($case.Verb) SHIORI/3.0")
+            $headers.Add('Charset: Shift_JIS')
+            $headers.Add('Sender: SSP')
+            $headers.Add('SecurityLevel: local')
+            $headers.Add("ID: $id")
+            if ($refs) {
+                $n = 0
+                foreach ($ref in ($refs -split ',')) { $headers.Add("Reference${n}: $($ref.Trim())"); $n++ }
+            }
         }
         $file = Join-Path $Work ('req{0:D3}.txt' -f $index)
         [IO.File]::WriteAllBytes($file, $Latin1.GetBytes(($headers -join "`r`n") + "`r`n`r`n"))
@@ -368,6 +386,8 @@ try {
     if ($Suite -eq 'all' -or $Suite -eq 'check') { Test-Check $work }
     if ($Suite -eq 'all' -or $Suite -eq 'shiori') { Test-Shiori $work 'shiori' }
     if ($Suite -eq 'all' -or $Suite -eq 'baseware') { Test-Shiori $work 'baseware' }
+    if ($Suite -eq 'all' -or $Suite -eq 'kosui7') { Test-Kosui $work 'kosui7' }
+    if ($Suite -eq 'all' -or $Suite -eq 'shiori7') { Test-Shiori $work 'shiori7' }
 } finally {
     if ($KeepWork) {
         Write-Host "work folder kept: $work"

@@ -78,20 +78,27 @@ def read_cases(path, expect_mark, verbs):
 
 # ---- kosui --------------------------------------------------------------------------------
 
-def test_kosui(bin_dir, work, timeout):
+def copy_fixture(fixture, dest):
+    """every file of the fixture folder except the case file (kawarirc.kis, or kawari.ini and the dictionaries)"""
+    for f in os.listdir(fixture):
+        if f != "cases.txt":
+            shutil.copy(os.path.join(fixture, f), dest)
+
+
+def test_kosui(bin_dir, work, timeout, suite="kosui"):
     exe = os.path.join(bin_dir, "kosui")
     if not os.path.isfile(exe):
         stop_setup("kosui was not found in " + bin_dir)
-    fixture = os.path.join(HERE, "kosui")
+    fixture = os.path.join(HERE, suite)
     cases = read_cases(os.path.join(fixture, "cases.txt"), "=", ("echo", "cmd"))
 
-    print("== kosui (%d cases)" % len(cases))
+    print("== %s (%d cases)" % (suite, len(cases)))
     banner = "'.' is mode change command.\n"
     for index, case in enumerate(cases, 1):
-        name = "kosui:%d %s %s" % (case["line"], case["verb"], case["rest"])
-        d = os.path.join(work, "kosui%d" % index)
+        name = "%s:%d %s %s" % (suite, case["line"], case["verb"], case["rest"])
+        d = os.path.join(work, "%s%d" % (suite, index))
         os.mkdir(d)
-        shutil.copy(os.path.join(fixture, "kawarirc.kis"), d)
+        copy_fixture(fixture, d)
         if case["verb"] == "cmd":
             session = ".\n%s\nexit\n" % case["rest"]
         else:
@@ -225,23 +232,39 @@ def find_library(bin_dir):
     stop_setup("libshiori.so / libshiori.bundle was not found in " + bin_dir)
 
 
-def make_ghost(work, name):
+def make_ghost(work, name, suite="shiori"):
     ghost = os.path.join(work, name)
     os.mkdir(ghost)
-    shutil.copy(os.path.join(HERE, "shiori", "kawarirc.kis"), ghost)
+    copy_fixture(os.path.join(HERE, suite), ghost)
     return ghost
 
 
-def test_shiori(bin_dir, work):
-    cases = read_cases(os.path.join(HERE, "shiori", "cases.txt"), "~", ("GET", "NOTIFY"))
-    shiori = Shiori(find_library(bin_dir), make_ghost(work, "ghost"))
-    print("== shiori (%d cases)" % len(cases))
+def make_raw_request(rest, charset):
+    """REQ <first line> | <Header>: <value> | ... : the request line as it is (see run.ps1)"""
+    parts = re.split(r"\s\|\s", rest)
+    custom = parts[1:]
+    headers = [parts[0], "Charset: " + charset]
+    if not any(h.startswith("Sender:") for h in custom):
+        headers.append("Sender: SSP")
+    if not any(h.startswith("SecurityLevel:") for h in custom):
+        headers.append("SecurityLevel: local")
+    headers += custom
+    return "\r\n".join(headers) + "\r\n\r\n"
+
+
+def test_shiori(bin_dir, work, suite="shiori"):
+    cases = read_cases(os.path.join(HERE, suite, "cases.txt"), "~", ("GET", "NOTIFY", "REQ"))
+    shiori = Shiori(find_library(bin_dir), make_ghost(work, "ghost_" + suite, suite))
+    print("== %s (%d cases)" % (suite, len(cases)))
     for case in cases:
-        parts = case["rest"].split(None, 1)
-        refs = [r.strip() for r in parts[1].split(",")] if len(parts) > 1 else []
-        req = make_request(case["verb"], parts[0], refs, "Shift_JIS")
+        if case["verb"] == "REQ":
+            req = make_raw_request(case["rest"], "Shift_JIS")
+        else:
+            parts = case["rest"].split(None, 1)
+            refs = [r.strip() for r in parts[1].split(",")] if len(parts) > 1 else []
+            req = make_request(case["verb"], parts[0], refs, "Shift_JIS")
         response = shiori.request(req.encode("latin-1")).decode("latin-1")
-        name = "shiori:%d %s %s" % (case["line"], case["verb"], case["rest"])
+        name = "%s:%d %s %s" % (suite, case["line"], case["verb"], case["rest"])
         missing = [t for t in case["expected"] if t not in response]
         detail = ["missing: " + t for t in missing]
         if missing:
@@ -277,7 +300,7 @@ def test_utf8(bin_dir, work):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--bin-dir", default=None)
-    ap.add_argument("--suite", default="all", choices=("all", "kosui", "check", "shiori", "utf8"))
+    ap.add_argument("--suite", default="all", choices=("all", "kosui", "check", "shiori", "utf8", "kosui7", "shiori7"))
     ap.add_argument("--timeout", type=int, default=30)
     args = ap.parse_args()
 
@@ -293,19 +316,23 @@ def main():
     try:
         if args.suite in ("all", "kosui"):
             test_kosui(bin_dir, work, args.timeout)
+        if args.suite in ("all", "kosui7"):
+            test_kosui(bin_dir, work, args.timeout, "kosui7")
         if args.suite in ("all", "check"):
             test_check(bin_dir, work, args.timeout)
         # Each suite loads the library once; the module keeps one instance per process,
         # so the SHIORI suites run in child processes.
-        for suite in ("shiori", "utf8"):
+        for suite in ("shiori", "shiori7", "utf8"):
             if args.suite in ("all", suite):
                 if args.suite == "all":
                     run = subprocess.run([sys.executable, os.path.abspath(__file__), "--bin-dir", bin_dir, "--suite", suite])
                     if run.returncode == 2:
                         sys.exit(2)
                     count_child(run.returncode)
+                elif suite == "utf8":
+                    test_utf8(bin_dir, work)
                 else:
-                    (test_shiori if suite == "shiori" else test_utf8)(bin_dir, work)
+                    test_shiori(bin_dir, work, suite)
     finally:
         shutil.rmtree(work, ignore_errors=True)
 

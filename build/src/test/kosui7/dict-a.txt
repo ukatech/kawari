@@ -1,0 +1,20 @@
+# Dictionary of the kosui7 suite (ASCII only). Every entry that a case reads has one word (no random).
+greet : Hello
+nest : ${greet} world!
+a : 0
+b : x
+n : 3
+one : only
+dots : plain
+dots. : dotted
+dots..x : doubled
+lst : p , q , r
+quote : "a , b"
+and1 : p , q
+and2 : q , r
+call : $(echo [$(echo in)])
+ten : 10
+=kis
+set from_zone 9-syntax;
+=end
+zone2 : $[ ${n} * 2 ]

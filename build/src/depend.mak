@@ -82,7 +82,7 @@
 
 ./kis/kis_xargs.h : ./config.h ./kis/kis_base.h
 
-./libkawari/kawari7.cpp : ./config.h ./libkawari/kawari7.h ./libkawari/kawari_vm.h ./libkawari/kawari_dict.h ./libkawari/kawari_engine.h ./misc/misc.h
+./libkawari/kawari7.cpp : ./config.h ./libkawari/kawari7.h ./libkawari/kawari_compiler.h ./libkawari/kawari_log.h ./libkawari/kawari_vm.h ./libkawari/kawari_dict.h ./libkawari/kawari_engine.h ./misc/misc.h
 
 ./libkawari/kawari7.h : ./config.h ./libkawari/kawari_code.h ./misc/charset.h
 

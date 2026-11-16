@@ -15,6 +15,8 @@
 #include <string>
 //---------------------------------------------------------------------------
 #include "libkawari/kawari7.h"
+#include "libkawari/kawari_compiler.h"
+#include "libkawari/kawari_log.h"
 #include "libkawari/kawari_vm.h"
 #include "libkawari/kawari_dict.h"
 #include "libkawari/kawari_engine.h"
@@ -534,6 +536,57 @@ wstring TK7InlineScript::DisCompile(void) const
 //===========================================================================
 // コンパイラ
 //===========================================================================
+// 引用符 ('...' か "...") の次の位置。閉じていなければ文字列の長さ
+static size_t SkipQuoted(const wstring &s, size_t i)
+{
+	wchar_t q=s[i];
+	i++;
+	while(i<s.size()) {
+		if(s[i]==L'\\') i++;
+		else if(s[i]==q) return i+1;
+		i++;
+	}
+	return s.size();
+}
+//---------------------------------------------------------------------------
+// $[ ... ] の中身の始まり (i) から、対応する ] の位置を探す。無ければ npos
+// 引用符の中の ] と、${ } / $( ) の中の ] は数えない
+static size_t FindExpressionEnd(const wstring &s, size_t i)
+{
+	int depth=1;
+	while(i<s.size()) {
+		wchar_t c=s[i];
+		if((c==L'"')||(c==L'\'')) {
+			i=SkipQuoted(s, i);
+			continue;
+		}
+		if((c==L'$')&&((i+1)<s.size())&&((s[i+1]==L'(')||(s[i+1]==L'{'))) {
+			// ${ ... } / $( ... ) を対応する閉じまで飛ばす
+			wchar_t open=s[i+1];
+			wchar_t close=(open==L'(')?L')':L'}';
+			int d=1;
+			i+=2;
+			while((i<s.size())&&(d>0)) {
+				if((s[i]==L'"')||(s[i]==L'\'')) {
+					i=SkipQuoted(s, i);
+					continue;
+				}
+				if(s[i]==open) d++;
+				else if(s[i]==close) d--;
+				i++;
+			}
+			continue;
+		}
+		if(c==L'[') depth++;
+		else if(c==L']') {
+			depth--;
+			if(depth==0) return i;
+		}
+		i++;
+	}
+	return wstring::npos;
+}
+//---------------------------------------------------------------------------
 // 文字列 (TKawariCodeString::Compile)
 // 文字列だけの連続を 1 つに結合する。区切り文字のうち ] だけは文字列の一部
 bool TKawari7Compiler::compileText(TKawari7Lexer &lex, wstring &out)
@@ -571,6 +624,19 @@ bool TKawari7Compiler::compileWordParts(TKawari7Lexer &lex, vector<TKVMCode_base
 	size_t oldsize=codelist.size();
 
 	while(!lex.IsEnd()) {
+		// 9 の式 $[ ... ] (7 には無い。取り込む指定のときだけ。中身は 9 の文法で最後まで読む)
+		if(lex.logger&&(lex.At(lex.pos)==L'$')&&(lex.At(lex.pos+1)==L'[')) {
+			size_t end=FindExpressionEnd(lex.src, lex.pos+2);
+			if(end!=wstring::npos) {
+				TKVMCode_base *code=TKawariCompiler::Compile(lex.src.substr(lex.pos, end+1-lex.pos), *lex.logger);
+				if(code) {
+					codelist.push_back(code);
+					lex.pos=end+1;
+					continue;
+				}
+			}
+		}
+
 		size_t pos=lex.pos;
 		TKawari7Lexer::Token token=lex.GetToken();
 
@@ -771,9 +837,9 @@ TKVMCode_base *TKawari7Compiler::ParseDictWord(TKawari7Lexer &lex)
 }
 //---------------------------------------------------------------------------
 // 文字列全体を 1 つの単語として中間コード化する
-TKVMCode_base *TKawari7Compiler::CompileString(const wstring &src)
+TKVMCode_base *TKawari7Compiler::CompileString(const wstring &src, TKawariLogger *logger)
 {
-	TKawari7Lexer lex(src);
+	TKawari7Lexer lex(src, logger);
 
 	vector<TKVMCode_base *> codelist;
 	if(!CompileWord(lex, codelist, 0)) return NULL;

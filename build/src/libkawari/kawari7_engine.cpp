@@ -154,7 +154,7 @@ wstring TKawariEngine::MatchRandomSelect(void)
 //   エントリ, ... : 単語, 単語 ...
 void TKawariEngine::LoadKawari7Line(const wstring &line, const wstring &filename, unsigned int lineno)
 {
-	TKawari7Lexer buff(line);
+	TKawari7Lexer buff(line, logger);
 	wchar_t head=buff.At(0);
 
 	if(head==L'#') {

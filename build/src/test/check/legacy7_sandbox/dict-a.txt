@@ -1,0 +1,5 @@
+greet : Hello
+save_it : $(save saved.txt greet)$(callsaori ns x)
+=kis
+save zone_saved.txt greet;
+=end

@@ -1,0 +1,388 @@
+# Cases for the kosui7 suite (the Kawari 7 compatible mode).
+#
+#   echo <input>   input line in echo mode (evaluated as a sentence)
+#   cmd <input>    input line in command mode (evaluated as $(<input>))
+#   = <text>       expected output (a lone "=" is an empty line)
+#
+# The folder has kawari.ini and no kawarirc.kis, so kosui runs in the Kawari 7 compatible mode.
+# Every case runs in a fresh copy of this folder (without cases.txt).
+#
+# The expected outputs of the sections before "extensions" were taken from the real Kawari 7.5.0
+# (kosui.exe 7.5.0): the same lines gave the same output there. Use ASCII only.
+
+# entry reference
+echo ${greet}
+= Hello
+echo ${nest}
+= Hello world!
+echo plain text
+= plain text
+echo ${nosuch}
+=
+echo ${ b }
+= x
+echo ${one}${one}
+= onlyonly
+
+# entry names are flat strings in 7: "dots" "dots." "dots..x" are three different entries
+echo ${dots}
+= plain
+echo ${dots.}
+= dotted
+echo ${dots..x}
+= doubled
+echo ${dots.x}
+=
+
+# @ is an ordinary character of an entry name in 7 (not a local entry as in 9)
+cmd set @loc 5 ; echo ${@loc}
+= 5
+cmd set @loc.a 1 ; echo ${@loc.a}/${@loc}
+= 1/
+echo ${@none}
+=
+
+# lexical rules: separators are plain text in a sentence, a quoted text is not expanded
+echo a (b) c
+= a (b) c
+echo a;b:c!d&e|f
+= a;b:c!d&e|f
+echo a,b
+= a,b
+echo "he said \"hi\""
+= he said "hi"
+echo $x $() $
+= $x $() $
+echo a   b
+= a   b
+echo ${quote}
+= a , b
+echo "${greet}"
+= ${greet}
+echo $(echo a
+= a
+
+# history reference counts only the entry calls (${N} is not counted, $() is not counted)
+echo ${b}$(echo q)${0}/${1}
+= xqx/
+echo ${b}${n}${1}/${0}
+= x33/x
+echo ${b}${n}${0}${1}${2}
+= x3x3
+echo $(echo ${b} ${n})${0}${1}
+= x 3
+
+# if takes a condition, a word and an optional else word (no else keyword)
+echo $(if 1 yes no)
+= yes
+echo $(if "" yes no)
+= no
+echo $(if 0 yes)
+=
+echo $(if 0 yes no)
+= no
+echo $(if false yes no)
+= no
+echo $(if 1 yes else no)
+=
+echo $(if 1 $(echo x)$(echo y) z)
+= xy
+cmd if 1 a b
+= a
+cmd if x a
+= a
+
+# control commands
+cmd loop 3 x
+= xxx
+cmd loop 0 x
+=
+cmd loop -1 x
+=
+cmd while "" x
+=
+cmd until 1 x
+=
+cmd ? a
+= a
+cmd NULL
+=
+cmd echo 1 ; echo 2 ; silent ; echo 3
+= 3
+cmd foreach i one ${i}!
+= only!
+
+# the arguments of a statement
+cmd echo a  b   c
+= a b c
+cmd echo "a  b"
+= a  b
+cmd echo a;b
+= a
+cmd echo (a)
+= (a)
+cmd echo 1 ; echo 2
+= 12
+cmd echo
+=
+
+# expr (7.5.0 style: each token is an argument)
+cmd expr 1 + 2
+= 3
+cmd expr 5 / 2
+= 2
+cmd expr 5 % 3
+= 2
+cmd expr 5 / 0
+=
+cmd expr 7 - 10
+= -3
+cmd expr 3 * 4
+= 12
+cmd expr 8 / 4 / 2
+= 4
+cmd expr 1 + 2 * 3
+= 7
+cmd expr ( 1 + 2 ) * 3
+=  * 3)
+cmd expr 2 * ( 1 + 2 ")" 
+= 6
+cmd expr abc + 1
+=
+cmd expr 5x + 1
+= 6
+cmd expr 3 > 2
+= 1
+cmd expr 3 < 2
+=
+cmd expr 3 = 3
+= 1
+cmd expr 3 == 3
+= 1
+cmd expr 3 != 3
+=
+cmd expr 3 >= 3
+= 1
+cmd expr 3 <= 2
+=
+cmd expr abc = abc
+= 1
+cmd expr abc < abd
+= 1
+cmd expr 10 < 9
+=
+cmd expr 1 | 2
+= 1
+cmd expr "" | 2
+=
+cmd expr 1 & 0
+=
+cmd expr 1 & 5
+= 1
+cmd expr substr abcdef 2 3
+= bcd
+cmd expr substr abcdef 0 3
+=
+cmd expr substr abcdef 7 3
+=
+cmd expr length abcd
+= 4
+cmd expr index abcdef xcd
+= 3
+cmd expr index abcdef zz
+=
+cmd expr find abcdef cd
+= cd
+cmd expr find abcdef zz
+=
+cmd expr findpos abcdef cd
+= 3
+cmd expr findpos abcdef zz
+=
+cmd expr quote find
+= find
+cmd expr 1 +
+=
+cmd expr
+=
+cmd expr ${n} + ${n}
+= 6
+
+# test and [ ]
+cmd test 1
+= true
+cmd test 0
+= false
+cmd test ""
+= false
+cmd test false
+= false
+cmd test ! 0
+= true
+cmd test ! x
+= false
+cmd test a == a
+= true
+cmd test a = b
+= false
+cmd test a != b
+= true
+cmd test 2 < 10
+= false
+cmd test 2 -lt 10
+= true
+cmd test 2 -gt 10
+= false
+cmd test 10 -ge 10
+= true
+cmd test 3 -eq 3
+= true
+cmd test 3 -ne 3
+= false
+cmd test 1 && 0
+= false
+cmd test 1 && 1
+= true
+cmd test 0 || x
+= true
+cmd test a b
+= false
+cmd [ 1 -eq 1 ]
+= true
+cmd [ ${n} -eq 3 ]
+= true
+cmd [ a == b ]
+= false
+echo $([ ${n} -lt ${ten} ])
+= true
+
+# dictionary commands (7.5.0: get shows the source, array runs it, enumerate lists the source)
+cmd get lst 0
+= "p"
+cmd get lst 2
+= "r"
+cmd get lst 9
+=
+cmd get lst
+=
+cmd get nest 0
+= ${greet}" ""world""!"
+cmd array lst 1
+= q
+cmd array nest 0
+= Hello world!
+cmd array lst 9
+=
+cmd enumerate lst
+= "p" "q" "r"
+cmd enumerate nest
+= ${greet}" ""world""!"
+cmd enumerate quote
+= "a , b"
+cmd enumerate nosuch
+=
+cmd size lst
+= 3
+cmd size nosuch
+= 0
+cmd size dots.
+= 1
+cmd set x1 abc ; echo ${x1}
+= abc
+cmd set x2 "${greet}" ; echo ${x2}
+= Hello
+cmd set x3 "" ; size x3
+= 0
+cmd adddict x4 one ; adddict x4 two ; size x4
+= 2
+cmd set x5 a ; clear x5 ; size x5
+= 0
+cmd set x6 "a b" ; array x6 0
+= a b
+cmd set x7 "(q)" ; echo ${x7}
+= (q)
+cmd set x8 "a ; b" ; get x8 0
+= "a"" ;"" ""b"
+cmd entry one
+= only
+cmd entry nosuch dflt
+= dflt
+cmd entry nosuch
+=
+cmd eval "${greet}"
+= Hello
+cmd eval "$(echo e)"
+= e
+cmd eval a b
+= a b
+
+# counters and strings
+cmd set c 5 ; dec c ; echo ${c}
+= 4
+cmd set c 5 ; inc c 3 ; echo ${c}
+= 8
+cmd set c 5 ; inc c 3 6 ; echo ${c}
+= 6
+cmd set c 5 ; dec c 9 2 ; echo ${c}
+= 2
+cmd inc nocount ; echo ${nocount}
+= 1
+cmd chr 65
+= A
+cmd tolower ABC def
+= abc def
+cmd toupper abc DEF
+= ABC DEF
+cmd escape a\b%c
+= a\\b\%c
+cmd rand 1
+= 0
+cmd rand 0
+= 0
+
+# files and splitting
+cmd textload t.txt tx ; echo ${tx.1}/${tx.2}/${tx.3}/${tx.size}
+= line1//line3/3
+cmd textload nosuch.txt ty ; size ty.size
+= 0
+cmd split sp "1ch2ch3" ch ; echo ${sp.1}/${sp.2}/${sp.3}/${sp.size}
+= 1/2/3/3
+cmd split sq "a,,b" "," ; echo ${sq.1}/${sq.2}/${sq.3}/${sq.size}
+= a//b/3
+cmd split sr "abc" "x" ; echo ${sr.1}/${sr.size}
+= abc/1
+cmd split ss "" "x" ; size ss.size
+= 0
+cmd readdir . rd ; if $([ $(size rd) -gt 2 ]) many few
+= many
+cmd readdir nosuchdir rd2 ; size rd2
+= 0
+
+# settings in kawari.ini
+echo ${sv}
+= 7.5.0 set
+echo ${av}
+= added by ini
+echo ${tl.1}/${tl.size}
+= line1/3
+
+# piro
+cmd pirocall #nolabel dflt
+= dflt
+cmd pirocall #nolabel
+=
+
+# extensions (not in 7.5.0): the 9 syntax is allowed in a 7 ghost. A $[ ] expression and a =kis ... =end zone
+# are read in the 9 grammar to the end. A word that is not in such a place stays in the 7 grammar.
+echo $[ 1 + 2 ]
+= 3
+echo $[ ${n} * 2 ]
+= 6
+echo $[ "a]b" == "a]b" ]
+= true
+echo x$[ 2 * 3 ]y
+= x6y
+echo ${zone2}
+= 6
+echo ${from_zone}
+= 9-syntax

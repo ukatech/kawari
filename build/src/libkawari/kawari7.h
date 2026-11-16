@@ -46,7 +46,11 @@ public:
 	std::wstring src;
 	size_t pos;
 
-	TKawari7Lexer(const std::wstring &s) : src(s), pos(0) {}
+	// 9 の式 $[ ... ] を取り込むときに 9 のコンパイラへ渡すロガー。
+	// NULL なら $[ は 7 のとおり (解釈できないマクロ = 文字列そのまま)
+	class TKawariLogger *logger;
+
+	TKawari7Lexer(const std::wstring &s, class TKawariLogger *lgr=NULL) : src(s), pos(0), logger(lgr) {}
 
 	bool IsEnd(void) const { return pos>=src.size(); }
 	wchar_t At(size_t i) const { return (i<src.size())?src[i]:L'\0'; }
@@ -144,7 +148,8 @@ public:
 
 	// 文字列全体を 1 つの単語として中間コード化する (TNS_KawariDictionary::StringToCode)
 	// 空なら NULL
-	static TKVMCode_base *CompileString(const std::wstring &src);
+	// logger : 9 の式 $[ ... ] を取り込むためのロガー (NULL なら 7 のとおり取り込まない)
+	static TKVMCode_base *CompileString(const std::wstring &src, class TKawariLogger *logger=NULL);
 
 	// 文字列をエントリ名で使える文字列にする (TKawariEngine::EncodeEntryName)
 	static std::wstring EncodeEntryName(const std::wstring &orgsen);
