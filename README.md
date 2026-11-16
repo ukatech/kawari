@@ -37,9 +37,9 @@ Phase 9 系は、オリジナルの華和梨をフォークし、[ponapalt](http
 
 **Phase 9.3.0 以降は、華和梨 Phase 7.5.0 のゴーストを、辞書を書き換えずに動かせます。** ゴーストのフォルダに `kawarirc.kis` が無く、`kawari.ini` があれば、`shiori.dll` を差し替えるだけで 7.5.0 の動作になります。モードはゴーストごとに、`shiori.dll` を読み込むときに決まります。`kawarirc.kis` があるゴーストの動作は変わりません。幸水 (`kosui`) と `kosui --check` も同じ規則で 7 互換モードになります。
 
-仕様は[マニュアルの「華和梨 7 互換モード」](http://ukatech.shillest.net/kawari-docs/spec/07-kawari7-compat/)にあります。次の点を知っておいてください (意図した違いです)。
+仕様は[マニュアルの「華和梨 7 互換モード」](http://ukatech.shillest.net/kawari-docs/spec/#07-kawari7-compat)にあります。次の点を知っておいてください (意図した違いです)。
 
-- 7.5.0 の `shiori.dll` と同じ入力を与えて出力を比べて確かめました。実在の華和梨 7 のゴースト (辞書約 9MB) に 169 件の要求を送り、応答が 7.5.0 とバイト単位で同じでした。ただし、実際の本体 (SSP など) の上では試していません
+- 7.5.0 の `shiori.dll` と同じ入力を与えて出力を比べて確かめました。実在の華和梨 7 のゴースト (辞書約 9MB) に 169 件の要求を送り、応答が 7.5.0 とバイト単位で同じでした (バージョンの数字と `GET Status` の統計を除く)。ただし、実際の本体 (SSP など) の上では試していません
 - `save` / `savecrypt` は UTF-8 (BOM あり) で書き出します。7.5.0 が書いたセーブはそのまま読めますが、7 互換モードが書いたセーブを 7.5.0 の `shiori.dll` に戻して読めるとは限りません (差し替えを戻す可能性があるなら、セーブのバックアップを)
 - リクエストの値と SAORI の応答の値は、文字列としてそのまま扱います (7.5.0 は単語として読んだので、`"` が消えたり `${` `$(` が実行されたりしました)
 - `ver` と `GET Version` は、この華和梨のバージョンを返します。`locale` の Big5 と ISO-8859-1 は扱えません
@@ -69,7 +69,7 @@ Phase 9 系は、オリジナルの華和梨をフォークし、[ponapalt](http
 
 **華和梨 7 互換モード**
 
-- 華和梨 Phase 7.5.0 のゴースト (`kawari.ini` があり、`kawarirc.kis` が無いフォルダ) を、辞書を書き換えずに 7.5.0 の動作で動かせるようにした。モードはゴーストごとに、`shiori.dll` の読み込みのときに決まる。それ以外のゴーストの動作は変わらない。仕様は[マニュアル](http://ukatech.shillest.net/kawari-docs/spec/07-kawari7-compat/)
+- 華和梨 Phase 7.5.0 のゴースト (`kawari.ini` があり、`kawarirc.kis` が無いフォルダ) を、辞書を書き換えずに 7.5.0 の動作で動かせるようにした。モードはゴーストごとに、`shiori.dll` の読み込みのときに決まる。それ以外のゴーストの動作は変わらない。仕様は[マニュアル](http://ukatech.shillest.net/kawari-docs/spec/#07-kawari7-compat)
 - `kawari.ini` (`dict` `include` `text` `adddict` `set` `saori` `randomseed` `security` `locale` `debug`)、1 行 1 定義の辞書、暗号化行、マッチエントリ、`[SAKURA]` 形式のピロを読む。単語は、Phase 8 以降のコンパイラではなく、7.5.0 の字句と文法で読む (素の `( )` は文字、`if 条件 A [B]` に `else` は無い、履歴参照はエントリ呼び出しだけを数える、など)
 - エントリ名は 7.5.0 と同じ平坦な文字列で、`A.` `A..B` `.A` `A.B` は別のエントリ。`@` は、ローカルなエントリではなく、ふつうの文字
 - `expr` `test` `[` `array` `enumerate` `get` `textload` `readdir` `split` `pirocall` は 7.5.0 の意味で動く (Phase 8 以降は同名で意味が違う)。他のコマンドも、7.5.0 と同じ結果を返すことを確かめた
