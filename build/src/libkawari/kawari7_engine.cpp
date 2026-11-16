@@ -98,6 +98,14 @@ bool TKawariEngine::DetectLegacy7(const wstring &datapath, const wstring &rcfile
 	return false;
 }
 //---------------------------------------------------------------------------
+// kawari.ini を読んでいる途中の、ファイルごとの状態 (include の入れ子)
+struct TIniFrame7 {
+	vector<string> lines;
+	TKawariCharset cs;
+	size_t li;
+	TIniFrame7() : cs(KC_NULL), li(0) {}
+};
+//---------------------------------------------------------------------------
 // 華和梨7互換モードにする
 void TKawariEngine::SetLegacy7(bool enable)
 {
@@ -326,21 +334,25 @@ bool TKawariEngine::LoadKawari7Ini(const wstring &inifile)
 
 	vector<wstring> dictfiles;
 
-	// ini を読む (include は再帰)
-	vector<wstring> inistack;
-	inistack.push_back(inifile);
-	bool opened=false;
-	for(size_t si=0; si<inistack.size(); si++) {
-		vector<string> lines;
-		TKawariCharset cs=KC_NULL;
-		if(!ReadLines7(inistack[si], KC_NULL, lines, cs)) {
-			if(si==0) return false;
+	// ini を読む。include は、その位置で読み込んでから続きを読む (7.5.0 は再帰で読んだ)
+	vector<TIniFrame7> frames;
+	{
+		TIniFrame7 first;
+		if(!ReadLines7(inifile, KC_NULL, first.lines, first.cs)) return false;
+		frames.push_back(first);
+	}
+	bool opened=true;
+	while(frames.size()) {
+		if(frames.back().li>=frames.back().lines.size()) {
+			frames.pop_back();
 			continue;
 		}
-		if(si==0) opened=true;
+		const string rawline=frames.back().lines[frames.back().li];
+		TKawariCharset cs=frames.back().cs;
+		frames.back().li++;
 
-		for(size_t li=0; li<lines.size(); li++) {
-			wstring buff=StringTrim(MBtoW(lines[li], cs));
+		{
+			wstring buff=StringTrim(MBtoW(rawline, cs));
 			if((buff.size()==0)||(buff[0]==L'#')) continue;
 
 			wstring key, value;
@@ -380,16 +392,32 @@ bool TKawariEngine::LoadKawari7Ini(const wstring &inifile)
 					PushAfterClear(StringTrim(value.substr(0, sp)), StringTrim(value.substr(sp+1)));
 				}
 			} else if(key==L"include") {
-				inistack.push_back(DataPath+value);
+				// 入れ子は 16 段まで (7.5.0 は互いに include すると終わらなかった)
+				if(frames.size()<16) {
+					TIniFrame7 sub;
+					if(ReadLines7(DataPath+value, KC_NULL, sub.lines, sub.cs))
+						frames.push_back(sub);
+				}
 			} else if(key==L"locale") {
 				TKawariCharset lcs=CharsetFromNameExt(value);
 				Legacy7State->locale=value;
 				Legacy7State->localecs=lcs;
 			} else if(key==L"debug") {
 				if(value==L"log") {
+					// kawari.log に、エラー・警告と、OnMouseMove 以外の要求と応答を記録する
+					// (記録の書式は 9 のもの。7.5.0 のログとは同じではない)
 					vector<wstring> args;
 					args.push_back(L"logfile");
 					args.push_back(L"kawari.log");
+					KawariVM->FunctionCall(args);
+					args.clear();
+					args.push_back(L"loglevel");
+					args.push_back(L"error");
+					args.push_back(L"warning");
+					args.push_back(L"info");
+					args.push_back(L"baseevents");
+					args.push_back(L"rscevents");
+					args.push_back(L"timeevents");
 					KawariVM->FunctionCall(args);
 				} else if(value==L"debugger") {
 					Push(L"event.ShioriEcho", L"${system.Reference0}\\e");

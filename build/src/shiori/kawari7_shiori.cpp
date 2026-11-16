@@ -159,6 +159,23 @@ void TKawariShioriAdapter::Request7(TPHMessage &request, TPHMessage &response)
 	}
 	wstring type=reqline.substr(0, pos);
 
+	// debug : log (kawari.ini) のログ。7.5.0 は OnMouseMove 以外の要求と応答を全て記録した
+	TKawariLogger &Logger=Engine.GetLogger();
+	unsigned int evtchk=kawari_log::LOG_BASEEVENTS;
+	if(request.count(L"Event")) {
+		wstring ev=Hdr(request, L"Event");
+		if((ev==L"OnSecondChange")||(ev==L"OnMinuteChange")) evtchk=kawari_log::LOG_TIMEEVENTS;
+		else if(ev==L"OnMouseMove") evtchk=kawari_log::LOG_MOUSEEVENTS;
+	} else if(type==L"GET String") {
+		evtchk=kawari_log::LOG_RSCEVENTS;
+	}
+	bool logmode=Logger.Check(evtchk);
+	if(logmode) {
+		Logger.GetStream() << L"[SHIORI/SAORI Adapter] Query sequence begin." << endl;
+		Logger.GetStream() << L"---------------------- REQUEST" << endl;
+		request.Dump(Logger.GetStream());
+	}
+
 	unsigned int statuscode=400;
 
 	// 伝達経路 (SecurityLevel ヘッダ。local / external 以外は unknown)
@@ -330,5 +347,11 @@ void TKawariShioriAdapter::Request7(TPHMessage &request, TPHMessage &response)
 		response.SetStartline(L"SAORI/" KW_WIDE(SAORIVER) L" "+statusheader);
 	else
 		response.SetStartline(L"SHIORI/2.6 "+statusheader);
+
+	if(logmode) {
+		Logger.GetStream() << L"--------------------- RESPONSE" << endl;
+		response.Dump(Logger.GetStream());
+		Logger.GetStream() << L"[SHIORI/SAORI Adapter] Query sequence end." << endl;
+	}
 }
 //---------------------------------------------------------------------------

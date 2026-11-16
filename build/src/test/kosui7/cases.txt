@@ -380,13 +380,15 @@ cmd readdir . rd ; if $([ $(size rd) -gt 2 ]) many few
 cmd readdir nosuchdir rd2 ; size rd2
 = 0
 
-# settings in kawari.ini
+# settings in kawari.ini (include is read at its place: the words of ord come in the order A B C)
 echo ${sv}
 = 7.5.0 set
 echo ${av}
 = added by ini
 echo ${tl.1}/${tl.size}
 = line1/3
+cmd enumerate ord
+= "A" "B" "C"
 
 # piro
 cmd pirocall #nolabel dflt

@@ -91,8 +91,8 @@ CASES = [
     ('cmd', 'split ss "" "x" ; size ss.size'),
     ('cmd', 'readdir . rd ; if $([ $(size rd) -gt 2 ]) many few'),
     ('cmd', 'readdir nosuchdir rd2 ; size rd2'),
-    ('settings in kawari.ini', None, None),
-    ('echo', '${sv}'), ('echo', '${av}'), ('echo', '${tl.1}/${tl.size}'),
+    ('settings in kawari.ini (include is read at its place: the words of ord come in the order A B C)', None, None),
+    ('echo', '${sv}'), ('echo', '${av}'), ('echo', '${tl.1}/${tl.size}'), ('cmd', 'enumerate ord'),
     ('piro', None, None),
     ('cmd', 'pirocall #nolabel dflt'), ('cmd', 'pirocall #nolabel'),
 ]

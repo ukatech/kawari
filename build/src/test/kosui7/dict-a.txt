@@ -14,6 +14,7 @@ and1 : p , q
 and2 : q , r
 call : $(echo [$(echo in)])
 ten : 10
+ord : A
 =kis
 set from_zone 9-syntax;
 =end
