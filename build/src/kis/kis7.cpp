@@ -39,6 +39,24 @@ static int Atoi7(const wstring &s)
 	return neg?static_cast<int>(0u-v):static_cast<int>(v);
 }
 //---------------------------------------------------------------------------
+// Atoi7 の 64bit 版 (expr / test の数値演算用。範囲外は 64bit で回り込む)
+static kawari_int64 Atoi7_64(const wstring &s)
+{
+	size_t i=0;
+	while((i<s.size())&&((s[i]==L' ')||(s[i]==L'\t')||(s[i]==L'\n')||(s[i]==L'\r'))) i++;
+	bool neg=false;
+	if((i<s.size())&&((s[i]==L'+')||(s[i]==L'-'))) {
+		neg=(s[i]==L'-');
+		i++;
+	}
+	kawari_uint64 v=0;
+	while((i<s.size())&&(s[i]>=L'0')&&(s[i]<=L'9')) {
+		v=v*10+static_cast<kawari_uint64>(s[i]-L'0');
+		i++;
+	}
+	return neg?static_cast<kawari_int64>(static_cast<kawari_uint64>(0)-v):static_cast<kawari_int64>(v);
+}
+//---------------------------------------------------------------------------
 static inline bool IsFalse7(const wstring &s)
 {
 	return (s.size()==0)||(s==L"0")||(s==L"false");
@@ -249,17 +267,17 @@ static wstring TestFunction7(const vector<wstring> &args)
 		} else if(args[2]==L">=") {
 			status=(args[1]>=args[3]);
 		} else if(args[2]==L"-eq") {
-			status=(Atoi7(args[1])==Atoi7(args[3]));
+			status=(Atoi7_64(args[1])==Atoi7_64(args[3]));
 		} else if(args[2]==L"-ne") {
-			status=(Atoi7(args[1])!=Atoi7(args[3]));
+			status=(Atoi7_64(args[1])!=Atoi7_64(args[3]));
 		} else if(args[2]==L"-lt") {
-			status=(Atoi7(args[1])<Atoi7(args[3]));
+			status=(Atoi7_64(args[1])<Atoi7_64(args[3]));
 		} else if(args[2]==L"-gt") {
-			status=(Atoi7(args[1])>Atoi7(args[3]));
+			status=(Atoi7_64(args[1])>Atoi7_64(args[3]));
 		} else if(args[2]==L"-le") {
-			status=(Atoi7(args[1])<=Atoi7(args[3]));
+			status=(Atoi7_64(args[1])<=Atoi7_64(args[3]));
 		} else if(args[2]==L"-ge") {
-			status=(Atoi7(args[1])>=Atoi7(args[3]));
+			status=(Atoi7_64(args[1])>=Atoi7_64(args[3]));
 		} else if(args[2]==L"&&") {
 			status=(!IsFalse7(args[1]))&&(!IsFalse7(args[3]));
 		} else if(args[2]==L"||") {
@@ -298,11 +316,6 @@ bool IsInteger7(const wstring &x)
 	return ((x[0]>=L'0')&&(x[0]<=L'9'))||(x[0]==L'-');
 }
 
-wstring ArithResult(unsigned int v)
-{
-	return IntToString(static_cast<int>(v));
-}
-
 class TExpr7 {
 	const vector<wstring> &Args;
 	size_t Index;
@@ -313,7 +326,7 @@ class TExpr7 {
 	static bool Compare(const wstring &l, const wstring &r, int op)
 	{
 		if(IsInteger7(l)&&IsInteger7(r)) {
-			int il=Atoi7(l), ir=Atoi7(r);
+			kawari_int64 il=Atoi7_64(l), ir=Atoi7_64(r);
 			switch(op) {
 			case 0: return il<ir;
 			case 1: return il<=ir;
@@ -336,18 +349,24 @@ class TExpr7 {
 	static wstring Arith(const wstring &l, const wstring &r, wchar_t op)
 	{
 		if(!IsInteger7(l)||!IsInteger7(r)) throw TExprError();
-		unsigned int a=static_cast<unsigned int>(Atoi7(l));
-		unsigned int b=static_cast<unsigned int>(Atoi7(r));
-		int ib=Atoi7(r);
+		// 符号付きのオーバーフローは未定義動作なので、+ - * と -1 での除算は unsigned で計算する
+		kawari_int64 ia=Atoi7_64(l);
+		kawari_int64 ib=Atoi7_64(r);
+		kawari_uint64 a=static_cast<kawari_uint64>(ia);
+		kawari_uint64 b=static_cast<kawari_uint64>(ib);
 		switch(op) {
-		case L'+': return ArithResult(a+b);
-		case L'-': return ArithResult(a-b);
-		case L'*': return ArithResult(a*b);
+		case L'+': return Int64ToString(static_cast<kawari_int64>(a+b));
+		case L'-': return Int64ToString(static_cast<kawari_int64>(a-b));
+		case L'*': return Int64ToString(static_cast<kawari_int64>(a*b));
 		default:
 			if(ib==0) throw TExprError();
-			if(op==L'/') return IntToString(Atoi7(l)/ib);
-			if(ib==-1) return IntToString(0);
-			return IntToString(Atoi7(l)%ib);
+			if(ib==-1) {
+				// 最小値 / -1 は例外で落ちる。割り算は符号反転、余りは 0
+				if(op==L'/') return Int64ToString(static_cast<kawari_int64>(static_cast<kawari_uint64>(0)-a));
+				return Int64ToString(0);
+			}
+			if(op==L'/') return Int64ToString(ia/ib);
+			return Int64ToString(ia%ib);
 		}
 	}
 

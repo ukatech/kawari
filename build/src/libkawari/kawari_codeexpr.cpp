@@ -30,7 +30,7 @@ using namespace std;
 TValue TValue::Error(void){
 	return TValue();
 }
-int TValue::AsInteger(void){
+kawari_int64 TValue::AsInteger(void){
 	if (CanInteger()) return i;
 	return 0;
 }
@@ -39,7 +39,7 @@ bool TValue::CanInteger(void){
 	if ((state==vINTEGER)||(state==vBOOL)) return true;
 	if (IsInteger(str)){
 		state=vINTEGER;
-		i=StringToInt(str);
+		i=StringToInt64(str);
 		return true;
 	}else{
 		return false;
@@ -51,8 +51,8 @@ bool TValue::IsTrue(void){
 	if (state==vINTEGER) return (i!=0);
 	return ::IsTrue(str);
 }
-TValue::TValue(const int orgi):i(orgi), state(vINTEGER){
-	str=IntToString(orgi);
+TValue::TValue(const kawari_int64 orgi):i(orgi), b(true), state(vINTEGER){
+	str=Int64ToString(orgi);
 }
 //=========================================================================
 // 式
@@ -144,6 +144,7 @@ wostream &TKVMExprUnaryCode_base::Debug(wostream& os, unsigned int level) const{
 
 
 // KIU_TODO:ランタイムエラー表示
+// 符号付きのオーバーフローは未定義動作なので、unsigned で計算して 64bit で回り込ませる
 #define ARITH_FUNC(name, rel)\
 	TValue name(TKawariVM &vm){\
 		if (!lhs||!rhs) return TValue::Error();\
@@ -152,7 +153,7 @@ wostream &TKVMExprUnaryCode_base::Debug(wostream& os, unsigned int level) const{
 		TValue r=rhs->Evaluate(vm);\
 		if (r.IsError()) return r;\
 		if (!l.CanInteger()||!r.CanInteger()) return TValue::Error();\
-		return TValue(l.AsInteger() rel r.AsInteger());\
+		return TValue((kawari_int64)((kawari_uint64)l.AsInteger() rel (kawari_uint64)r.AsInteger()));\
 	}\
 
 #define ARITHDIV_FUNC(name, rel)\
@@ -164,8 +165,8 @@ wostream &TKVMExprUnaryCode_base::Debug(wostream& os, unsigned int level) const{
 		if (r.IsError()) return r;\
 		if (!l.CanInteger()||!r.CanInteger()) return TValue::Error();\
 		if (r.AsInteger()==0) { vm.GetLogger().Diag(kawari_log::LOG_ERROR, kawari_log::E_DIVIDED_BY_ZERO) << RC.S(ERR_CODEEXPR_DIVIDED_BY_ZERO); return TValue::Error(); }\
-		/* INT_MIN / -1 は例外で落ちるので、-1 で割るときは符号反転 (余りは 0) を unsigned で計算する */\
-		if (r.AsInteger()==-1) { int n=(int)(0u-(unsigned int)l.AsInteger()); return TValue(((-1) rel (-1))==1 ? n : 0); }\
+		/* 最小値 / -1 は例外で落ちるので、-1 で割るときは符号反転 (余りは 0) を unsigned で計算する */\
+		if (r.AsInteger()==-1) { kawari_int64 n=(kawari_int64)((kawari_uint64)0-(kawari_uint64)l.AsInteger()); return TValue(((-1) rel (-1))==1 ? n : (kawari_int64)0); }\
 		return TValue(l.AsInteger() rel r.AsInteger());\
 	}\
 
@@ -289,7 +290,8 @@ TValue TKVMExprCodeUMINUS::Evaluate(TKawariVM &vm){
 	TValue val=code->Evaluate(vm);
 	if (val.IsError()) return val;
 	if (!val.CanInteger()) return TValue::Error();
-	return TValue(-1*val.AsInteger());
+	// 最小値の符号反転があふれないよう unsigned で計算する
+	return TValue((kawari_int64)((kawari_uint64)0-(kawari_uint64)val.AsInteger()));
 }
 
 //--------------------------------------------------------------------------
@@ -315,11 +317,17 @@ TValue TKVMExprCodeCOMP::Evaluate(TKawariVM &vm){
 // POWER
 
 namespace {
-	// n>0, nは偶数
-	int pow_local(int x, unsigned int n){
-		if (n==1) return x;
-		int tmp=pow_local(x, n>>1);
-		return (n&0x01)?x*tmp*tmp:tmp*tmp;
+	// n>0。符号付きのオーバーフローを避けるため unsigned で計算し、64bit で回り込ませる
+	kawari_int64 pow_local(kawari_int64 x, kawari_int64 n){
+		kawari_uint64 base=(kawari_uint64)x;
+		kawari_uint64 result=1;
+		kawari_uint64 e=(kawari_uint64)n;
+		while (e>0){
+			if (e&1) result*=base;
+			base*=base;
+			e>>=1;
+		}
+		return (kawari_int64)result;
 	}
 }
 
@@ -330,11 +338,11 @@ TValue TKVMExprCodePOW::Evaluate(TKawariVM &vm){
 	TValue r=rhs->Evaluate(vm);
 	if (r.IsError()) return r;
 	if (!l.CanInteger()||!r.CanInteger()) return TValue::Error();
-	int x=l.AsInteger();
-	int n=r.AsInteger();
+	kawari_int64 x=l.AsInteger();
+	kawari_int64 n=r.AsInteger();
 	if (n<0) return TValue::Error();
-	else if (n==0) return TValue(0);
-	return TValue(pow_local(x, (unsigned int)n));
+	else if (n==0) return TValue((kawari_int64)0);
+	return TValue(pow_local(x, n));
 }
 //--------------------------------------------------------------------------
 // ExprWord

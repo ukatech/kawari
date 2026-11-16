@@ -51,7 +51,7 @@ inline int StringToInt(const std::wstring &str)
 }
 
 //---------------------------------------------------------------------------
-// 64bit整数版 (時刻の通算秒数用。式の評価は int のまま)
+// 64bit整数版 (時刻の通算秒数と、式 $[ ] の整数用)
 wstring Int64ToString(kawari_int64 n);
 // 文字列から64bit整数値を得る (StringToInt と同じ規則。範囲外は飽和)
 kawari_int64 StringToInt64(const std::wstring &str);

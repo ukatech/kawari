@@ -414,3 +414,27 @@ cmd setstr s1 "a\b" ; save r.txt s1 ; clear s1 ; load r.txt ; get s1 0
 = "a\b"
 cmd adddict s2 "$[ 1 + 2 ]" ; save r.txt s2 ; clear s2 ; load r.txt ; array s2 0
 = 3
+
+# extensions (not in 7.5.0): the integers of expr and test are 64 bit (7.5.0 wrapped at 32 bit)
+cmd expr 2147483647 + 1
+= 2147483648
+cmd expr 100000 * 100000
+= 10000000000
+cmd expr 9223372036854775807 + 1
+= -9223372036854775808
+cmd expr 0 - 9223372036854775807 - 2
+= 9223372036854775807
+cmd expr 10000000000 / 3
+= 3333333333
+cmd expr 10000000000 % 3
+= 1
+cmd expr -9223372036854775808 / -1
+= -9223372036854775808
+cmd expr -9223372036854775808 % -1
+= 0
+cmd expr 5000000000 > 4999999999
+= 1
+cmd test 5000000000 -gt 4999999999
+= true
+cmd test 4294967296 -eq 0
+= false

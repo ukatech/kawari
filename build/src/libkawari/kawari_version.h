@@ -12,6 +12,7 @@
 //  2026.10.23  Phase 9.2.0   Phase 9.2.0 / Core 4.2.0 (診断・kosui --check・静的検査・時刻の64bit化)
 //  2026.11.16  Phase 9.3.0   Phase 9.3.0 / Core 4.3.0 (華和梨7.5.0互換モード)
 //  2026.11.16  Phase 9.3.1   Phase 9.3.1 / Core 4.3.1 (7互換モードがSHIORI/3.0で動く)
+//  2026.11.17  Phase 9.3.2   Phase 9.3.2 / Core 4.3.2 (式の整数を64bit化)
 //
 //---------------------------------------------------------------------------
 #ifndef KAWARI_VERSION_H
@@ -23,11 +24,11 @@
 #define KAWARI_AUTHOR	"KawariDeveloperTeam"	// 著作者(英数字だけ)
 #define KAWARI_MAJOR	"9"		// メジャー番号(ピリオド無し、数字だけ)
 #define KAWARI_MINOR	"3"		// マイナー番号(ピリオド無し、数字だけ)
-#define KAWARI_SUBMINOR	"1"		// バグフィックス(ピリオド無し、数字だけ)
+#define KAWARI_SUBMINOR	"2"		// バグフィックス(ピリオド無し、数字だけ)
 
 // Win32のバージョン情報リソース(kawari_version.rc)用。上の番号と揃えること
-#define KAWARI_VERSION_RC		9,3,1,0
-#define KAWARI_VERSION_RC_STR	"9.3.1.0"
+#define KAWARI_VERSION_RC		9,3,2,0
+#define KAWARI_VERSION_RC_STR	"9.3.2.0"
 
 //---------------------------------------------------------------------------
 // コア
@@ -53,7 +54,8 @@
 //   4.2.2 = Phase 9.2.2 (他環境向けのメンテナンス。動作は4.2.1と同じ)
 //   4.3.0 = Phase 9.3.0 (華和梨7.5.0互換モード)
 //   4.3.1 = Phase 9.3.1 (7互換モードがSHIORI/3.0で動く)
-#define KAWARI_CORE_VERSION	"4.3.1"
+//   4.3.2 = Phase 9.3.2 (式の整数を64bit化)
+#define KAWARI_CORE_VERSION	"4.3.2"
 
 #ifndef RC_INVOKED	// リソースコンパイラ(VC6のrc等)は長いマクロを扱えず、下の2つは要らない
 // 華和梨コア・クレジット(適当に改行で区切って連名)

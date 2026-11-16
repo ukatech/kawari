@@ -190,7 +190,8 @@ function Test-Kosui([string]$Work, [string]$Suite7 = 'kosui') {
     foreach ($case in $cases) {
         $index++
         $name = "${Suite7}:$($case.Line) $($case.Verb) $($case.Rest)"
-        $dir = Join-Path $Work ($Suite7 + $index)
+        # kosui の 71 番と kosui7 の 1 番が同じ名前にならないよう、区切りを入れる
+        $dir = Join-Path $Work ($Suite7 + '_' + $index)
         New-Item -ItemType Directory -Path $dir | Out-Null
         # every file of the fixture folder except the case file (kawarirc.kis, or kawari.ini and the dictionaries)
         foreach ($f in Get-ChildItem -LiteralPath $fixture -File) {

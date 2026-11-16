@@ -19,18 +19,18 @@
 class TValue {
 private:
 	std::wstring str;
-	int i; bool b;
+	kawari_int64 i; bool b;	// 整数は64bit (config.h の kawari_int64: long long / VC6は __int64)
 	enum { vSTRING, vINTEGER, vBOOL, vERROR } state;
 	TValue(void) : str(L""), i(0), b(true), state(vERROR) {}
 	TValue &operator = (const TValue &val);
 public:
 	inline const std::wstring &AsString(void) { return str; }
-	inline int AsInteger(void);
+	inline kawari_int64 AsInteger(void);
 	inline bool CanInteger(void);
 	inline bool IsTrue(void);
 	inline bool IsError(void) { return (state==vERROR); }
 	inline TValue(const std::wstring &orgsen):str(orgsen), i(0), b(true), state(vSTRING){}
-	inline TValue(const int orgi);
+	inline TValue(const kawari_int64 orgi);
 	inline TValue(const TValue &val):str(val.str), i(val.i), b(val.b), state(val.state) {}
 	inline TValue(bool bv){
 		if(bv){ str=L"true"; b=true; } else { str=L"false"; b=false; }
