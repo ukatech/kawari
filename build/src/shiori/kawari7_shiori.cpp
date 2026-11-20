@@ -103,7 +103,7 @@ static void SetHdr(TPHMessage &m, const wchar_t *key, const wstring &value)
 //---------------------------------------------------------------------------
 // SHIORI/3.0 の GET (ID ヘッダ) を、7.5.0 の振り分けが分かる 2.x の要求に読み替える。
 // 戻り値は 2.x での要求の型。ID が大文字を含まなければ GET String、含めば GET Sentence (Event)。
-// 読み替え先は ID で決まる (大文字を含まない ID は資源、含む ID はイベント):
+// 読み替え先は ID で決まる (大文字を含まない ID はresource、含む ID はイベント):
 //   OnCommunicate -> GET Sentence (Sender = Reference0, Sentence = Reference1)
 //   OnTeach       -> TEACH (Word = Reference0)
 //   OnTranslate   -> TRANSLATE Sentence (Sentence = Reference0)
@@ -134,7 +134,7 @@ static wstring Normalize30(TPHMessage &request, const wstring &id)
 		return L"GET Word";
 	}
 	if((id==L"getaistate")||(id==L"getaistateex")) return L"GET Status";
-	// 大文字を 1 つでも含めばイベント (On... のほか ShioriEcho / KawariCommand も)、全部小文字なら資源
+	// 大文字を 1 つでも含めばイベント (On... のほか ShioriEcho / KawariCommand も)、全部小文字ならresource
 	if(HasUpper(id)) {
 		SetHdr(request, L"Event", id);
 		return L"GET Sentence";
@@ -142,7 +142,7 @@ static wstring Normalize30(TPHMessage &request, const wstring &id)
 	return L"GET String";
 }
 //---------------------------------------------------------------------------
-// SHIORI/3.0 の資源 version / craftman / craftmanw / shioriid / name の既定値 (辞書の resource.* で上書きできる)
+// SHIORI/3.0 のresource version / craftman / craftmanw / shioriid / name の既定値 (辞書の resource.* で上書きできる)
 static wstring Builtin30(const wstring &id)
 {
 	if(id==L"version")
@@ -311,7 +311,7 @@ void TKawariShioriAdapter::Request7(TPHMessage &request, TPHMessage &response)
 	wstring type=reqline.substr(0, pos);
 
 	// SHIORI/3.0 の要求は、2.x の要求に読み替えて同じ振り分けで処理し、応答を 3.0 の形 (Value) に戻す。
-	// GET の ID が大文字を含めばイベント (GET Sentence)、全部小文字なら資源 (GET String) である。
+	// GET の ID が大文字を含めばイベント (GET Sentence)、全部小文字ならresource (GET String) である。
 	// ログには、読み替える前の要求を出す
 	bool shiori3=(!saori)&&IsShiori3(reqline);
 	wstring id30;
