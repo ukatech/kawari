@@ -156,6 +156,15 @@ GET nosuch
 GET sakura.recommendsites
 ~ Value: Site,http://example.invalid/site,
 
+# a resource has its own Reference (inputbox.autocomplete: Reference0 = box name, Reference1 = title).
+# The References of the event before it (OnRef) must not be seen, and the ones it did not send are empty
+GET OnRef stale0,stale1,stale2
+~ Value: r0=stale0 r1=stale1
+
+GET inputbox.autocomplete inputbox,title
+~ SHIORI/3.0 200 OK
+~ Value: ac=inputbox/title/
+
 # only the case matters: onboot is a resource (there is none), OnBoot2 and ShioriEcho are events
 GET onboot
 ~ SHIORI/3.0 204 No Content

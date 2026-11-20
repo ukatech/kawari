@@ -11,6 +11,7 @@ sentence : plain talk
 system.response.unknown : no idea
 resource.homeurl : http://example.invalid/
 resource.sakura.recommendsites : "Site,http://example.invalid/site,"
+resource.inputbox.autocomplete : ac=${system.Reference0}/${system.Reference1}/${system.Reference2}
 compatible.ms : Tom
 compatible.mz : table
 system.OnTranslate : [${system.Sentence}]

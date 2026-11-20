@@ -461,6 +461,9 @@ void TKawariShioriAdapter::Request7(TPHMessage &request, TPHMessage &response)
 				if(request.count(L"ID")) {
 					wstring id=Hdr(request, L"ID");
 					SetSystemEntry7(L"system.ID", id);
+					// SHIORI/3.0 の resource は Reference を持つ (inputbox.autocomplete など)。入れ直さないと、
+					// 直前のイベント (OnKeyPress など) の system.ReferenceN が残ったまま読まれる
+					if(shiori3) StoreReferences7(request, refmax, false);
 					wstring aistr=Engine.RandomSelect(L"resource."+TKawari7Compiler::EncodeEntryName(id));
 					if(shiori3&&(aistr.size()==0)) aistr=Builtin30(id);
 					if(aistr.size()) {

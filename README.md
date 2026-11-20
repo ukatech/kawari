@@ -43,7 +43,7 @@ Phase 9 系は、オリジナルの華和梨をフォークし、[ponapalt](http
 - `save` / `savecrypt` は UTF-8 (BOM あり) で書き出します。7.5.0 が書いたセーブはそのまま読めますが、7 互換モードが書いたセーブを 7.5.0 の `shiori.dll` に戻して読めるとは限りません (差し替えを戻す可能性があるなら、セーブのバックアップを)
 - リクエストの値と SAORI の応答の値は、文字列としてそのまま扱います (7.5.0 は単語として読んだので、`"` が消えたり `${` `$(` が実行されたりしました)
 - `ver` と `GET Version` は、この華和梨のバージョンを返します。`locale` の Big5 と ISO-8859-1 は扱えません
-- Phase 9.3.1 以降は SHIORI/3.0 で動きます。`GET Version SHIORI/2.6` に `SHIORI/3.0` で答えて、本体に 3.0 を選ばせます (7.5.0 は 2.6 と答えました)。3.0 の `GET` は、ID に大文字があればイベント (`OnBoot` など)、全部小文字なら資源 (`homeurl` など) として、7.5.0 と同じ辞書 (`event.*` `resource.*` など) で答えます
+- Phase 9.3.1 以降は SHIORI/3.0 で動きます。`GET Version SHIORI/2.6` に `SHIORI/3.0` で答えて、本体に 3.0 を選ばせます (7.5.0 は 2.6 と答えました)。3.0 の `GET` は、ID に大文字があればイベント (`OnBoot` など)、全部小文字なら resource (`homeurl` など) として、7.5.0 と同じ辞書 (`event.*` `resource.*` など) で答えます
 - 7 互換モードのゴーストでも、`=kis` ～ `=end` と、単語の中の `$[ ]` は、Phase 8 以降の文法で読めます
 - Phase 9.3.2 以降は、`expr` と `test` の整数を 64bit で計算します (7.5.0 は 32bit)。32bit の範囲に収まる値の結果は 7.5.0 と同じです
 
@@ -67,6 +67,11 @@ Phase 9 系は、オリジナルの華和梨をフォークし、[ponapalt](http
 
 ### Phase 9
 
+#### 2026/11/21 Phase 9.3.3 (Core 4.3.3)
+
+- 7 互換モードで、SHIORI/3.0 の resource (`inputbox.autocomplete` など、ID が全部小文字のもの) の `Reference` が `system.Reference0`〜 に入らず、直前のイベント (`OnKeyPress` など) の値が残ったまま読まれていたのを直した。`resource.inputbox.autocomplete : ${system.Reference0}$(chr 1)${system.Reference1}` が、入力ボックスの名前と題ではなく、直前のイベントの `Reference0` と `Reference1` (キーコードとキー名など) を返していた。resource の要求が送らなかった番号は空になる。SHIORI/2.x の `GET String` は、これまでどおり `Reference` を持たない
+- テスト: `shiori7` に 2 件を追加した
+
 #### 2026/11/17 Phase 9.3.2 (Core 4.3.2)
 
 - 式 `$[ ]` の整数を 32bit から 64bit にした (-9223372036854775808 ～ 9223372036854775807)。2038 年以降の `date %s` どうしの計算ができる。範囲を超えた `+` `-` `*` `**` と単項 `-` は 64bit で回り込む (これまでは 32bit で回り込んだ)。最小値を `-1` で割っても落ちない
@@ -80,7 +85,7 @@ Phase 9 系は、オリジナルの華和梨をフォークし、[ponapalt](http
 #### 2026/11/16 Phase 9.3.1 (Core 4.3.1)
 
 - 7 互換モードを SHIORI/3.0 で動かすようにした。`GET Version SHIORI/2.6` に `SHIORI/3.0 200 OK` で答えて、本体に 3.0 を選ばせる (7.5.0 は `SHIORI/2.6`、3.0 の要求には 400 を返した)。SHIORI/2.x の要求への答えは変わらない
-- 3.0 の `GET` は 2.x の要求に読み替えて、`Value` で答える。ID に大文字があればイベント (`event.<ID>`)、全部小文字なら資源 (`resource.<ID>`)。`OnCommunicate` = COMMUNICATE、`OnTeach` = TEACH、`OnTranslate`、`\` で始まる ID = GET Word、`getaistate` / `getaistateex` = GET Status。3.0 の `NOTIFY` は `event.<ID>` を評価する (`ownerghostname` / `otherghostname` は 2.x の NOTIFY と同じ、`hwnd` は本体のウィンドウを覚える)。8 個より多い Reference も `system.ReferenceN` に入れる
+- 3.0 の `GET` は 2.x の要求に読み替えて、`Value` で答える。ID に大文字があればイベント (`event.<ID>`)、全部小文字なら resource (`resource.<ID>`)。`OnCommunicate` = COMMUNICATE、`OnTeach` = TEACH、`OnTranslate`、`\` で始まる ID = GET Word、`getaistate` / `getaistateex` = GET Status。3.0 の `NOTIFY` は `event.<ID>` を評価する (`ownerghostname` / `otherghostname` は 2.x の NOTIFY と同じ、`hwnd` は本体のウィンドウを覚える)。8 個より多い Reference も `system.ReferenceN` に入れる
 - テスト: `shiori7` に 3.0 のケースを追加した (「extensions」より前は、本物の 7.5.0 でも同じ答え)
 
 #### 2026/11/16 Phase 9.3.0 (Core 4.3.0)
