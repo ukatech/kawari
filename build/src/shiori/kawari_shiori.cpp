@@ -96,8 +96,8 @@ using namespace kawari_log;
 static TKawariCharset FixResponseCharset(TPHMessage &response, TKawariCharset cs)
 {
 	if (response.count(L"Charset")){
-		TKawariCharset rcs=CharsetFromName(response[L"Charset"]);
-		if ((rcs==KC_SJIS)||(rcs==KC_UTF8)) return rcs;
+		TKawariCharset rcs=CharsetFromNameExt(response[L"Charset"]);
+		if (rcs!=KC_NULL) return rcs;
 		response.erase(L"Charset");
 	}
 	response.Add(L"Charset", CharsetName(cs));
@@ -597,7 +597,7 @@ string TKawariShioriFactory::RequestAdapter(TKawariShioriAdapter *instance, cons
 	if (!instance) return ("");
 
 	TKawariCharset cs=TPHMessage::ScanCharset(reqstr);
-	if ((cs!=KC_SJIS)&&(cs!=KC_UTF8)) cs=KC_SJIS;
+	if (cs==KC_NULL) cs=KC_SJIS;
 
 	TPHMessage mreq, mres;
 	mreq.Deserialize(reqstr, cs);

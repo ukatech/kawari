@@ -128,7 +128,7 @@ int ParseExecuteResponse(const string &response, vector<wstring> &lines)
 	string headers=bytes.substr(0, header_end+2);
 
 	// Charsetが無ければ、送ったときと同じUTF-8とみなす
-	TKawariCharset cs=CharsetFromName(AtoW(FindHeader(headers, "charset:")));
+	TKawariCharset cs=CharsetFromNameExt(AtoW(FindHeader(headers, "charset:")));
 	if (cs==KC_NULL) cs=KC_UTF8;
 
 	string body=bytes.substr(header_end+4);

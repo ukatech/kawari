@@ -67,11 +67,11 @@ bool TBind::Query(const TPHMessage &request, TPHMessage &response, TKawariCharse
 		string resstr=module->Request(reqstr);
 
 		// デシリアライズ
-		// 応答のCharsetに従う。無ければ、送ったのがSJISならSJIS、そうでなければ自動判定
+		// 応答のCharsetに従う。無ければ、送ったのがUTF-8なら自動判定、そうでなければ送ったのと同じ
 		rcs=TPHMessage::ScanCharset(resstr);
 		TKawariCharset dcs=rcs;
 		if (dcs==KC_NULL)
-			dcs=(sendcs==KC_SJIS)?KC_SJIS:KC_NULL;
+			dcs=(sendcs==KC_UTF8)?KC_NULL:sendcs;
 		response=TPHMessage();
 		response.Deserialize(resstr, dcs);
 	}

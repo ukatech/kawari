@@ -67,6 +67,14 @@ Phase 9 系は、オリジナルの華和梨をフォークし、[ponapalt](http
 
 ### Phase 9
 
+#### 2026/11/23 Phase 9.3.4 (Core 4.3.4)
+
+- 7 互換モードの `locale` に `Big5` と `ISO-8859-1` を指定できるようにした (これまでは指定が無いものとして、辞書の文字コードを自動判定していた)。ISO-8859-1 は、バイトと U+0000〜U+00FF を 1 対 1 に対応させる。BOM が無い辞書の暗号化行 (`!KAWA0000` など) と、`=kis` ゾーンの暗号化行も、`locale` の文字コードで読む (これまでは Shift_JIS 固定だった)
+- `textload_charset` / `textsave_charset` / `textappend_charset` で `Big5` と `ISO-8859-1` を指定できる (`CP950`・`Latin1` などの別名も可)。ISO-8859-1 で書き出すとき、U+00FF を超える文字は `?` になる
+- SHIORI・SAORI・Direct SSTP の `Charset` ヘッダに、`EUC-JP`・`ISO-2022-JP`・`EUC-KR`・`GB2312`・`Big5`・`ISO-8859-1` を書けるようにした。これまでは `Shift_JIS` と `UTF-8` だけで、ほかは無いものとして Shift_JIS で読み書きしていた (SSP の `charset` の指定で EUC-JP などを送らせたゴーストで文字化けした)。要求の文字コードで読み、応答も同じ文字コードで返す。`Charset` の無い SAORI の応答は、UTF-8 で送ったなら自動判定、それ以外なら送ったのと同じ文字コードとして読む
+- 文字コード名の照合を、大文字小文字と `-` `_` `.` 空白を無視する規則にし、別名を増やした (`ShiftJIS`・`euc_jp`・`Latin1` なども通る。yaya-shiori と同じ規則)。辞書の自動判定 (BOM または UTF-8 として正当なら UTF-8、でなければ Shift_JIS) は変えていない
+- テスト: `kosui` に 8 件、`shiori` に 5 件、`shiori7` に 9 件を追加した
+
 #### 2026/11/21 Phase 9.3.3 (Core 4.3.3)
 
 - 7 互換モードで、SHIORI/3.0 の resource (`inputbox.autocomplete` など、ID が全部小文字のもの) の `Reference` が `system.Reference0`〜 に入らず、直前のイベント (`OnKeyPress` など) の値が残ったまま読まれていたのを直した。`resource.inputbox.autocomplete : ${system.Reference0}$(chr 1)${system.Reference1}` が、入力ボックスの名前と題ではなく、直前のイベントの `Reference0` と `Reference1` (キーコードとキー名など) を返していた。resource の要求が送らなかった番号は空になる。SHIORI/2.x の `GET String` は、これまでどおり `Reference` を持たない

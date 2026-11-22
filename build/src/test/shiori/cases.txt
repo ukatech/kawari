@@ -2,6 +2,8 @@
 #
 #   GET <ID> [<ref0>,<ref1>,...]      SHIORI/3.0 GET request
 #   NOTIFY <ID> [<ref0>,<ref1>,...]   SHIORI/3.0 NOTIFY request
+#   REQ <first line> [| <Header>: <value> ...]   a request as it is ("Charset: Shift_JIS", "Sender: SSP" and
+#                                     "SecurityLevel: local" are added unless the case gives its own)
 #   ~ <text>                          the response must contain <text> (a substring)
 #
 # All the requests of this file are sent in order to one loaded module, so a
@@ -53,3 +55,26 @@ NOTIFY ownerghostname testghost
 GET OnBoot
 ~ SHIORI/3.0 200 OK
 ~ Sender: testghost
+
+# The Charset of a request is answered back, whatever the module can convert (Shift_JIS and UTF-8 only before).
+# The name is matched without case and without '-' '_' '.'. An unknown name is read as Shift_JIS.
+REQ GET SHIORI/3.0 | ID: OnBoot | Charset: EUC-JP
+~ SHIORI/3.0 200 OK
+~ Value: \0\s[0]Hello\e
+~ Charset: EUC-JP
+
+REQ GET SHIORI/3.0 | ID: OnBoot | Charset: big5
+~ Value: \0\s[0]Hello\e
+~ Charset: Big5
+
+REQ GET SHIORI/3.0 | ID: OnBoot | Charset: ISO-8859-1
+~ Value: \0\s[0]Hello\e
+~ Charset: ISO-8859-1
+
+REQ GET SHIORI/3.0 | ID: OnBoot | Charset: utf_8
+~ Value: \0\s[0]Hello\e
+~ Charset: UTF-8
+
+REQ GET SHIORI/3.0 | ID: OnBoot | Charset: x-no-such-charset
+~ Value: \0\s[0]Hello\e
+~ Charset: Shift_JIS

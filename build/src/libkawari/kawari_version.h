@@ -14,6 +14,7 @@
 //  2026.11.16  Phase 9.3.1   Phase 9.3.1 / Core 4.3.1 (7互換モードがSHIORI/3.0で動く)
 //  2026.11.17  Phase 9.3.2   Phase 9.3.2 / Core 4.3.2 (式の整数を64bit化、date / mktimeをWin32では自前の暦計算にする)
 //  2026.11.21  Phase 9.3.3   Phase 9.3.3 / Core 4.3.3 (7互換モードのSHIORI/3.0のresourceでReferenceが正しく届く)
+//  2026.11.23  Phase 9.3.4   Phase 9.3.4 / Core 4.3.4 (文字コード: Big5 / ISO-8859-1、Charsetヘッダ、名前の照合)
 //
 //---------------------------------------------------------------------------
 #ifndef KAWARI_VERSION_H
@@ -25,11 +26,11 @@
 #define KAWARI_AUTHOR	"KawariDeveloperTeam"	// 著作者(英数字だけ)
 #define KAWARI_MAJOR	"9"		// メジャー番号(ピリオド無し、数字だけ)
 #define KAWARI_MINOR	"3"		// マイナー番号(ピリオド無し、数字だけ)
-#define KAWARI_SUBMINOR	"3"		// バグフィックス(ピリオド無し、数字だけ)
+#define KAWARI_SUBMINOR	"4"		// バグフィックス(ピリオド無し、数字だけ)
 
 // Win32のバージョン情報リソース(kawari_version.rc)用。上の番号と揃えること
-#define KAWARI_VERSION_RC		9,3,3,0
-#define KAWARI_VERSION_RC_STR	"9.3.3.0"
+#define KAWARI_VERSION_RC		9,3,4,0
+#define KAWARI_VERSION_RC_STR	"9.3.4.0"
 
 //---------------------------------------------------------------------------
 // コア
@@ -57,7 +58,8 @@
 //   4.3.1 = Phase 9.3.1 (7互換モードがSHIORI/3.0で動く)
 //   4.3.2 = Phase 9.3.2 (式の整数を64bit化、date / mktimeをWin32では自前の暦計算にする)
 //   4.3.3 = Phase 9.3.3 (7互換モードのSHIORI/3.0のresourceでReferenceが正しく届く)
-#define KAWARI_CORE_VERSION	"4.3.3"
+//   4.3.4 = Phase 9.3.4 (文字コード: Big5 / ISO-8859-1、Charsetヘッダ、名前の照合)
+#define KAWARI_CORE_VERSION	"4.3.4"
 
 #ifndef RC_INVOKED	// リソースコンパイラ(VC6のrc等)は長いマクロを扱えず、下の2つは要らない
 // 華和梨コア・クレジット(適当に改行で区切って連名)

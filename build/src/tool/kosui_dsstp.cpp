@@ -174,7 +174,7 @@ wstring TKosuiDSSTPInterface::Parse(const wstring& script){
 	}
 	// 応答のCharsetに従う (無ければShift_JIS)
 	TKawariCharset rcs=TPHMessage::ScanCharset(respmes);
-	if ((rcs!=KC_SJIS)&&(rcs!=KC_UTF8)) rcs=KC_SJIS;
+	if (rcs==KC_NULL) rcs=KC_SJIS;
 	return MBtoW(respmes, rcs);
 }
 //---------------------------------------------------------------------------

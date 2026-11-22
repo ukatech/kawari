@@ -319,7 +319,7 @@ bool TKawariEngine::LoadKawari7Dict(const wstring &filename)
 			}
 			i=j;
 			wistringstream wis(zone);
-			LoadKawariDictStream(wis, filename, (cs==KC_UTF8)?KC_UTF8:KC_SJIS);
+			LoadKawariDictStream(wis, filename, cs);
 			continue;
 		}
 		LoadKawari7Line(wl, filename, static_cast<unsigned int>(i+1));

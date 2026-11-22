@@ -235,3 +235,32 @@ NOTIFY basewareversion 1.2.3
 
 GET OnSeen
 ~ Value: ver=1.2.3
+
+# The Charset of a request is answered back, whatever the module can convert (Shift_JIS and UTF-8 only before).
+# The name is matched without case and without '-' '_' '.'. An unknown name is read as Shift_JIS.
+REQ GET Version SHIORI/2.6 | Charset: EUC-JP
+~ Charset: EUC-JP
+
+REQ GET Version SHIORI/2.6 | Charset: euc_jp
+~ Charset: EUC-JP
+
+REQ GET Version SHIORI/2.6 | Charset: ISO-2022-JP
+~ Charset: ISO-2022-JP
+
+REQ GET Version SHIORI/2.6 | Charset: EUC-KR
+~ Charset: EUC-KR
+
+REQ GET Version SHIORI/2.6 | Charset: GB2312
+~ Charset: GB2312
+
+REQ GET Version SHIORI/2.6 | Charset: Big5
+~ Charset: Big5
+
+REQ GET Version SHIORI/2.6 | Charset: iso_8859-1
+~ Charset: ISO-8859-1
+
+REQ GET Version SHIORI/2.6 | Charset: UTF-8
+~ Charset: UTF-8
+
+REQ GET Version SHIORI/2.6 | Charset: x-no-such-charset
+~ Charset: Shift_JIS

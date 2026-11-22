@@ -238,6 +238,7 @@ static UINT ExtCodePage(TKawariCharset cs)
 	case KC_JIS:     return 50220;
 	case KC_EUCKR:   return 949;
 	case KC_GB2312:  return 936;
+	case KC_BIG5:    return 950;
 	default:         return 0;
 	}
 }
@@ -333,7 +334,9 @@ static const char* const* ExtIconvNames(TKawariCharset cs)
 	static const char* const jis[]={"ISO-2022-JP", NULL};
 	static const char* const euckr[]={"CP949", "UHC", "EUC-KR", NULL};
 	static const char* const gb2312[]={"CP936", "GBK", "GB2312", NULL};
+	static const char* const big5[]={"CP950", "BIG5", NULL};
 	switch(cs) {
+	case KC_BIG5:    return big5;
 	case KC_EUCJP:   return eucjp;
 	case KC_JIS:     return jis;
 	case KC_EUCKR:   return euckr;
@@ -369,6 +372,39 @@ static std::string ExtWtoMB(const std::wstring &ws, TKawariCharset cs)
 //---------------------------------------------------------------------------
 #endif
 //---------------------------------------------------------------------------
+// ISO-8859-1 (バイトと U+0000〜U+00FF を 1 対 1 に対応させる。CP1252 ではない)
+// OS の変換に頼らず自前で行う (Windows の CP28591 / iconv の有無に左右されない)
+static std::wstring Latin1toW(const std::string &s)
+{
+	wstring ret;
+	ret.reserve(s.size());
+	for(string::size_type i=0; i<s.size(); i++)
+		ret+=(wchar_t)(unsigned char)s[i];
+	return ret;
+}
+//---------------------------------------------------------------------------
+// U+00FF を超える文字は '?' (サロゲートペアは 1 文字として 1 つの '?')
+static std::string WtoLatin1(const std::wstring &ws)
+{
+	string ret;
+	ret.reserve(ws.size());
+	for(wstring::size_type i=0; i<ws.size(); i++) {
+		unsigned long c=(unsigned long)ws[i];
+		if(sizeof(wchar_t)<4) c&=0xffff;
+		if(c<0x100) {
+			ret+=(char)c;
+		} else {
+			if((c>=0xd800)&&(c<=0xdbff)&&(i+1<ws.size())) {
+				unsigned long d=(unsigned long)ws[i+1];
+				if(sizeof(wchar_t)<4) d&=0xffff;
+				if((d>=0xdc00)&&(d<=0xdfff)) i++;
+			}
+			ret+='?';
+		}
+	}
+	return ret;
+}
+//---------------------------------------------------------------------------
 std::wstring MBtoW(const std::string &s, TKawariCharset cs)
 {
 	if(cs==KC_NULL) cs=DetectCharset(s);
@@ -378,7 +414,9 @@ std::wstring MBtoW(const std::string &s, TKawariCharset cs)
 	case KC_EUCJP:
 	case KC_JIS:
 	case KC_EUCKR:
-	case KC_GB2312: return ExtMBtoW(s, cs);
+	case KC_GB2312:
+	case KC_BIG5:   return ExtMBtoW(s, cs);
+	case KC_LATIN1: return Latin1toW(s);
 	case KC_SJIS:
 	default:      return SJIStoW(s);
 	}
@@ -392,59 +430,125 @@ std::string WtoMB(const std::wstring &ws, TKawariCharset cs)
 	case KC_EUCJP:
 	case KC_JIS:
 	case KC_EUCKR:
-	case KC_GB2312: return ExtWtoMB(ws, cs);
+	case KC_GB2312:
+	case KC_BIG5:   return ExtWtoMB(ws, cs);
+	case KC_LATIN1: return WtoLatin1(ws);
 	case KC_SJIS:
 	case KC_NULL:
 	default:      return WtoSJIS(ws);
 	}
 }
 //---------------------------------------------------------------------------
-// 前後の空白を除き、小文字化する。ASCII以外を含むならfalse
+// 名前の正規化: 小文字にし、'-' '_' '.' 空白を除く (YAYA と同じ規則。
+// "Shift_JIS" "shift-jis" "ShiftJIS" は同じ名前になる)。ASCII以外を含むならfalse
 static bool NormalizeCharsetName(const std::wstring &name, std::string &n)
 {
-	wstring::size_type b=0, e=name.size();
-	while((b<e)&&((name[b]==L' ')||(name[b]==L'\t')||(name[b]==L'\r')||(name[b]==L'\n'))) b++;
-	while((e>b)&&((name[e-1]==L' ')||(name[e-1]==L'\t')||(name[e-1]==L'\r')||(name[e-1]==L'\n'))) e--;
-
 	n.erase();
-	for(wstring::size_type i=b; i<e; i++) {
+	for(wstring::size_type i=0; i<name.size(); i++) {
 		wchar_t c=name[i];
-		if((c>=L'A')&&(c<=L'Z')) c=(wchar_t)(c-L'A'+L'a');
 		if(c>=0x80) return false;
+		if((c==L'-')||(c==L'_')||(c==L'.')||(c==L' ')||(c==L'\t')||(c==L'\r')||(c==L'\n')) continue;
+		if((c>=L'A')&&(c<=L'Z')) c=(wchar_t)(c-L'A'+L'a');
 		n+=(char)c;
 	}
 	return true;
 }
 //---------------------------------------------------------------------------
-TKawariCharset CharsetFromName(const std::wstring &name)
+// 名前の対照表 (正規化した名前)。ext が偽のものだけが CharsetFromName の対象
+struct TCharsetNameEntry {
+	const char *name;
+	TKawariCharset cs;
+	bool ext;
+};
+static const TCharsetNameEntry CharsetNameTable[]={
+	{"shiftjis",     KC_SJIS,    false},
+	{"sjis",         KC_SJIS,    false},
+	{"xsjis",        KC_SJIS,    false},
+	{"mskanji",      KC_SJIS,    false},
+	{"csshiftjis",   KC_SJIS,    false},
+	{"cp932",        KC_SJIS,    false},
+	{"ms932",        KC_SJIS,    false},
+	{"windows932",   KC_SJIS,    false},
+	{"windows31j",   KC_SJIS,    false},
+	{"cswindows31j", KC_SJIS,    false},
+	{"xmscp932",     KC_SJIS,    false},
+
+	{"utf8",         KC_UTF8,    false},
+	{"utf8n",        KC_UTF8,    false},
+	{"cp65001",      KC_UTF8,    false},
+	{"csutf8",       KC_UTF8,    false},
+
+	{"eucjp",        KC_EUCJP,   true},
+	{"xeucjp",       KC_EUCJP,   true},
+	{"ujis",         KC_EUCJP,   true},
+	{"cseucpkdfmtjapanese", KC_EUCJP, true},
+	{"cp20932",      KC_EUCJP,   true},
+	{"cp51932",      KC_EUCJP,   true},
+	{"eucjpms",      KC_EUCJP,   true},
+
+	{"iso2022jp",    KC_JIS,     true},
+	{"jis",          KC_JIS,     true},
+	{"csiso2022jp",  KC_JIS,     true},
+	{"cp50220",      KC_JIS,     true},
+	{"cp50221",      KC_JIS,     true},
+	{"cp50222",      KC_JIS,     true},
+
+	{"euckr",        KC_EUCKR,   true},
+	{"cseuckr",      KC_EUCKR,   true},
+	{"ksc5601",      KC_EUCKR,   true},
+	{"ksc56011987",  KC_EUCKR,   true},
+	{"uhc",          KC_EUCKR,   true},
+	{"cp949",        KC_EUCKR,   true},
+	{"ms949",        KC_EUCKR,   true},
+	{"windows949",   KC_EUCKR,   true},
+
+	{"gb2312",       KC_GB2312,  true},
+	{"gb231280",     KC_GB2312,  true},
+	{"csgb2312",     KC_GB2312,  true},
+	{"euccn",        KC_GB2312,  true},
+	{"xeuccn",       KC_GB2312,  true},
+	{"gbk",          KC_GB2312,  true},
+	{"xgbk",         KC_GB2312,  true},
+	{"cp936",        KC_GB2312,  true},
+	{"ms936",        KC_GB2312,  true},
+	{"windows936",   KC_GB2312,  true},
+
+	{"big5",         KC_BIG5,    true},
+	{"csbig5",       KC_BIG5,    true},
+	{"cp950",        KC_BIG5,    true},
+	{"ms950",        KC_BIG5,    true},
+	{"windows950",   KC_BIG5,    true},
+
+	{"iso88591",     KC_LATIN1,  true},
+	{"iso88591:1987", KC_LATIN1, true},
+	{"latin1",       KC_LATIN1,  true},
+	{"l1",           KC_LATIN1,  true},
+	{"cp819",        KC_LATIN1,  true},
+	{"ibm819",       KC_LATIN1,  true},
+	{"csisolatin1",  KC_LATIN1,  true},
+	{"isoir100",     KC_LATIN1,  true},
+
+	{NULL,           KC_NULL,    false}
+};
+//---------------------------------------------------------------------------
+static TKawariCharset LookupCharsetName(const std::wstring &name, bool ext)
 {
 	string n;
 	if(!NormalizeCharsetName(name, n)) return KC_NULL;
-
-	if((n=="shift_jis")||(n=="shift-jis")||(n=="x-sjis")||(n=="sjis")||(n=="windows-31j")||(n=="cp932")||(n=="ms932")||(n=="ms_kanji")||(n=="csshiftjis"))
-		return KC_SJIS;
-	if((n=="utf-8")||(n=="utf8"))
-		return KC_UTF8;
+	for(const TCharsetNameEntry *p=CharsetNameTable; p->name!=NULL; p++) {
+		if((ext||!p->ext)&&(n==p->name)) return p->cs;
+	}
 	return KC_NULL;
+}
+//---------------------------------------------------------------------------
+TKawariCharset CharsetFromName(const std::wstring &name)
+{
+	return LookupCharsetName(name, false);
 }
 //---------------------------------------------------------------------------
 TKawariCharset CharsetFromNameExt(const std::wstring &name)
 {
-	TKawariCharset cs=CharsetFromName(name);
-	if(cs!=KC_NULL) return cs;
-
-	string n;
-	if(!NormalizeCharsetName(name, n)) return KC_NULL;
-
-	if((n=="euc-jp")||(n=="eucjp")||(n=="euc_jp")||(n=="x-euc-jp")||(n=="ujis")||(n=="cp51932")||(n=="euc-jp-ms")||(n=="cseucpkdfmtjapanese"))
-		return KC_EUCJP;
-	if((n=="iso-2022-jp")||(n=="iso2022-jp")||(n=="iso2022jp")||(n=="iso_2022-jp")||(n=="jis")||(n=="csiso2022jp")||(n=="cp50220")||(n=="cp50221"))
-		return KC_JIS;
-	if((n=="euc-kr")||(n=="euckr")||(n=="euc_kr")||(n=="ks_c_5601-1987")||(n=="ks_c_5601")||(n=="cp949")||(n=="uhc")||(n=="cseuckr"))
-		return KC_EUCKR;
-	if((n=="gb2312")||(n=="gb_2312")||(n=="gb_2312-80")||(n=="gbk")||(n=="x-gbk")||(n=="cp936")||(n=="euc-cn")||(n=="euccn")||(n=="euc_cn")||(n=="csgb2312"))
-		return KC_GB2312;
-	return KC_NULL;
+	return LookupCharsetName(name, true);
 }
 //---------------------------------------------------------------------------
 const wchar_t* CharsetName(TKawariCharset cs)
@@ -456,6 +560,8 @@ const wchar_t* CharsetName(TKawariCharset cs)
 	case KC_JIS: return L"ISO-2022-JP";
 	case KC_EUCKR: return L"EUC-KR";
 	case KC_GB2312: return L"GB2312";
+	case KC_BIG5: return L"Big5";
+	case KC_LATIN1: return L"ISO-8859-1";
 	default:      return L"";
 	}
 }

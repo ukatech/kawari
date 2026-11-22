@@ -243,6 +243,33 @@ echo $(textsave_charset t.txt EUC-KR greet)$(textload_charset r t.txt EUC-KR)[${
 echo $(textsave_charset t.txt GB2312 greet)$(textload_charset r t.txt GB2312)[${r}]
 = [Hello]
 
+echo $(textsave_charset t.txt Big5 greet)$(textload_charset r t.txt Big5)[${r}]
+= [Hello]
+
+echo $(textsave_charset t.txt ISO-8859-1 greet)$(textload_charset r t.txt ISO-8859-1)[${r}]
+= [Hello]
+
+# names are matched without case and without '-' '_' '.' and spaces (the same rule as YAYA), and aliases are accepted
+echo $(textsave_charset t.txt Shift-JIS greet)$(textload_charset r t.txt shiftjis)[${r}]
+= [Hello]
+
+echo $(textsave_charset t.txt EUC_JP greet)$(textload_charset r t.txt Euc.Jp)[${r}]
+= [Hello]
+
+echo $(textsave_charset t.txt CP950 greet)$(textload_charset r t.txt BIG-5)[${r}]
+= [Hello]
+
+echo $(textsave_charset t.txt Latin1 greet)$(textload_charset r t.txt iso_8859-1)[${r}]
+= [Hello]
+
+# ISO-8859-1 has no character above U+00FF: such a character becomes "?" (chr 37510 is a Shift_JIS 2 byte character)
+echo $(set c $(chr 37510))$(textsave_charset t.txt ISO-8859-1 c)$(textload_charset r t.txt ISO-8859-1)[${r}]
+= [?]
+
+# a name that is not in the table is still an error (the entry is not changed)
+echo $(textsave_charset t.txt UTF-8 greet)$(textload_charset r t.txt Big6)[${r}]
+= []
+
 # several entries are written one line per word; "auto" detects the charset like textload
 echo $(textsave_charset t.txt UTF-8 greet name)$(textload_charset r t.txt auto)$(size r)$(join r "|")
 = 2Hello|world

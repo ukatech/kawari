@@ -91,7 +91,7 @@ TKawariCharset TPHMessage::ScanCharset(const string &mes){
 					string::size_type st=val.find_first_not_of(" \t");
 					string::size_type en=val.find_last_not_of(" \t");
 					if(st==string::npos) return KC_NULL;
-					return CharsetFromName(AtoW(val.substr(st, en-st+1)));
+					return CharsetFromNameExt(AtoW(val.substr(st, en-st+1)));
 				}
 			}
 		}

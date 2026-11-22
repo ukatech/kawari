@@ -340,9 +340,10 @@ function Test-Shiori([string]$Work, [string]$Name) {
             # "REQ <first line> | <Header>: <value> | ..." : the request line as it is (SHIORI/2.x and so on)
             $parts = $case.Rest -split '\s\|\s'
             $headers.Add($parts[0])
-            $headers.Add('Charset: Shift_JIS')
-            # "Sender: SSP" and "SecurityLevel: local" unless the case gives its own
             $custom = @($parts | Select-Object -Skip 1)
+            # "Charset: Shift_JIS" unless the case gives its own
+            if (-not ($custom | Where-Object { $_ -like 'Charset:*' })) { $headers.Add('Charset: Shift_JIS') }
+            # "Sender: SSP" and "SecurityLevel: local" unless the case gives its own
             if (-not ($custom | Where-Object { $_ -like 'Sender:*' })) { $headers.Add('Sender: SSP') }
             if (-not ($custom | Where-Object { $_ -like 'SecurityLevel:*' })) { $headers.Add('SecurityLevel: local') }
             foreach ($h in $custom) { $headers.Add($h) }
